@@ -1,10 +1,13 @@
 # Project Proposal
 
+Pod Name: 
 Pod Members: **Add Pod Members Names**
 
 ## Problem Statement
 
 Insert your groups problem statement and target audience.
+
+## Target Audience
 
 ## Description
 
@@ -14,6 +17,7 @@ What is the main purpose of your project? What are the key features your site ha
 
 Add a list of your groups's brainstormed features list
 
+## AI Feature API Endpoint Sketch
 ## Related Work
 
 What similar apps and websites? How will your project stand out from these other websites?
