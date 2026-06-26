@@ -86,6 +86,14 @@ The AI model generates an itinerary based on the provided inputs and returns a s
   ]
 }
 
+**Failure response:**
+- Status: 500
+- Body: { "error": "AI recommendation unavailable" }
+- Fallback behavior: Frontend displays a generic message when this endpoint fails
+
+**Why this runs on the backend (not in the browser):**
+This runs on the backend because the API key should only be held by the server rather than the user having the information on the browser. This helps secure the AI prompt calls the website makes to find itineraries and ultimately makes users feel more comfortable using AI to create itineraries.
+
 ## Related Work
 
 What similar apps and websites? How will your project stand out from these other websites?
