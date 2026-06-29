@@ -26,6 +26,7 @@ Our target audience will use NavQuest to create, save and share itineraries thro
 - Users can create textual and visual itineraries for a group
 - Display itineraries on an interactive map:
     * Show each group members individual route from their starting location to the group’s meeting point
+    * The group planner can enter a start time and end time for the day trip
     * After the meeting point, display a single shared route connecting each destination in chronological order( and displaying information such as travel time, activity duration, when places close, and the transportation method for each segment)
     * Show the final group’s final destination or endpoint
 -Users can create accounts and log in to create, save, edit, or delete itineraries

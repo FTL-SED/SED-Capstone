@@ -8,27 +8,20 @@ People often struggle to coordinate social activities in unfamiliar cities. Plan
 
 ## User Roles
 
-1. Trip organizer
-2. Trip attendee
+Trip Organizer
 
 ## User Personas
 
 Trip Organizer:
 
 Persona 1: Maya - Summer Intern
-Who: 20 year old, college junior interning in San Francisco for the summer. From Texas and doesn't know the Bay Area. Enjoys finding new events to attend in her free time.
-Tech relationship: On social media often. Would use Side-Quest 1-2 times a week, mostly on mobile.
-Motivation: She is the one in the friend group who organizes the hangouts. Her friends and herself are all staying in different neighborhoods and looking for weekend plans together. They want to organize a plan without spending hours reseraching/
-Pain points: Group chat planning takes forever and fizzle out sometimes. She does not know SF well enough to find spots to go to. Hard to track who is coming or not and what everyone wants to do.
+Maya is a 20 year old college junior from Texas, interning in San Francisco for the summer. She is new to the Bay Area and doesn't know the city well. She is a heavy social media user who would use NavQuest 1-2 times a week, mostly on her phone. She's made plans to hang out with fellow interns next weekend, but they're spread across different parts of the Bay Area and can't agree on a place to meet or activities that suit everyone, they're all new to California. Her pain points are that Group-chat planning drags on and on, doesn't know SF well enough to suggest good spots, and it is difficult to land on a meeting point when everyone is living far from each other. She wants to have a ready-made plan that cuts down on the hours spent researching an unfamiliar city.
 
-Persona 2: Bob - FTE
-Who: Bob is an elder millennial from Boston, Massachusetts. He works at a law firm and is using his PTO to plan a spring trip to Japan with friends 
-from several parts of the United States. He is the only one in the friend group that has been to Japan.
-Tech relationship: Bob prefers planning trips on a desktop but wants all of his trip details to be easily accessible on his phone while traveling. 
-He would use the app frequently to check the itinerary and view travel updates.
-Motivation:
-Bob wants a convenient way to organize the trip, coordinate with friends, and have a clear daily itinerary so the group can make the most of their time in Japan. He is familiar with what there is to do in Japan but wants to have an efficient way of sending out itineraries to his friends.
-Pain Points: Bob finds it time-consuming to coordinate everyone's preferences, schedules, and flights to Japan. He also wants to avoid wasting time during the trip deciding what to do or figuring out when and where everyone will meet after arriving.
+Personal 2: James - Full Time Employee
+James is a full-time employee who wants to organize a social gathering with his coworkers. He usually likes to make plans on his desktop. He wants to bring his team together outside the office, but everyone has a busy conflicting schedule, so finding a time and place that works for the group is the hard part. His own pain point is that coordinating availability across many people is a blocker, and he finds it time consuming finding ideas for meeting locations. He wants the ability to find convenient meeting locations that work for the group.
+
+Persona 3: Mark - High School Senior
+Mark is a high school senior planning a senior trip to a local beach with friends. He's organizing the trip, but the group is split on which spots to visit, and they have a budget everyone has to stay within. Balancing what everyone wants to do against a limited budget is tough, and it's hard to compare options when friends keep suggesting different places. Mark wants to build an itinerary the whole group is happy with that stays inside their budget.
 
 ## User Stories
 
