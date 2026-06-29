@@ -27,7 +27,26 @@ Mark is a high school senior planning a senior trip to a local beach with friend
 
 Include at least 10 user stories.
 
-1. **As a [user role], I want to [what], so that [why]**
+#1 As a trip organizer, I want to create itineraries that fit the budgetary restrictions of my group, so that each member of my group can afford to go on the trip.
+
+#2 As a trip organizer, I want to create itineraries to fit within a specific time window so that the trip fits my group’s available schedule.
+
+#3 As a trip organizer, I want to create itineraries to be optimized around a central meeting location or destination so that the group can figure out where to meet before they travel together.
+
+#4 As a trip organizer, I want itineraries to reflect group interests so that the trip matches what most people would enjoy.
+
+#5 As a trip organizer, I want to be able to generate a written itinerary using AI so that I don’t have to spend too much time writing one myself and so that I can share it easily.
+
+#6 As a trip organizer, I want to be able to generate a visual itinerary using AI so that the group can follow the itinerary throughout the day. 
+#7 As a trip organizer, I want to update my itineraries so that, if I want to change parts of my itinerary in case my group’s trip constraints change
+
+#8 As a trip organizer, I want to be able to view other user made itineraries and share my own publicly 
+
+#9 As a trip organizer, I want to save my itinerary such that I can revisit the plan again in the future.
+
+#10 As a trip organizer, I want to delete my itinerary in case my plans fall through or I dislike my current trip plan.
+
+
 
 ## Wireframe (Bonus)
 
