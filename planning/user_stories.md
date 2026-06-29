@@ -4,7 +4,7 @@ Pod Members: **Dylan D’Rozario, Emmanuel Ekpenyong, Semir Ali**
 
 ## Problem Statement
 
-Insert your groups problem statement and target audience.
+People often struggle to coordinate social activities in unfamiliar cities. Planning a group outing requires aligning schedules, choosing convenient meeting locations, and finding activities that match diverse interests, often leading to time consuming back-and-forth communication and/or cancelled plans. The audience is “people in unfamiliar cities.”
 
 ## User Roles
 
