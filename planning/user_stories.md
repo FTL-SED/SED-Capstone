@@ -1,6 +1,6 @@
 # Project Proposal
 
-Pod Members: **Add Pod Members Names**
+Pod Members: **Dylan D’Rozario, Emmanuel Ekpenyong, Semir Ali**
 
 ## Problem Statement
 
