@@ -14,6 +14,9 @@ People often struggle to coordinate social activities in unfamiliar cities. Plan
 2. event viewer
 
 
+1. Trip organizer
+2. Trip attendee
+
 ## User Personas
 
 Include at least 2 personas per User Role
