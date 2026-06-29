@@ -8,12 +8,6 @@ People often struggle to coordinate social activities in unfamiliar cities. Plan
 
 ## User Roles
 
-
-
-1. event planner
-2. event viewer
-
-
 1. Trip organizer
 2. Trip attendee
 
