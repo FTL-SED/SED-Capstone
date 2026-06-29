@@ -8,7 +8,11 @@ People often struggle to coordinate social activities in unfamiliar cities. Plan
 
 ## User Roles
 
-Include at least at least 1, but no more than 3, user roles
+
+
+1. event planner
+2. event viewer
+
 
 ## User Personas
 
