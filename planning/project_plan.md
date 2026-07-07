@@ -113,7 +113,44 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 
 ## Data Model
 
-Describe your app's data model using diagrams or tables
+### User
+| Attribute | Type | Additional Info |
+| id | Int | @default(autoincrement()) |
+| email | String | @unique |
+| username | String | @unique |
+| password | String | |
+| createdItineraries | Itinerary[] | @relation("CreatedItineraries") |
+| likedItineraries | Itinerary[] | @relation("LikedItineraries") |
+
+### Itinerary
+| Attribute | Type | Additional Info |
+| id | Int | @default(autoincrement()) |
+| userId | Int | Foreign key → User.id |
+| title | String | |
+| location | String | |
+| isPublic | Boolean | @default(false) |
+| likeCount | Int | @default(0) |
+| createdAt | DateTime | @default(now()) |
+| updatedAt | DateTime | @updatedAt |
+| creator | User | @relation("CreatedItineraries", fields: [userId], references: [id]) |
+| likedBy | User[] | @relation("LikedItineraries") |
+| pins | Pin[] | |
+
+### Pin
+| Attribute | Type | Additional Info |
+| id | Int | @default(autoincrement()) |
+| itineraryId | Int | Foreign key → Itinerary.id |
+| orderInItinerary | Int | |
+| name | String | |
+| description | String? | |
+| budgetPerPerson | Float | |
+| latitude | Float | |
+| longitude | Float | |
+| address | String? | |
+| startTime | DateTime | |
+| endTime | DateTime | |
+| locationImageUrl | String | |
+| itinerary | Itinerary | @relation(fields: [itineraryId], references: [id]) |
 
 ## Endpoints
 
