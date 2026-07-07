@@ -2,6 +2,10 @@
 
 Pod Members: **Emmanuel, Dylan, Semir**
 
+## Kanban Board
+
+https://trello.com/invite/b/6a4be0e996e36198ef8b85ba/ATTI1326f85c29b362903c595c4b316e58dbD4986BF4/sed-capstone-planning 
+
 ## Problem Statement and Description
 
 Young people in unfamiliar cities struggle to plan group outings, since aligning schedules, picking locations, and matching interests means tedious back-and-forth
@@ -106,7 +110,6 @@ Acceptance Criteria:
 ## Pages/Screens
 
 List all the pages and screens in the app. Include wireframes for at least 3 of them.
-
 
 ## Data Model
 
