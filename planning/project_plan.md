@@ -106,6 +106,21 @@ Acceptance Criteria:
 - An organizer can delete an itinerary from their "My Trips" list
 - Deleted itineraries no longer appear in their "My Trips" list
 
+#13 As a trip organizer, I want to create my own designed account so I can access all the itineraries that I have saved.
+Acceptance Criteria:
+- When I submit a valid username, email, and password, a POST /users request is sent and I receive a 201 response with {username, email, createdAt}, then I'm logged in and redirected to my dashboard
+- If any field is missing or improperly formatted, the UI shows a field-specific error without clearing my other inputs
+- The password is hashed before storage and is never included in the response, logs, or client storage
+
+#14 As a trip organizer, I want to update my account’s information in case - I want to change my username, email, or password
+- When I change one or more fields and save, a PUT /users/:id request is sent containing only the changed fields, and I receive a 200 response reflecting those changes
+- If a field is improperly formatted, the API returns 400 and the UI shows which field failed without discarding my other valid inputs
+- If my account ID no longer exists, the API returns 404 and the UI redirects me to log in again
+
+#15 As a trip organizer, I want to see information about my account displayed on my dashboard, including information about my username and the itineraries that I have saved.
+- When I navigate to my dashboard while logged in, a GET /users/:id request is sent and the response is used to display my username, liked itineraries, and created itineraries
+- If I'm not signed in, the API returns 401 and I'm redirected to the login page instead of seeing a broken dashboard
+- If I have no liked or created itineraries, the lists render as empty and the UI shows an empty-state message instead of an error
 
 ## Pages/Screens
 
@@ -155,5 +170,6 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 ## Endpoints
 
 List the API endpoints you will need to implement.
+
 
 ***Don't forget to set up your Issues, Milestones, and Project Board!***
