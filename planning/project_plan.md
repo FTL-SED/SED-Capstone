@@ -169,21 +169,92 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 
 ## Endpoints
 
-| CRUD | HTTP Verb | Endpoint | Description | Request Shape | Response Shape | Error Cases | US |
-|---|---|---|---|---|---|---|---|
-| Create | POST | `/users` | Adds a user to the webpage | `{username, email, password}` | `{username, email, createdAt}` (201) | 400 if fields are missing or improperly structured | 13 |
-| Update | PUT | `/users/:id` | Updates a user's information | `{username, email, password}` (all fields optional) | `{username, email, password}` (the changed field) (200) | 400 if fields are improperly structured, 404 if the user cannot be found | 14 |
-| Read | GET | `/users/:id` | Receive information about a user (to be displayed on the user dashboard) | — | `{username, email, likedItineraries, createdItineraries}` | 401 if the user is not signed in, 404 if the user cannot be found | 15 |
-| Create | POST | `/itineraries` | Create a new itinerary for a group of people | `{title, creator, isPublic, pins}` | `{title, creator, isPublic, pins, createdAt}` (201) | 400 if any of the fields are missing or wrongly structured, 401 if the user is not signed in | 8, 11 |
-| Read | GET | `/itineraries/:id` | Access an itinerary that is accessible to you as a user | — | `{createdAt, updatedAt, title, creator, isPublic, likeCount, pins}` | 401 if the user is not signed in, 403 if the user is not authorized to access the resource, 404 if the itinerary cannot be found | 9, 11 |
-| Read | GET | `/itineraries` | Access a list of itineraries that are accessible to the user | — | `[{createdAt, updatedAt, title, creator, isPublic, likeCount, pins}]` | 401 if the user is not signed in | 9, 11 |
-| Update | PUT | `/itineraries/:id` | Update an itinerary | `{title, creator, isPublic, likeCount, pins}` (all fields optional) | `{title, creator, isPublic, likeCount, pins}` (the changed field) | 401 if the user is not signed in, 403 if the user does not have access to the itinerary, 404 if the itinerary cannot be found | 7, 8 |
-| Delete | DELETE | `/itineraries/:id` | Delete an itinerary | — | — | 401 if the user is not signed in, 403 if the authenticated user does not have access to the itinerary, 404 if the itinerary cannot be found | 12 |
-| Read | GET | `/pins/:id` | Get information about one specific pin | — | `{orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl}` | 401 if the user is not signed in, 403 if the authenticated user does not have access to the pin, 404 if the pin cannot be found | 3, 5 |
-| Create | POST | `/pins` | Create pin information for a place an itinerary includes | `{itineraryId, orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl}` | `{itineraryId, orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl}` (201) | 400 if there are missing/wrongly structured fields, 401 if the user is not signed in | 1, 2, 3, 4, 10 |
-| Update | PUT | `/pins/:id` | Updates pin information | `{orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl}` (all fields optional) | `{orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl}` (only sends back replaced field) | 400 if there are missing/wrongly structured fields, 401 if the user is not signed in, 403 if the authenticated user does not have access to the pin, 404 if the pin cannot be found | 7 |
-| Delete | DELETE | `/pins/:id` | Delete a pin from an itinerary | — | — | 401 if the user is not signed in, 403 if the authenticated user does not have access to the pin, 404 if the pin cannot be found | 7 |
-| Create | POST | `/ai-agent` | Receive structured information from AI agent about an itinerary to be stored in the database and rendered on frontend | `{foodPreferences, startingLocation, timeConstraints, interests}` | `{itinerary}` | 401 if the user is not signed in | 1, 2, 3, 4, 5, 6, 10 |
+### Users
+
+POST /users - Register a new user
+- User story: 13
+- Request: { username, email, password }
+- Response (201): { username, email, createdAt }
+- Errors: 400 if fields are missing or improperly structured
+
+PUT /users/:id - Update a user's information
+- User story: 14
+- Request: { username, email, password } (all fields optional)
+- Response (200): the changed fields
+- Errors: 400 if fields are improperly structured, 404 if the user cannot be found
+
+GET /users/:id - Get a user's dashboard information
+- User story: 15
+- Request: none
+- Response (200): { username, email, likedItineraries, createdItineraries }
+- Errors: 401 if the user is not signed in, 404 if the user cannot be found
+
+### Itineraries
+
+POST /itineraries - Create a new itinerary
+- User stories: 8, 11
+- Request: { title, isPublic, pins }
+- Response (201): { title, creator, isPublic, pins, createdAt }
+- Errors: 400 if fields are missing or wrongly structured, 401 if the user is not signed in
+
+GET /itineraries - List itineraries accessible to the user
+- User stories: 9, 11
+- Request: none
+- Response (200): [ { createdAt, updatedAt, title, creator, isPublic, likeCount, pins } ]
+- Errors: 401 if the user is not signed in
+
+GET /itineraries/:id - Get a single itinerary
+- User stories: 9, 11
+- Request: none
+- Response (200): { createdAt, updatedAt, title, creator, isPublic, likeCount, pins }
+- Errors: 401 if the user is not signed in, 403 if the user is not authorized to access the resource, 404 if the itinerary cannot be found
+
+PUT /itineraries/:id - Update an itinerary
+- User stories: 7, 8
+- Request: { title, isPublic, likeCount, pins } (all fields optional)
+- Response (200): the changed fields
+- Errors: 401 if the user is not signed in, 403 if the user does not have access to the itinerary, 404 if the itinerary cannot be found
+
+DELETE /itineraries/:id - Delete an itinerary
+- User story: 12
+- Request: none
+- Response (204): none
+- Errors: 401 if the user is not signed in, 403 if the authenticated user does not have access to the itinerary, 404 if the itinerary cannot be found
+
+### Pins
+
+GET /pins/:id - Get a single pin
+- User stories: 3, 5
+- Request: none
+- Response (200): { orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl }
+- Errors: 401 if the user is not signed in, 403 if the authenticated user does not have access to the pin, 404 if the pin cannot be found
+
+POST /pins - Create a pin for an itinerary
+- User stories: 1, 2, 3, 4, 10
+- Request: { itineraryId, orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl }
+- Response (201): the created pin
+- Errors: 400 if fields are missing or wrongly structured, 401 if the user is not signed in
+
+PUT /pins/:id - Update a pin
+- User story: 7
+- Request: { orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl } (all fields optional)
+- Response (200): the changed fields
+- Errors: 400 if fields are missing or wrongly structured, 401 if the user is not signed in, 403 if the authenticated user does not have access to the pin, 404 if the pin cannot be found
+
+DELETE /pins/:id - Delete a pin from an itinerary
+- User story: 7
+- Request: none
+- Response (204): none
+- Errors: 401 if the user is not signed in, 403 if the authenticated user does not have access to the pin, 404 if the pin cannot be found
+
+### AI Agent
+
+POST /ai-agent - Generate a structured itinerary from AI
+- User stories: 1, 2, 3, 4, 5, 6, 10
+- Description: Receives structured input, prompts the AI agent, and returns an itinerary to be stored in the database and rendered on the frontend.
+- Request: { foodPreferences, startingLocation, timeConstraints, interests }
+- Response (200): { itinerary }
+- Errors: 401 if the user is not signed in
 
 
 ***Don't forget to set up your Issues, Milestones, and Project Board!***
