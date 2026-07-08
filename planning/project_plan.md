@@ -106,6 +106,21 @@ Acceptance Criteria:
 - An organizer can delete an itinerary from their "My Trips" list
 - Deleted itineraries no longer appear in their "My Trips" list
 
+#13 As a trip organizer, I want to create my own designed account so I can access all the itineraries that I have saved.
+Acceptance Criteria:
+- When I submit a valid username, email, and password, a POST /users request is sent and I receive a 201 response with {username, email, createdAt}, then I'm logged in and redirected to my dashboard
+- If any field is missing or improperly formatted, the UI shows a field-specific error without clearing my other inputs
+- The password is hashed before storage and is never included in the response, logs, or client storage
+
+#14 As a trip organizer, I want to update my account’s information in case - I want to change my username, email, or password
+- When I change one or more fields and save, a PUT /users/:id request is sent containing only the changed fields, and I receive a 200 response reflecting those changes
+- If a field is improperly formatted, the API returns 400 and the UI shows which field failed without discarding my other valid inputs
+- If my account ID no longer exists, the API returns 404 and the UI redirects me to log in again
+
+#15 As a trip organizer, I want to see information about my account displayed on my dashboard, including information about my username and the itineraries that I have saved.
+- When I navigate to my dashboard while logged in, a GET /users/:id request is sent and the response is used to display my username, liked itineraries, and created itineraries
+- If I'm not signed in, the API returns 401 and I'm redirected to the login page instead of seeing a broken dashboard
+- If I have no liked or created itineraries, the lists render as empty and the UI shows an empty-state message instead of an error
 
 ## Pages/Screens
 
@@ -175,6 +190,92 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 
 ## Endpoints
 
-List the API endpoints you will need to implement.
+### Users
+
+POST /users - Register a new user
+- User story: 13
+- Request: { username, email, password }
+- Response (201): { username, email, createdAt }
+- Errors: 400 if fields are missing or improperly structured
+
+PUT /users/:id - Update a user's information
+- User story: 14
+- Request: { username, email, password } (all fields optional)
+- Response (200): the changed fields
+- Errors: 400 if fields are improperly structured, 404 if the user cannot be found
+
+GET /users/:id - Get a user's dashboard information
+- User story: 15
+- Request: none
+- Response (200): { username, email, likedItineraries, createdItineraries }
+- Errors: 401 if the user is not signed in, 404 if the user cannot be found
+
+### Itineraries
+
+POST /itineraries - Create a new itinerary
+- User stories: 8, 11
+- Request: { title, isPublic, pins }
+- Response (201): { title, creator, isPublic, pins, createdAt }
+- Errors: 400 if fields are missing or wrongly structured, 401 if the user is not signed in
+
+GET /itineraries - List itineraries accessible to the user
+- User stories: 9, 11
+- Request: none
+- Response (200): [ { createdAt, updatedAt, title, creator, isPublic, likeCount, pins } ]
+- Errors: 401 if the user is not signed in
+
+GET /itineraries/:id - Get a single itinerary
+- User stories: 9, 11
+- Request: none
+- Response (200): { createdAt, updatedAt, title, creator, isPublic, likeCount, pins }
+- Errors: 401 if the user is not signed in, 403 if the user is not authorized to access the resource, 404 if the itinerary cannot be found
+
+PUT /itineraries/:id - Update an itinerary
+- User stories: 7, 8
+- Request: { title, isPublic, likeCount, pins } (all fields optional)
+- Response (200): the changed fields
+- Errors: 401 if the user is not signed in, 403 if the user does not have access to the itinerary, 404 if the itinerary cannot be found
+
+DELETE /itineraries/:id - Delete an itinerary
+- User story: 12
+- Request: none
+- Response (204): none
+- Errors: 401 if the user is not signed in, 403 if the authenticated user does not have access to the itinerary, 404 if the itinerary cannot be found
+
+### Pins
+
+GET /pins/:id - Get a single pin
+- User stories: 3, 5
+- Request: none
+- Response (200): { orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl }
+- Errors: 401 if the user is not signed in, 403 if the authenticated user does not have access to the pin, 404 if the pin cannot be found
+
+POST /pins - Create a pin for an itinerary
+- User stories: 1, 2, 3, 4, 10
+- Request: { itineraryId, orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl }
+- Response (201): the created pin
+- Errors: 400 if fields are missing or wrongly structured, 401 if the user is not signed in
+
+PUT /pins/:id - Update a pin
+- User story: 7
+- Request: { orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl } (all fields optional)
+- Response (200): the changed fields
+- Errors: 400 if fields are missing or wrongly structured, 401 if the user is not signed in, 403 if the authenticated user does not have access to the pin, 404 if the pin cannot be found
+
+DELETE /pins/:id - Delete a pin from an itinerary
+- User story: 7
+- Request: none
+- Response (204): none
+- Errors: 401 if the user is not signed in, 403 if the authenticated user does not have access to the pin, 404 if the pin cannot be found
+
+### AI Agent
+
+POST /ai-agent - Generate a structured itinerary from AI
+- User stories: 1, 2, 3, 4, 5, 6, 10
+- Description: Receives structured input, prompts the AI agent, and returns an itinerary to be stored in the database and rendered on the frontend.
+- Request: { foodPreferences, startingLocation, timeConstraints, interests }
+- Response (200): { itinerary }
+- Errors: 401 if the user is not signed in
+
 
 ***Don't forget to set up your Issues, Milestones, and Project Board!***
