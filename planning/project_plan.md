@@ -111,6 +111,27 @@ Acceptance Criteria:
 
 List all the pages and screens in the app. Include wireframes for at least 3 of them.
 
+### Landing Page
+![Landing page wireframe](wireframes/landing_page_wireframe.png?raw=true "Landing Page")
+
+### Login Page
+![Login page wireframe](wireframes/login_page_wireframe.png?raw=true "Login Page")
+
+### Home Page
+![Home page wireframe](wireframes/home_page_wireframe.png?raw=true "Home Page")
+
+### Create Itinerary Page
+![Create itinerary wireframe](wireframes/create_itinerary_wireframe.png?raw=true "Create Itinerary Page")
+
+### Loading Page
+![Loading page wireframe](wireframes/loading_page_wireframe.png?raw=true "Loading Page")
+
+### Itinerary Page
+![Itinerary page wireframe](wireframes/itinerary_page_wireframe.png?raw=true "Itinerary Page")
+
+### Guide Page
+![Guide page wireframe](wireframes/guide_page_wireframe.png?raw=true "Guide Page")
+
 ## Data Model
 
 ### User
