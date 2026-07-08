@@ -169,7 +169,21 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 
 ## Endpoints
 
-List the API endpoints you will need to implement.
+| CRUD | HTTP Verb | Endpoint | Description | Request Shape | Response Shape | Error Cases | US |
+|---|---|---|---|---|---|---|---|
+| Create | POST | `/users` | Adds a user to the webpage | `{username, email, password}` | `{username, email, createdAt}` (201) | 400 if fields are missing or improperly structured | 13 |
+| Update | PUT | `/users/:id` | Updates a user's information | `{username, email, password}` (all fields optional) | `{username, email, password}` (the changed field) (200) | 400 if fields are improperly structured, 404 if the user cannot be found | 14 |
+| Read | GET | `/users/:id` | Receive information about a user (to be displayed on the user dashboard) | — | `{username, email, likedItineraries, createdItineraries}` | 401 if the user is not signed in, 404 if the user cannot be found | 15 |
+| Create | POST | `/itineraries` | Create a new itinerary for a group of people | `{title, creator, isPublic, pins}` | `{title, creator, isPublic, pins, createdAt}` (201) | 400 if any of the fields are missing or wrongly structured, 401 if the user is not signed in | 8, 11 |
+| Read | GET | `/itineraries/:id` | Access an itinerary that is accessible to you as a user | — | `{createdAt, updatedAt, title, creator, isPublic, likeCount, pins}` | 401 if the user is not signed in, 403 if the user is not authorized to access the resource, 404 if the itinerary cannot be found | 9, 11 |
+| Read | GET | `/itineraries` | Access a list of itineraries that are accessible to the user | — | `[{createdAt, updatedAt, title, creator, isPublic, likeCount, pins}]` | 401 if the user is not signed in | 9, 11 |
+| Update | PUT | `/itineraries/:id` | Update an itinerary | `{title, creator, isPublic, likeCount, pins}` (all fields optional) | `{title, creator, isPublic, likeCount, pins}` (the changed field) | 401 if the user is not signed in, 403 if the user does not have access to the itinerary, 404 if the itinerary cannot be found | 7, 8 |
+| Delete | DELETE | `/itineraries/:id` | Delete an itinerary | — | — | 401 if the user is not signed in, 403 if the authenticated user does not have access to the itinerary, 404 if the itinerary cannot be found | 12 |
+| Read | GET | `/pins/:id` | Get information about one specific pin | — | `{orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl}` | 401 if the user is not signed in, 403 if the authenticated user does not have access to the pin, 404 if the pin cannot be found | 3, 5 |
+| Create | POST | `/pins` | Create pin information for a place an itinerary includes | `{itineraryId, orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl}` | `{itineraryId, orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl}` (201) | 400 if there are missing/wrongly structured fields, 401 if the user is not signed in | 1, 2, 3, 4, 10 |
+| Update | PUT | `/pins/:id` | Updates pin information | `{orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl}` (all fields optional) | `{orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl}` (only sends back replaced field) | 400 if there are missing/wrongly structured fields, 401 if the user is not signed in, 403 if the authenticated user does not have access to the pin, 404 if the pin cannot be found | 7 |
+| Delete | DELETE | `/pins/:id` | Delete a pin from an itinerary | — | — | 401 if the user is not signed in, 403 if the authenticated user does not have access to the pin, 404 if the pin cannot be found | 7 |
+| Create | POST | `/ai-agent` | Receive structured information from AI agent about an itinerary to be stored in the database and rendered on frontend | `{foodPreferences, startingLocation, timeConstraints, interests}` | `{itinerary}` | 401 if the user is not signed in | 1, 2, 3, 4, 5, 6, 10 |
 
 
 ***Don't forget to set up your Issues, Milestones, and Project Board!***
