@@ -290,6 +290,8 @@ POST /ai-agent - Generate a structured itinerary from AI
 
 ## Component Hierarchy
 
+## Component Hierarchy
+
 # NavQuest — Component Hierarchy
 
 ```
@@ -358,27 +360,37 @@ POST /ai-agent - Generate a structured itinerary from AI
 │   │
 │   ├── <CreateItineraryPage>
 │   │   ├── <PageHeading>
-│   │   └── <ItineraryForm>
-│   │       ├── <TimeRangeField>
-│   │       │   ├── <TimeInput> "Start Time"
-│   │       │   └── <TimeInput> "End Time"
-│   │       ├── <PrivacyField>
-│   │       ├── <BudgetField>
-│   │       ├── <TravelRadiusField>
-│   │       ├── <TransportField>
-│   │       ├── <TagInput> Food preferences
-│   │       │   ├── <TextInput>
-│   │       │   └── <TagList>
-│   │       │       └── <Tag> ×N
-│   │       ├── <TagInput> Starting locations
-│   │       │   ├── <TextInput>
-│   │       │   └── <TagList>
-│   │       │       └── <Tag> ×N
-│   │       ├── <TagInput> Interests
-│   │       │   ├── <TextInput>
-│   │       │   └── <TagList>
-│   │       │       └── <Tag> ×N
-│   │       └── <CreateButton>
+│   │   ├── <WizardStepper>
+│   │   │   └── <Step> ×4        "Time Range" / "Travel/Transport" / "Preferences" / "Finish"
+│   │   └── <ItineraryWizard>
+│   │       ├── <Step1_TimeRange>
+│   │       │   ├── <TimeRangeField>
+│   │       │   │   ├── <TimeInput> "Start Time"
+│   │       │   │   └── <TimeInput> "End Time"
+│   │       │   └── <NextButton>
+│   │       ├── <Step2_TravelTransport>
+│   │       │   ├── <TagInput> Starting locations
+│   │       │   │   ├── <TextInput>
+│   │       │   │   └── <TagList>
+│   │       │   │       └── <Tag> ×N
+│   │       │   ├── <TravelRadiusField>
+│   │       │   ├── <TransportField>
+│   │       │   └── <NextButton>
+│   │       ├── <Step3_Preferences>
+│   │       │   ├── <TagInput> Interests
+│   │       │   │   ├── <TextInput>
+│   │       │   │   └── <TagList>
+│   │       │   │       └── <Tag> ×N
+│   │       │   ├── <TagInput> Food preferences
+│   │       │   │   ├── <TextInput>
+│   │       │   │   └── <TagList>
+│   │       │   │       └── <Tag> ×N
+│   │       │   ├── <BudgetField>
+│   │       │   └── <NextButton>
+│   │       └── <Step4_Finish>
+│   │           ├── <ItineraryDetailsPreview>
+│   │           ├── <PrivacyField>        "Private/Public"
+│   │           └── <FinishButton>
 │   │
 │   ├── <LoadingPage>
 │   │   └── <LoadingSection>
