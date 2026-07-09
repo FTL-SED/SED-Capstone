@@ -132,6 +132,9 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 ### Login Page
 ![Login page wireframe](wireframes/login_page_wireframe.png?raw=true "Login Page")
 
+### Register Page
+![Register page wireframe](wireframes/register_page_wireframe.png?raw=true "Register Page")
+
 ### Home Page
 ![Home page wireframe](wireframes/home_page_wireframe.png?raw=true "Home Page")
 
@@ -142,10 +145,13 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 ![Loading page wireframe](wireframes/loading_page_wireframe.png?raw=true "Loading Page")
 
 ### Itinerary Page
-![Itinerary page wireframe](wireframes/itinerary_page_wireframe.png?raw=true "Itinerary Page")
+![Itinerary page wireframe](wireframes/author_itinerary_page_wireframe.png?raw=true "Itinerary Page")
 
 ### Guide Page
 ![Guide page wireframe](wireframes/guide_page_wireframe.png?raw=true "Guide Page")
+
+### Account Page
+![Account page wireframe](wireframes/account_page_wireframe.png?raw=true "Account Page")
 
 ## Data Model
 
