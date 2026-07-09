@@ -432,3 +432,80 @@ POST /ai-agent - Generate a structured itinerary from AI
 ## Decision Log
 
 ## Milestones
+
+Milestone 1: Creating the Website’s Skeleton
+Goal: Begin creating the skeleton for what the project will look like
+
+Requirements:
+- Set up the frontend and backend libraries and frameworks
+- Translate the User, Itinerary, and Pin models from project_plan.md into prisma/schema.prisma, including the named relations and the implicit many-to-many for likes.
+    - Run an initial migration
+- Add user functionality
+    - On the backend, the endpoints POST /users, PUT /users/:id, GET /users/:id should work with proposed request/response structures
+    - Set up Supabase Auth authentication to streamline the user authentication process
+- Set up the React app with pages: login/register, landing, dashboard, itinerary view, and a "create itinerary" page.
+- Wire register/login to Supabase authentication
+    - Users should have the ability to edit their username/email/password, which is reflected through Supabase
+
+Checkpoint:
+- Prisma Models for the User, Itinerary, and Pin Models are all properly displayed
+- Users are able to login into NavQuest and change their username/email/password accordingly
+- Users can see an empty page corresponding to the landing, login, register, dashboard, itinerary view, and “create itinerary” pages.
+
+Milestone 2: Generating Itineraries
+Goal: Create the itinerary generation algorithm using real place data to generate itinerary information
+
+Requirements:
+- Set up OSM and MapLibre on the backend to handle fetching/displaying place data
+- Create the endpoint POST /itineraries with a Prisma transaction to ensure all pins are created within one transaction
+- Test using Postman whether user-provided inputs (i.e. food restrictions, time restrictions) provide reasonable itineraries
+- Include proper error handling (i.e. recognizing when there are no times for the group to meet)
+- Design the form for group members to fill out their information (i.e. food preferences, interests)
+    - Create the functionality to prepopulate this information through adding user’s information
+    - Connect form to backend and see if, when logging the result, a properly structured itinerary is created to be displayed
+
+Checkpoint:
+- An itinerary can be properly created given group member constraints
+- A form is created where an event organizer can input their group’s preferences to make this itinerary
+
+Milestone 3: Displaying and Saving Itineraries
+Goal: Once the itinerary has been created, the user should be able to see their own itinerary in their dashboard and see other people’s itineraries
+
+Requirements:
+- After the user creates the itinerary, display information about the itinerary through a sidebar and a map filled with numbered pins describing where the group should go for each location
+    - The map view should be clearly visible for all views
+- Reopening a saved itinerary should restore all of its information exactly as it was saved
+- Users should have the ability to mark their itineraries as public
+    - If public, the user should be able to access it in a “Itineraries” page
+    - On this “Itineraries” page, users should be able to filter to find certain itineraries
+    - All public itineraries should be displayed on the “Itineraries” page.
+    - For these public itineraries, the user should be able to like these itineraries, which changes their like count for all users
+- Users should be able to view the itineraries they have liked from their dashboard
+- Users should be able to save a copy of another user’s public itinerary to their own dashboard
+
+Checkpoint:
+- The user can see a visual itinerary with pins and information surrounding the itinerary
+- The user should be able to set their itinerary as public so other users can use it
+- The user can find other user’s public itineraries
+- The user can like a public itinerary and view their liked itineraries from their dashboard
+- The user can save a copy of a public itinerary to their own dashboard
+
+Milestone 4: Editing, Deleting, and Polishing
+Goal: Allow users to modify and remove their itineraries, and make sure the app is polished and deployable
+
+Requirements:
+- Implement PUT /itineraries/:id so users can edit a saved itinerary’s details
+- Implement DELETE /itineraries/:id so users can delete an itinerary from their dashboard
+- Implement the pin endpoints (POST /pins, PUT /pins/:id, DELETE /pins/:id) so users can add, edit, or remove individual stops within an itinerary
+- Make sure all pages are responsive and usable on mobile devices
+- Deploy the frontend, backend, and database so the app is publicly accessible
+
+Checkpoint:
+- A user can edit a saved itinerary and its pins
+- A user can delete an itinerary and it no longer appears in their dashboard
+- The app is fully usable on mobile screen sizes
+- The app is deployed and accessible online
+
+Stretch Goals:
+- Google Places enrichment to fill in ratings, price level, and reliable hours for recommended places
+- A written/text version of the itinerary for easy sharing
