@@ -129,6 +129,9 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 ### Landing Page
 ![Landing page wireframe](wireframes/landing_page_wireframe.png?raw=true "Landing Page")
 
+### Register Page
+![Register page wireframe](wireframes/register_page_wireframe.png?raw=true "Register Page")
+
 ### Login Page
 ![Login page wireframe](wireframes/login_page_wireframe.png?raw=true "Login Page")
 
@@ -136,16 +139,22 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 ![Home page wireframe](wireframes/home_page_wireframe.png?raw=true "Home Page")
 
 ### Create Itinerary Page
-![Create itinerary wireframe](wireframes/create_itinerary_wireframe.png?raw=true "Create Itinerary Page")
+![Create itinerary wizard wireframe](wireframes/create_itinerary_wizard_wireframe.png?raw=true "Create Itinerary Page")
 
 ### Loading Page
 ![Loading page wireframe](wireframes/loading_page_wireframe.png?raw=true "Loading Page")
 
-### Itinerary Page
-![Itinerary page wireframe](wireframes/itinerary_page_wireframe.png?raw=true "Itinerary Page")
+### Itinerary Page (Author View)
+![Author itinerary page wireframe](wireframes/author_itinerary_page_wireframe.png?raw=true "Itinerary Page (Author View)")
 
 ### Guide Page
 ![Guide page wireframe](wireframes/guide_page_wireframe.png?raw=true "Guide Page")
+
+### Itinerary Page (Viewer View)
+![Viewer itinerary page wireframe](wireframes/viewer_itinerary_page_wireframe.png?raw=true "Itinerary Page (Viewer View)")
+
+### Account Page
+![Account page wireframe](wireframes/account_page_wireframe.png?raw=true "Account Page")
 
 ## Data Model
 
@@ -277,5 +286,137 @@ POST /ai-agent - Generate a structured itinerary from AI
 - Response (200): { itinerary }
 - Errors: 401 if the user is not signed in
 
+## State Architecture
 
-***Don't forget to set up your Issues, Milestones, and Project Board!***
+## Component Hierarchy
+
+# NavQuest — Component Hierarchy
+
+```
+<App>
+│
+├── <Navbar>
+│   ├── <Logo>
+│   ├── <NavLinks>              (only if authenticated)
+│   │   ├── <NavLink> "Home"
+│   │   └── <NavLink> "Guides"
+│   ├── <AuthButtons>          (only if unauthenticated)
+│   │   ├── <LoginButton>
+│   │   └── <RegisterButton>
+│   └── <AccountIcon>          (only if authenticated)
+│
+├── <Pages>
+│   │
+│   ├── <LandingPage>
+│   │   ├── <HeroSection>
+│   │   │   ├── <Heading>
+│   │   │   ├── <Subheading>
+│   │   │   └── <StartPlanningButton>
+│   │   └── <DemoVideoSection>
+│   │       └── <VideoPlayer>
+│   │
+│   ├── <LoginPage>
+│   │   └── <AuthCard>
+│   │       ├── <Heading>
+│   │       ├── <LoginForm>
+│   │       │   ├── <TextInput> email
+│   │       │   ├── <PasswordInput> password
+│   │       │   └── <SubmitButton> "Log in"
+│   │       └── <SignUpSection>
+|   |           ├── <SignUpText>
+|   |           ├── <RegisterLink>
+│   │
+│   ├── <RegisterPage>
+│   │   └── <AuthCard>
+│   │       ├── <Heading>
+│   │       ├── <RegisterForm>
+│   │       │   ├── <TextInput> username
+│   │       │   ├── <TextInput> email
+│   │       │   ├── <PasswordInput> password
+│   │       │   └── <SubmitButton> "Register"
+|   |       └── <LoginSection>
+|   |           ├── <loginText>
+|   |           ├── <loginLink>
+│   │
+│   ├── <HomePage>
+│   │   ├── <ExploreSection>
+│   │   │   ├── <SectionHeader>
+│   │   │   └── <CardCarousel>
+│   │   │       ├── <TripCard> ×N
+│   │   │       └── <CarouselArrow>
+│   │   ├── <YourTripsSection>
+│   │   │   ├── <SectionHeader>
+│   │   │   │   └── <NewTripButton>
+│   │   │   └── <CardCarousel>
+│   │   │       ├── <TripCard> ×N
+│   │   │       └── <CarouselArrow>
+│   │   └── <SavedTripsSection>
+│   │       ├── <SectionHeader>
+│   │       └── <CardCarousel>
+│   │           ├── <TripCard> ×N
+│   │           └── <CarouselArrow>
+│   │
+│   ├── <CreateItineraryPage>
+│   │   ├── <PageHeading>
+│   │   └── <ItineraryForm>
+│   │       ├── <TimeRangeField>
+│   │       │   ├── <TimeInput> "Start Time"
+│   │       │   └── <TimeInput> "End Time"
+│   │       ├── <PrivacyField>
+│   │       ├── <BudgetField>
+│   │       ├── <TravelRadiusField>
+│   │       ├── <TransportField>
+│   │       ├── <TagInput> Food preferences
+│   │       │   ├── <TextInput>
+│   │       │   └── <TagList>
+│   │       │       └── <Tag> ×N
+│   │       ├── <TagInput> Starting locations
+│   │       │   ├── <TextInput>
+│   │       │   └── <TagList>
+│   │       │       └── <Tag> ×N
+│   │       ├── <TagInput> Interests
+│   │       │   ├── <TextInput>
+│   │       │   └── <TagList>
+│   │       │       └── <Tag> ×N
+│   │       └── <CreateButton>
+│   │
+│   ├── <LoadingPage>
+│   │   └── <LoadingSection>
+│   │       ├── <LoadingText>
+│   │       └── <LoadingSpinner>
+│   │
+│   ├── <ItineraryPage>
+│   │   ├── <ItineraryHeader>
+│   │   │   ├── <Title>
+│   │   │   ├── <Description>
+│   │   │   ├── <Author>
+│   │   │   └── <CoverImage>
+│   │   ├── <ItineraryPanel>
+│   │   │   ├── <ActionBar>
+│   │   │   │   ├── <EditButton>
+│   │   │   │   ├── <SaveButton>
+│   │   │   │   └── <DeleteButton>
+│   │   │   └── <WrittenItinerary>
+│   │   ├── <MapView>
+│   │   │   ├── <MapPin> ×N
+│   │   │   └── <CloseButton>
+│   │   └── <PinDetailModal>
+│   │       ├── <PinName>
+│   │       ├── <PinImage>
+│   │       ├── <PinTiming>
+│   │       ├── <PinCost>
+│   │       └── <PinAddress>
+│   │
+│   └── <GuidePage>
+│       ├── <SearchBar>
+│       ├── <SectionHeader>
+│       ├── <GuidesGrid>
+│       │   └── <GuideCard> ×N
+│       └── <LoadMoreButton>
+│
+└── <Footer>
+```
+
+## Decision Log
+
+## Milestones
