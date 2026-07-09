@@ -129,26 +129,29 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 ### Landing Page
 ![Landing page wireframe](wireframes/landing_page_wireframe.png?raw=true "Landing Page")
 
-### Login Page
-![Login page wireframe](wireframes/login_page_wireframe.png?raw=true "Login Page")
-
 ### Register Page
 ![Register page wireframe](wireframes/register_page_wireframe.png?raw=true "Register Page")
+
+### Login Page
+![Login page wireframe](wireframes/login_page_wireframe.png?raw=true "Login Page")
 
 ### Home Page
 ![Home page wireframe](wireframes/home_page_wireframe.png?raw=true "Home Page")
 
 ### Create Itinerary Page
-![Create itinerary wireframe](wireframes/create_itinerary_wireframe.png?raw=true "Create Itinerary Page")
+![Create itinerary wizard wireframe](wireframes/create_itinerary_wizard_wireframe.png?raw=true "Create Itinerary Page")
 
 ### Loading Page
 ![Loading page wireframe](wireframes/loading_page_wireframe.png?raw=true "Loading Page")
 
-### Itinerary Page
-![Itinerary page wireframe](wireframes/author_itinerary_page_wireframe.png?raw=true "Itinerary Page")
+### Itinerary Page (Author View)
+![Author itinerary page wireframe](wireframes/author_itinerary_page_wireframe.png?raw=true "Itinerary Page (Author View)")
 
 ### Guide Page
 ![Guide page wireframe](wireframes/guide_page_wireframe.png?raw=true "Guide Page")
+
+### Itinerary Page (Viewer View)
+![Viewer itinerary page wireframe](wireframes/viewer_itinerary_page_wireframe.png?raw=true "Itinerary Page (Viewer View)")
 
 ### Account Page
 ![Account page wireframe](wireframes/account_page_wireframe.png?raw=true "Account Page")
