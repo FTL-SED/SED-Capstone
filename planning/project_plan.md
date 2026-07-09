@@ -160,6 +160,7 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 
 ### User
 | Attribute | Type | Additional Info |
+| --- | --- | --- |
 | id | Int | @default(autoincrement()) |
 | email | String | @unique |
 | username | String | @unique |
@@ -169,6 +170,7 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 
 ### Itinerary
 | Attribute | Type | Additional Info |
+| --- | --- | --- |
 | id | Int | @default(autoincrement()) |
 | userId | Int | Foreign key → User.id |
 | title | String | |
@@ -183,6 +185,7 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 
 ### Pin
 | Attribute | Type | Additional Info |
+| --- | --- | --- |
 | id | Int | @default(autoincrement()) |
 | itineraryId | Int | Foreign key → Itinerary.id |
 | orderInItinerary | Int | |
@@ -288,13 +291,39 @@ POST /ai-agent - Generate a structured itinerary from AI
 
 ## State Architecture
 
-## Component Hierarchy
+Global (used by auth or App component)
+#1  const [currentUser, setCurrentUser]                       = useState(null);
+
+Database (come from API)
+#3  const [exploreItinerariesList, setExploreItinerariesList] = useState([];
+#4  const [yourItinerariesList, setYourItinerariesList]       = useState([]);
+#5  const [savedItinerariesList, setSavedItinerariesList]     = useState([]);
+#6  const [recentItinerariesList, setRecentItinerariesList]   = useState([]);
+
+Local to guide page
+#2  const [userSearchQuery, setUserSearchQuery]               = useState("");
+
+Local to Iternerary wizard component
+#8  const [draftPreferences, setDraftPreferences] = useState({
+      timeRange: { start: null, end: null },
+      startingLocations: [],
+      travelRadius: null,
+      transport: "",              // single value
+      interests: [],              // list (tag input)
+      foodPreferences: [],        // list (tag input)
+      budget: null,               // single value (per person)
+      isPublic: false,            // single boolean
+    });
+#10 const [currentWizardStep, setCurrentWizardStep]           = useState(1);
+
+Local to Iternerary page
+#11 const [currentPin, setCurrentPin]                         = useState(null);
+#9  const [currentViewedItinerary, setCurrentViewedItinerary] = useState(null);
 
 ## Component Hierarchy
-
-# NavQuest — Component Hierarchy
 
 ```
+
 <App>
 │
 ├── <Navbar>
@@ -370,7 +399,7 @@ POST /ai-agent - Generate a structured itinerary from AI
 │   │       │   └── <NextButton>
 │   │       ├── <Step2_TravelTransport>
 │   │       │   ├── <TagInput> Starting locations
-│   │       │   │   ├── <TextInput>
+│   │       │   │   ├── <dropdownInput>
 │   │       │   │   └── <TagList>
 │   │       │   │       └── <Tag> ×N
 │   │       │   ├── <TravelRadiusField>
@@ -378,11 +407,11 @@ POST /ai-agent - Generate a structured itinerary from AI
 │   │       │   └── <NextButton>
 │   │       ├── <Step3_Preferences>
 │   │       │   ├── <TagInput> Interests
-│   │       │   │   ├── <TextInput>
+│   │       │   │   ├── <dropdownInput>
 │   │       │   │   └── <TagList>
 │   │       │   │       └── <Tag> ×N
 │   │       │   ├── <TagInput> Food preferences
-│   │       │   │   ├── <TextInput>
+│   │       │   │   ├── <dropdownInput>
 │   │       │   │   └── <TagList>
 │   │       │   │       └── <Tag> ×N
 │   │       │   ├── <BudgetField>
@@ -405,9 +434,9 @@ POST /ai-agent - Generate a structured itinerary from AI
 │   │   │   └── <CoverImage>
 │   │   ├── <ItineraryPanel>
 │   │   │   ├── <ActionBar>
-│   │   │   │   ├── <EditButton>
-│   │   │   │   ├── <SaveButton>
-│   │   │   │   └── <DeleteButton>
+│   │   │   │   ├── <EditButton> (owner only)
+│   │   │   │   ├── <SaveButton> (owner only)
+│   │   │   │   └── <DeleteButton> (owner only)
 │   │   │   └── <WrittenItinerary>
 │   │   ├── <MapView>
 │   │   │   ├── <MapPin> ×N
