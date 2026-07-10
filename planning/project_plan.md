@@ -1,6 +1,7 @@
 # Project Plan
 
 Pod Members: **Emmanuel, Dylan, Semir**
+Pod Name: Team 404 not found
 
 ## Kanban Board
 
@@ -8,7 +9,8 @@ https://trello.com/invite/b/6a4be0e996e36198ef8b85ba/ATTI1326f85c29b362903c595c4
 
 ## Problem Statement and Description
 
-Young people in unfamiliar cities struggle to plan group outings, since aligning schedules, picking locations, and matching interests means tedious back-and-forth
+Young people in unfamiliar cities struggle to plan group outings, since aligning schedules, picking locations, and matching interests means tedious back-and-forth decision-making.
+
 NavQuest is an AI-powered travel platform that generates personalized group itineraries, complete with mapped routes, per-activity timing, and transportation for each step.
 
 
