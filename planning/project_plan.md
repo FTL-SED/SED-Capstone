@@ -607,3 +607,21 @@ Checkpoint:
 Stretch Goals:
 - Google Places enrichment to fill in ratings, price level, and reliable hours for recommended places
 - A written/text version of the itinerary for easy sharing
+
+## Decision Log
+
+# Sprint 1
+Decision 1:
+
+Decision: Decided to make the Trip Organizer be the only person inputting information about their group’s budgets, interests, and time constraints.
+Context: We were creating the wireframe for the itinerary and were unsure whether or not to let the group members individually fill out the form to prevent user fatigue from the event organizer
+
+Alternative Considered:  Each member of the group fills out information about their own interests, budgets, and time constraints by themselves and all this information is used to draft an itinerary. This would require each group member to become users for NavQuest and fill out the form before the itinerary is created.
+
+Tradeoffs: By requiring the organizer to fill out the form themselves, they will need to fill in more fields as their group gets larger. Therefore, the website needs to minimize the amount of information that the organizer is placing on the form. However, by doing this approach, our website now prevents the issue of trying to maintain/store information about incomplete itineraries (since the alternative of requiring all group members to fill out preferences would mean having to store that information) which may waste website storage.
+
+# Sprint 2
+
+# Sprint 3
+
+# Sprint 4
