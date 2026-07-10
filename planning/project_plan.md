@@ -518,7 +518,15 @@ manually editing each stop.
     - Because the revised constraints are re-run through the deterministic engine, every place in the result remains real and validated
     - Ambiguous requests leave the itinerary unchanged and prompt the user to clarify
 
-## Decision Log
+## AI Feature Decisions Log
+
+| Decision | Sprint | What Changed | Why|
+| --- | --- | --- | --- |
+
+## Feature Decision Log
+
+| Decision | Context | Alternatives | Tradeoffs|
+| --- | --- | --- | --- |
 
 ## Milestones
 
