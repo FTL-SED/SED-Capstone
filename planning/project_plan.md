@@ -458,6 +458,64 @@ Local to Iternerary page
 └── <Footer>
 ```
 
+## AI Feature Specification
+
+The app uses AI in three distinct places. The recommendation engine stays
+deterministic (it selects and ranks real places from our database); the AI is a
+language layer around it that either enriches data offline or turns constraints
+and plain language into a usable day. Every model call is made through OpenRouter
+and must return structured JSON, and each feature has a non-AI fallback so the
+app never hard-fails on a bad response.
+
+### Tag Enrichment (offline seed step)
+
+Enriches sparsely-tagged places with additional interest tags from the fixed
+vocabulary so the recommendation engine has richer signal to match on.
+
+- User stories: 4, 10
+- Description: Roughly 80% of seeded places carry only one interest tag. Before
+  launch, an AI pass suggests additional tags (e.g. a waterfront park also gets
+  "scenic_views") to improve recommendation quality.
+- When it runs: offline, during database seeding — not part of the live request flow
+- Input: a seeded place { name, category, existing tags }
+- Output: zero or more additional interest tags
+- Behavior:
+    - Only tags in the canonical interest vocabulary are accepted; any suggested tag outside the vocabulary is discarded
+    - Suggested tags are reviewed by a person before being committed
+    - Results are written to the place's tags column and cached, so there is zero cost at request time
+
+### Itinerary Sequencing (POST /ai-agent)
+
+Organizes a shortlist of real, pre-ranked places into a sensible one-day
+itinerary. The AI sequences only — it does not choose or invent places.
+
+- User stories: 1, 2, 3, 5, 6, 10
+- Description: Receives the recommendation engine's shortlist plus the group's
+  constraints and returns an ordered day to be stored and rendered.
+- Input: { shortlist (places with id, category, coordinates, hours, cost estimate), timeWindow, budget, groupSize, startingLocations }
+- Output (200): a structured JSON itinerary — ordered stops with arrive/depart times, a per-stop cost estimate, and travel time to the next stop
+- Behavior:
+    - Orders stops by geography, inserts meal stops at meal times, and respects each place's opening hours and the trip's time window
+    - Uses only place IDs from the provided shortlist — no hallucinated places
+    - Keeps the estimated total cost within the group's budget; if no feasible day fits the constraints, it returns a "constraints too tight" message instead of an itinerary
+    - If the AI call fails or its output fails validation, the system falls back to a deterministic ordering so an itinerary is always produced
+
+### Natural-Language Itinerary Editing
+
+Lets the organizer adjust a generated itinerary in plain language instead of
+manually editing each stop.
+
+- User stories: 7
+- Description: After an itinerary exists, the organizer types a request such as
+  "make it cheaper," "less walking," or "swap the museum for something outdoors."
+  The AI interprets it into constraint changes and the itinerary is regenerated.
+- Input: { currentItinerary, userRequest (free text), currentConstraints }
+- Output: an updated set of constraints (a delta) that is re-run through the recommendation engine and sequencing step to produce a revised itinerary
+- Behavior:
+    - The AI only translates the request into constraint changes (budget, radius, add/remove interests) — it never edits the list of places directly
+    - Because the revised constraints are re-run through the deterministic engine, every place in the result remains real and validated
+    - Ambiguous requests leave the itinerary unchanged and prompt the user to clarify
+
 ## Decision Log
 
 ## Milestones
