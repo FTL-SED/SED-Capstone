@@ -521,9 +521,8 @@ manually editing each stop.
 ## AI Feature Decisions Log
 
 | Decision | Sprint | What Changed | Why|
-| Make filtering of events responsiblity entirely to recommendation engine. | sprint 1 | Not let AI handle filtering of events and let the recommendation system do it. | AI does not add value and the recommendation system already obtains the pins determinsiticly with other constraints so doing some with AI and others with recommendation engine maeks no sense.  |
-| Add AI tag enrichment | sprint 1 | A new addition of AI feature that allows us to get better tagging with letting ai generate tag based on the pin | Lets us have better tags which will result in better recommendations since tagging is a huge part of scoring. |
-| NLP AI editing | sprint 1 | A new addition to AI feature which will be a stretch feature. Will allow users to edit the iternary if they dont like it with a chatbox.| Solves the issue of iternary not being to users' liking . |
+| --- | --- | --- | --- |
+
 ## Feature Decision Log
 
 | Decision | Context | Alternatives | Tradeoffs|
