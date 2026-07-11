@@ -85,10 +85,11 @@ Acceptance Criteria:
 
 #9 As an itinerary organizer, I want to browse and view itineraries that other users have made public, so that I can get ideas or find a ready-made plan for my own itinerary.
 Acceptance Criteria:
-- The organizer can access a "Discover" or "Browse" page to see public itineraries.
+- If the user has not typed a search query, the Discover page shows a list of recently made public itineraries by default.
+- The organizer can access a "Discover" page to see public itineraries.
 - The organizer can search or filter itineraries by criteria such as location or interests.
 - Each itinerary only displays its details in a read-only view.
-- An itinerary organizer can save a copy of a public itinerary to their own dashboard.
+- An itinerary organizer can save a copy of a public itinerary to their "Saved Itineraries" list (a new itinerary owned by them, with its pins duplicated).
 
 #10 As an itinerary organizer, I want meal times to be automatically included in my itinerary based on my group's food preferences, so that the group doesn't have to manually plan around when and where to eat.
 Acceptance Criteria:
@@ -97,16 +98,17 @@ Acceptance Criteria:
 - Meal stops are clearly labeled within the generated itinerary timeline.
 - The system automatically adjusts the itinerary schedule to accommodate these meal times.
 
-#11 As an itinerary organizer, I want to save my itinerary such that I can revisit the plan again in the future.
+#11 As an itinerary organizer, I want to have access to a dashboard that shows the itineraries I've created, a list of itineraries I can explore, a list of itineraries I've saved, and a list of itineraries I've liked.
 Acceptance Criteria:
-- Once an organizer creates an itinerary, it is automatically saved
-- Saved itineraries appear in a "Saved itineraries" list which is found on the user's dashboard
-- Reopening a saved itinerary restores all of the user's data exactly as it was saved
+- Once an organizer creates an itinerary, it can be found in the "Created Itineraries" part of the dashboard
+- The organizer can view a list of itineraries to discover in the "Explore Itineraries" part of the dashboard
+- Itineraries the organizer saved a copy of (from another user's public itinerary) appear in the "Saved Itineraries" part of the dashboard
+- Users can see all itineraries they have liked in the "Liked Itineraries" part of the dashboard
 
 #12 As an itinerary organizer, I want to delete my itinerary in case my plans fall through or I dislike my current itinerary.
 Acceptance Criteria:
-- An organizer can delete an itinerary from their "Created itineraries" list
-- Deleted itineraries no longer appear in their "Created itineraries" list
+- An organizer can delete an itinerary from their "Created Itineraries" list
+- Deleted itineraries no longer appear in their "Created Itineraries" list
 
 #13 As an itinerary organizer, I want to create my own designed account so I can access all the itineraries that I have saved.
 Acceptance Criteria:
@@ -120,9 +122,9 @@ Acceptance Criteria:
 - If my account ID no longer exists, the API returns 404 and the UI redirects me to log in again
 
 #15 As an itinerary organizer, I want to see information about my account displayed on my dashboard, including information about my username and the itineraries that I have saved.
-- When I navigate to my dashboard while logged in, a GET /users/:id request is sent and the response is used to display my username, liked itineraries, and created itineraries
+- When I navigate to my dashboard while logged in, a GET /users/:id request is sent and the response is used to display my username, created itineraries, saved itineraries, and liked itineraries
 - If I'm not signed in, the API returns 401 and I'm redirected to the login page instead of seeing a broken dashboard
-- If I have no liked or created itineraries, the lists render as empty and the UI shows an empty-state message instead of an error
+- If I have no created, saved, or liked itineraries, the lists render as empty and the UI shows an empty-state message instead of an error
 
 ## Pages/Screens
 
@@ -149,8 +151,8 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 ### Itinerary Page (Author View)
 ![Author itinerary page wireframe](wireframes/author_itinerary_page_wireframe.png?raw=true "Itinerary Page (Author View)")
 
-### Itineraries Search Page
-![Itineraries page wireframe](wireframes/itinerary_search_page_wireframe.png?raw=true "Itineraries Page")
+### Discover Page
+![Discover page wireframe](wireframes/discover_page_wireframe.png?raw=true "Discover Page")
 
 ### Itinerary Page (Viewer View)
 ![Viewer itinerary page wireframe](wireframes/viewer_itinerary_page_wireframe.png?raw=true "Itinerary Page (Viewer View)")
@@ -175,6 +177,7 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 | --- | --- | --- |
 | id | Int | @default(autoincrement()) |
 | userId | Int | Foreign key → User.id |
+| sourceItineraryId | Int? | Foreign key → Itinerary.id; set when this is a saved copy of another itinerary, null for originals |
 | title | String | |
 | location | String | |
 | isPublic | Boolean | @default(false) |
@@ -221,7 +224,7 @@ PUT /users/:id - Update a user's information
 GET /users/:id - Get a user's dashboard information
 - User story: 15
 - Request: none
-- Response (200): { username, email, likedItineraries, createdItineraries }
+- Response (200): { username, email, createdItineraries, savedItineraries, likedItineraries }
 - Errors: 401 if the user is not signed in, 404 if the user cannot be found
 
 ### Itineraries
@@ -294,19 +297,20 @@ POST /ai-agent - Generate a structured itinerary from AI
 ## State Architecture
 
 Global (used by auth or App component)
-#1  const [currentUser, setCurrentUser]                       = useState(null);
+const [currentUser, setCurrentUser]                       = useState(null);
 
 Database (come from API)
-#3  const [exploreItinerariesList, setExploreItinerariesList] = useState([];
-#4  const [yourItinerariesList, setYourItinerariesList]       = useState([]);
-#5  const [savedItinerariesList, setSavedItinerariesList]     = useState([]);
-#6  const [recentItinerariesList, setRecentItinerariesList]   = useState([]);
+const [exploreItinerariesList, setExploreItinerariesList] = useState([]);
+const [createdItinerariesList, setCreatedItinerariesList] = useState([]);
+const [savedItinerariesList, setSavedItinerariesList]     = useState([]);
+const [likedItinerariesList, setLikedItinerariesList]     = useState([]);
 
-Local to Itineraries page
-#2  const [userSearchQuery, setUserSearchQuery]               = useState("");
+Local to Discover page
+const [userSearchQuery, setUserSearchQuery]               = useState("");
+const [recentItinerariesList, setRecentItinerariesList]   = useState([]);
 
-Local to Iternerary wizard component
-#8  const [draftPreferences, setDraftPreferences] = useState({
+Local to Itinerary wizard component
+const [draftPreferences, setDraftPreferences] = useState({
       timeRange: { start: null, end: null },
       startingLocations: [],
       travelRadius: null,
@@ -316,11 +320,11 @@ Local to Iternerary wizard component
       budget: null,               // single value (per person)
       isPublic: false,            // single boolean
     });
-#10 const [currentWizardStep, setCurrentWizardStep]           = useState(1);
+const [currentWizardStep, setCurrentWizardStep]           = useState(1);
 
-Local to Iternerary page
-#11 const [currentPin, setCurrentPin]                         = useState(null);
-#9  const [currentViewedItinerary, setCurrentViewedItinerary] = useState(null);
+Local to Itinerary page
+const [currentPin, setCurrentPin]                         = useState(null);
+const [currentViewedItinerary, setCurrentViewedItinerary] = useState(null);
 
 ## Component Hierarchy
 
@@ -332,7 +336,7 @@ Local to Iternerary page
 │   ├── <Logo>
 │   ├── <NavLinks>              (only if authenticated)
 │   │   ├── <NavLink> "Home"
-│   │   └── <NavLink> "Itineraries"
+│   │   └── <NavLink> "Discover"
 │   ├── <AuthButtons>          (only if unauthenticated)
 │   │   ├── <LoginButton>
 │   │   └── <RegisterButton>
@@ -377,13 +381,18 @@ Local to Iternerary page
 │   │   │   └── <CardCarousel>
 │   │   │       ├── <ItineraryCard> ×N
 │   │   │       └── <CarouselArrow>
-│   │   ├── <YourItinerariesSection>
+│   │   ├── <CreatedItinerariesSection>
 │   │   │   ├── <SectionHeader>
 │   │   │   │   └── <NewItineraryButton>
 │   │   │   └── <CardCarousel>
 │   │   │       ├── <ItineraryCard> ×N
 │   │   │       └── <CarouselArrow>
-│   │   └── <SavedItinerariesSection>
+│   │   ├── <SavedItinerariesSection>
+│   │   │   ├── <SectionHeader>
+│   │   │   └── <CardCarousel>
+│   │   │       ├── <ItineraryCard> ×N
+│   │   │       └── <CarouselArrow>
+│   │   └── <LikedItinerariesSection>
 │   │       ├── <SectionHeader>
 │   │       └── <CardCarousel>
 │   │           ├── <ItineraryCard> ×N
@@ -437,7 +446,8 @@ Local to Iternerary page
 │   │   ├── <ItineraryPanel>
 │   │   │   ├── <ActionBar>
 │   │   │   │   ├── <EditButton> (owner only)
-│   │   │   │   ├── <SaveButton> (owner only)
+│   │   │   │   ├── <SaveButton> (owner only — save edits)
+│   │   │   │   ├── <SaveCopyButton> (non-owner — save a copy to "Saved Itineraries")
 │   │   │   │   └── <DeleteButton> (owner only)
 │   │   │   └── <WrittenItinerary>
 │   │   ├── <MapView>
@@ -450,12 +460,18 @@ Local to Iternerary page
 │   │       ├── <PinCost>
 │   │       └── <PinAddress>
 │   │
-│   └── <ItinerariesPage>
+│   └── <DiscoverPage>
 │       ├── <SearchBar>
-│       ├── <SectionHeader>
-│       ├── <ItinerariesGrid>
-│       │   └── <ItineraryCard> ×N
-│       └── <LoadMoreButton>
+│       ├── <SearchResultsSection>        (shown when a query is typed)
+│       │   ├── <SectionHeader>
+│       │   ├── <ItinerariesGrid>
+│       │   │   └── <ItineraryCard> ×N
+│       │   └── <LoadMoreButton>
+│       └── <RecentItinerariesSection>    (shown when no query — US #9)
+│           ├── <SectionHeader>
+│           ├── <ItinerariesGrid>
+│           │   └── <ItineraryCard> ×N
+│           └── <LoadMoreButton>
 │
 └── <Footer>
 ```
@@ -523,11 +539,6 @@ manually editing each stop.
 | Decision | Sprint | What Changed | Why|
 | --- | --- | --- | --- |
 
-## Feature Decision Log
-
-| Decision | Context | Alternatives | Tradeoffs|
-| --- | --- | --- | --- |
-
 ## Milestones
 
 Milestone 1: Creating the Website’s Skeleton
@@ -573,12 +584,12 @@ Requirements:
     - The map view should be clearly visible for all views
 - Reopening a saved itinerary should restore all of its information exactly as it was saved
 - Users should have the ability to mark their itineraries as public
-    - If public, the user should be able to access it in a “Itineraries” page
-    - On this “Itineraries” page, users should be able to filter to find certain itineraries
-    - All public itineraries should be displayed on the “Itineraries” page.
+    - If public, the user should be able to access it in a “Discover” page
+    - On this “Discover” page, users should be able to filter to find certain itineraries
+    - All public itineraries should be displayed on the “Discover” page.
     - For these public itineraries, the user should be able to like these itineraries, which changes their like count for all users
 - Users should be able to view the itineraries they have liked from their dashboard
-- Users should be able to save a copy of another user’s public itinerary to their own dashboard
+- Users should be able to save a copy of another user’s public itinerary to their "Saved Itineraries" list on their dashboard (the copy and its pins are duplicated under the current user)
 
 Checkpoint:
 - The user can see a visual itinerary with pins and information surrounding the itinerary
