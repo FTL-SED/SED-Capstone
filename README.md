@@ -8,6 +8,10 @@ Team Member Names: Dylan D'Rozario, Emmanuel Ekpenyong, Semir Ali
 
 Mentors Names: Dylan Gnatz, Praveen Kumar Senathi Dwaraganath, Sarang Vadali, Shradha Kohli
 
+Manager Names: Ashish Patel
+
+Advisor Name: Gregory Merrill
+
 Project Code Repository Links
 
 * [Frontend Repo Link]()
