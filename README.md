@@ -6,16 +6,9 @@ Cohort: Salesforce
 
 Team Member Names: Dylan D'Rozario, Emmanuel Ekpenyong, Semir Ali
 
-Mentors Names: Dylan Gnatz, Praveen Kumar Senathi Dwaraganath, Sarang Vadali, Shradha Kohli
-
-Manager Names: Ashish Patel
+Mentors Names: Ashish Patel, Dylan Gnatz, Mayakrishnan Chakkarapani, Praveen Kumar Senathi Dwaraganath, Sarang Vadali, Shradha Kohli
 
 Advisor Name: Gregory Merrill
-
-Project Code Repository Links
-
-* [Frontend Repo Link]()
-* [Backend Repo Link]()
 
 ## Project Overview
 
