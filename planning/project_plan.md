@@ -171,8 +171,9 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 | username | String | @unique |
 | createdAt | DateTime | @default(now()) |
 | createdItineraries | Itinerary[] | @relation("CreatedItineraries") |
-| likedItineraries | Itinerary[] | @relation("LikedItineraries") |
-| bookmarkedItineraries | Itinerary[] | @relation("BookmarkedItineraries") |
+| likes | Like[] | Join rows for the itineraries this user has liked (US #6) |
+| bookmarks | Bookmark[] | Join rows for the itineraries this user has bookmarked (US #5) |
+
 
 ### Itinerary
 | Attribute | Type | Additional Info |
@@ -198,8 +199,8 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 | updatedAt | DateTime | @updatedAt |
 | creator | User | @relation("CreatedItineraries", fields: [userId],
 references: [id], onDelete: Cascade) |
-| likedBy | User[] | @relation("LikedItineraries") |
-| bookmarkedBy | User[] | @relation("BookmarkedItineraries") |
+| likes | Like[] | Join rows for the users who have liked this itinerary; `likeCount` is the denormalized count of these |
+| bookmarks | Bookmark[] | Join rows for the users who have bookmarked this itinerary |
 | sourceItinerary |	Itinerary? |	@relation("ForkedItinerary", fields: [sourceItineraryId], references: [id], onDelete: SetNull) |
 | savedCopies |	Itinerary[] |	@relation("ForkedItinerary") |
 | pins | Pin[] | |
@@ -225,6 +226,30 @@ references: [id], onDelete: Cascade) |
 
 **Model Constraints**
 - `@@unique([itineraryId, orderInItinerary])` — Ensures that each pin has a unique position within an itinerary (i.e., no two pins in the same itinerary can have the same `orderInItinerary`).
+
+### Like
+| Attribute | Type | Additional Info |
+| --- | --- | --- |
+| userId | Int | Foreign key → User.id |
+| itineraryId | Int | Foreign key → Itinerary.id |
+| createdAt | DateTime | @default(now()) — when the user liked the itinerary; enables recency ordering |
+| user | User | @relation(fields: [userId], references: [id], onDelete: Cascade) |
+| itinerary | Itinerary | @relation(fields: [itineraryId], references: [id], onDelete: Cascade) |
+
+**Model Constraints**
+- `@@id([userId, itineraryId])` — Composite primary key; a user can like a given itinerary at most once (dedupe), keeping the `Itinerary.likeCount` cache honest.
+
+### Bookmark
+| Attribute | Type | Additional Info |
+| --- | --- | --- |
+| userId | Int | Foreign key → User.id |
+| itineraryId | Int | Foreign key → Itinerary.id |
+| createdAt | DateTime | @default(now()) — when the user bookmarked the itinerary; enables recency ordering |
+| user | User | @relation(fields: [userId], references: [id], onDelete: Cascade) |
+| itinerary | Itinerary | @relation(fields: [itineraryId], references: [id], onDelete: Cascade) |
+
+**Model Constraints**
+- `@@id([userId, itineraryId])` — Composite primary key; a user can bookmark a given itinerary at most once (dedupe).
 ## Endpoints
 
 ### Users
