@@ -1,0 +1,9 @@
+import './LoadingPage.css'
+
+function LoadingPage() {
+  return (
+    <div>LoadingPage</div>
+  );
+}
+
+export default LoadingPage;
