@@ -364,20 +364,21 @@ POST /ai-agent/edit - Revise an itinerary from a natural-language request
 
 ## State Architecture
 
-Global (used by auth or App component)
+```jsx
+// Global (used by auth or App component)
 const [currentUser, setCurrentUser]                       = useState(null);
 
-Database (come from API)
+// Database (come from API)
 const [exploreItinerariesList, setExploreItinerariesList]         = useState([]);
 const [createdItinerariesList, setCreatedItinerariesList]         = useState([]);
 const [bookmarkedItinerariesList, setBookmarkedItinerariesList]   = useState([]);  // dashboard "Saved Itineraries" section
 const [likedItinerariesList, setLikedItinerariesList]             = useState([]);
 
-Local to Discover page
+// Local to Discover page
 const [userSearchQuery, setUserSearchQuery]               = useState("");
 const [recentItinerariesList, setRecentItinerariesList]   = useState([]);
 
-Local to Itinerary wizard component
+// Local to Itinerary wizard component
 const [draftPreferences, setDraftPreferences] = useState({
       // title, location, and description are NOT collected here — the AI
       // sequencing step generates them from the constraints below.
@@ -393,9 +394,10 @@ const [draftPreferences, setDraftPreferences] = useState({
     });
 const [currentWizardStep, setCurrentWizardStep]           = useState(1);
 
-Local to Itinerary page
+// Local to Itinerary page
 const [currentPin, setCurrentPin]                         = useState(null);
 const [currentViewedItinerary, setCurrentViewedItinerary] = useState(null);
+```
 
 ## Component Hierarchy
 
