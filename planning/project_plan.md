@@ -11,13 +11,12 @@ https://trello.com/invite/b/6a4be0e996e36198ef8b85ba/ATTI1326f85c29b362903c595c4
 
 Young people in unfamiliar cities struggle to plan group outings, since aligning schedules, picking locations, and matching interests means tedious back-and-forth decision-making.
 
-NavQuest is an AI-powered travel platform that generates personalized group itineraries, complete with mapped routes, per-activity timing, and transportation for each step.
-
+NavQuest is an AI-powered travel platform that creates personalized group itineraries with optimized schedules, budget estimates, and travel times, and enables users to discover and explore itineraries shared by other travelers.
 
 ## User Roles and Personas
 
 User Role: 
-Event Organizer
+Itinerary Organizer
 
 User Personas:
 Maya is a college student originally from Texas who is interning in San Francisco for the summer. She has made plans to hang out with her fellow interns next weekend, but she and her friends are living in different parts of the Bay Area and cannot figure out a good place to meet or a list of activities that suits everyone's interests, since they are all new to California.
@@ -30,99 +29,102 @@ Mark is a high school senior who is planning a senior trip with friends to a loc
 
 List the current user stories you will implement.
 
-#1 As a trip organizer, I want to create itineraries that fit the budgetary restrictions of my group, so that each member of my group can afford to go on the trip.
+#1 As an itinerary organizer, I want to create itineraries that fit the budgetary restrictions of my group, so that each member of my group can afford to attend.
 
 Acceptance Criteria:
-- Organizer can input a per-person budget when creating an itinerary
+- Organizer can input an average maximum budget when creating an itinerary
 - Generated itinerary's total estimated cost per person is displayed on the itinerary and does not exceed the inputted budget per person
 - Cost breakdown is visible per activity
 - Program sends back a message to the user if it is not feasible to create an itinerary with a given budget and does not create an itinerary
 
-#2 As a trip organizer, I want to create itineraries to fit within a specific time window so that the trip fits my group’s available schedule.
+#2 As an itinerary organizer, I want to create itineraries to fit within a specific time window so that the itinerary fits my group’s available schedule.
 Acceptance Criteria:
 - The organizer can input a specific start and end time
 - A group's itinerary is restricted to one day
 - System rejects impossible time windows (i.e. visiting 3 places within the same hour)
 - Program sends back a message to the user if it is not feasible to create an itinerary with the given time constraints and does not create an itinerary
 
-
-#3 As a trip organizer, I want to create itineraries to be optimized around a central meeting location or destination so that the group can figure out where to meet before they travel together.
+#3 As an itinerary organizer, I want to create itineraries to be optimized around a central meeting location or destination so that the group can figure out where to meet before they travel together.
 Acceptance Criteria:
 - Organizer can input the starting location for each group member which is used to find a central meeting location for the first itinerary activity
-- Generated itinerary prioritizes finding activities within a user-configurable radius of each group member's starting location
+- Generated itinerary prioritizes finding activities within a user-configurable radius the first meeting location
 - Itinerary displays the distance/travel time from one activity to another
 
-#4 As a trip organizer, I want itineraries to reflect group interests so that the trip matches what most people would enjoy.
+#4 As an itinerary organizer, I want itineraries to reflect group interests so that the itinerary matches what most people would enjoy.
 Acceptance Criteria:
 - Organizer can input interest tags for each group member (i.e. food, outdoors, museums)
 - Each member of the group has one or more interest tags associated with it
 - AI-generated itinerary activities only include activities with at least one tag matching the group's combined interest list
 - If too few matching activities exist to fill the time window, system fills remaining slots with unmatched activities and flags this to the user (rather than failing outright)
 
-#5 As a trip organizer, I want to be able to generate a written itinerary using AI so that I do not have to spend too much time writing one myself and so that I can share it easily.
+#5 As an itinerary organizer, I want to be able to generate a written itinerary using AI so that I do not have to spend too much time writing one myself and so that I can share it easily.
 Acceptance Criteria:
 - After inputting group information (time constraints, budget constraints, and interests), the organizer can trigger an AI-generated itinerary using a button
 - Output can also be transformed into a written description of each activity for the itinerary, including its location, cost estimate per person, and travel time
 - The written description is reformatted to be easily readable in the mobile view with adjusted font sizes
 - The written itinerary should match the contents of the visual itinerary
 
-#6 As a trip organizer, I want to be able to generate a visual itinerary using AI so that the group can follow the itinerary throughout the day.
+#6 As an itinerary organizer, I want to be able to generate a visual itinerary using AI so that the group can follow the itinerary throughout the day.
 Acceptance Criteria:
 - After inputting group information (time constraints, budget constraints, and interests), the organizer can trigger an AI generation using a button
 - Output is structured as a visual itinerary with points representing each activity that the group members should visit
 - The visual itinerary should be reformatted so it is easily readable in the mobile view with larger fonts and information shown through a sidebar
 
-#7 As a trip organizer, I want to update my itineraries so that, if I want to change parts of my itinerary in case my group’s trip constraints change.
+#7 As an itinerary organizer, I want to update my itineraries so that I can change parts of my itinerary if my group’s constraints change.
 Acceptance Criteria:
-- The organizer can edit any constraint (budget, time, location, interests) on an existing saved itinerary
-- Editing the activities results in the activity updates the itinerary when another user views it
+- The organizer can edit any constraint (budget, time, location, interests, food preferences, travel radius, transport) on an existing itinerary they own
+- Edits an organizer makes to an itinerary's activities are reflected when another user views it
 
-#8 As a trip organizer, I want to mark my itinerary as public and share it, so that other people can view and use the trip plan I created.
+#8 As an itinerary organizer, I want to mark my itinerary as public and share it, so that other people can view and use the itinerary I created.
 Acceptance Criteria:
 - The organizer can mark an itinerary as either public or private
 - Public itineraries are visible to other users in a browsable list or search
 - Viewing another user's itinerary does not allow editing it (read-only access)
 
-#9 As a trip organizer, I want to browse and view itineraries that other users have made public, so that I can get ideas or find a ready-made plan for my own trip.
+#9 As an itinerary organizer, I want to browse and view itineraries that other users have made public, so that I can get ideas or find a ready-made plan for my own itinerary.
 Acceptance Criteria:
-- The organizer can access a "Discover" or "Browse" page to see public itineraries.
+- If the user has not typed a search query, the Discover page shows a list of recently made public itineraries by default.
+- The organizer can access a "Discover" page to see public itineraries.
 - The organizer can search or filter itineraries by criteria such as location or interests.
 - Each itinerary only displays its details in a read-only view.
-- A trip organizer can save a copy of a public itinerary to their own dashboard.
+- An itinerary organizer can bookmark a public itinerary to their "Bookmarked Itineraries" list as a read-only reference (the original stays owned by its creator).
+- An itinerary organizer can also save a copy of a public itinerary, creating a new editable itinerary owned by them (with its pins duplicated) that appears in their "Created Itineraries" list.
 
-#10 As a trip organizer, I want meal times to be automatically included in my itinerary based on my group's food preferences, so that the group doesn't have to manually plan around when and where to eat.
+#10 As an itinerary organizer, I want meal times to be automatically included in my itinerary based on my group's food preferences, so that the group doesn't have to manually plan around when and where to eat.
 Acceptance Criteria:
-- The AI generated itinerary includes designated meal slots based on the trip's duration.
+- The AI generated itinerary includes designated meal slots based on the itinerary's duration.
 - The system selects food venues that align with the group's interest tags (e.g., "food," "cuisine type").
 - Meal stops are clearly labeled within the generated itinerary timeline.
 - The system automatically adjusts the itinerary schedule to accommodate these meal times.
 
-#11 As a trip organizer, I want to save my itinerary such that I can revisit the plan again in the future.
+#11 As an itinerary organizer, I want to have access to a dashboard that shows the itineraries I've created, a list of itineraries I can explore, a list of itineraries I've saved, and a list of itineraries I've liked.
 Acceptance Criteria:
-- Once an organizer creates an itinerary, it is automatically saved
-- Saved itineraries appear in a "My Trips" list which is found on the user's dashboard
-- Reopening a saved itinerary restores all of the user's data exactly as it was saved
+- Once an organizer creates an itinerary, it can be found in the "Created Itineraries" part of the dashboard
+- The organizer can view a list of itineraries to discover in the "Explore Itineraries" part of the dashboard
+- Itineraries the organizer bookmarked (read-only references to other users' public itineraries) appear in the "Bookmarked Itineraries" part of the dashboard
+- Users can see all itineraries they have liked in the "Liked Itineraries" part of the dashboard
 
-#12 As a trip organizer, I want to delete my itinerary in case my plans fall through or I dislike my current trip plan.
+#12 As an itinerary organizer, I want to delete my itinerary in case my plans fall through or I dislike my current itinerary.
 Acceptance Criteria:
-- An organizer can delete an itinerary from their "My Trips" list
-- Deleted itineraries no longer appear in their "My Trips" list
+- An organizer can delete an itinerary from their "Created Itineraries" list
+- Deleted itineraries no longer appear in their "Created Itineraries" list
 
-#13 As a trip organizer, I want to create my own designed account so I can access all the itineraries that I have saved.
+#13 As an itinerary organizer, I want to create my own designed account so I can access all the itineraries that I have saved.
 Acceptance Criteria:
-- When I submit a valid username, email, and password, a POST /users request is sent and I receive a 201 response with {username, email, createdAt}, then I'm logged in and redirected to my dashboard
+- When I submit a valid username, email, and password, Supabase Auth creates my account, then a POST /users request creates my linked profile and I receive a 201 response with {username, email, createdAt}, then I'm logged in and redirected to my dashboard
 - If any field is missing or improperly formatted, the UI shows a field-specific error without clearing my other inputs
-- The password is hashed before storage and is never included in the response, logs, or client storage
+- The password is handled entirely by Supabase Auth; NavQuest never receives or stores it, and it is never included in any response, logs, or client storage
 
-#14 As a trip organizer, I want to update my account’s information in case - I want to change my username, email, or password
-- When I change one or more fields and save, a PUT /users/:id request is sent containing only the changed fields, and I receive a 200 response reflecting those changes
+#14 As an itinerary organizer, I want to update my account’s information in case - I want to change my username, email, or password
+- When I change my username and save, a PUT /users/:id request is sent containing only the changed field, and I receive a 200 response reflecting the change
+- When I change my email or password, the change is made through Supabase Auth; a changed email is then mirrored back into my profile so the dashboard stays in sync
 - If a field is improperly formatted, the API returns 400 and the UI shows which field failed without discarding my other valid inputs
 - If my account ID no longer exists, the API returns 404 and the UI redirects me to log in again
 
-#15 As a trip organizer, I want to see information about my account displayed on my dashboard, including information about my username and the itineraries that I have saved.
-- When I navigate to my dashboard while logged in, a GET /users/:id request is sent and the response is used to display my username, liked itineraries, and created itineraries
+#15 As an itinerary organizer, I want to see information about my account displayed on my dashboard, including information about my username and the itineraries that I have saved.
+- When I navigate to my dashboard while logged in, a GET /users/:id request is sent and the response is used to display my username, created itineraries, saved itineraries, and liked itineraries
 - If I'm not signed in, the API returns 401 and I'm redirected to the login page instead of seeing a broken dashboard
-- If I have no liked or created itineraries, the lists render as empty and the UI shows an empty-state message instead of an error
+- If I have no created, saved, or liked itineraries, the lists render as empty and the UI shows an empty-state message instead of an error
 
 ## Pages/Screens
 
@@ -149,8 +151,8 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 ### Itinerary Page (Author View)
 ![Author itinerary page wireframe](wireframes/author_itinerary_page_wireframe.png?raw=true "Itinerary Page (Author View)")
 
-### Guide Page
-![Guide page wireframe](wireframes/guide_page_wireframe.png?raw=true "Guide Page")
+### Discover Page
+![Discover page wireframe](wireframes/discover_page_wireframe.png?raw=true "Discover Page")
 
 ### Itinerary Page (Viewer View)
 ![Viewer itinerary page wireframe](wireframes/viewer_itinerary_page_wireframe.png?raw=true "Itinerary Page (Viewer View)")
@@ -164,25 +166,35 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 | Attribute | Type | Additional Info |
 | --- | --- | --- |
 | id | Int | @default(autoincrement()) |
-| email | String | @unique |
+| authUserId | String | @unique — the Supabase Auth user id (UUID) this profile belongs to. Credentials (password) are owned by Supabase Auth, not stored here |
+| email | String | @unique — mirrored from Supabase Auth for display/lookup; the source of truth for login is Supabase |
 | username | String | @unique |
-| password | String | |
+| createdAt | DateTime | @default(now()) |
 | createdItineraries | Itinerary[] | @relation("CreatedItineraries") |
-| likedItineraries | Itinerary[] | @relation("LikedItineraries") |
+| likes | Like[] | Join rows for the itineraries this user has liked (US #6) |
+| bookmarks | Bookmark[] | Join rows for the itineraries this user has bookmarked (US #5) |
+
 
 ### Itinerary
 | Attribute | Type | Additional Info |
 | --- | --- | --- |
 | id | Int | @default(autoincrement()) |
 | userId | Int | Foreign key → User.id |
+| likeCount | Int | @default(0)|
+| sourceItineraryId | Int? | Foreign key → Itinerary.id. Null for original itineraries; set when this itinerary is a saved copy of another. |
 | title | String | |
-| location | String | |
+| location | String | Human-readable city/area label (e.g. "San Francisco, CA") shown on itinerary cards and used to search/filter itineraries by location on the Discover page (US #9) |
+| description | String? | Short overview text shown in the itinerary header (<Description>) |
+| coverImageUrl | String? | Cover image shown in the itinerary header (<CoverImage>). Not user-entered in the wizard; defaults to the first pin's locationImageUrl when the itinerary is created, and is editable later via PUT /itineraries/:id (US #7) |
 | isPublic | Boolean | @default(false) |
-| likeCount | Int | @default(0) |
 | createdAt | DateTime | @default(now()) |
 | updatedAt | DateTime | @updatedAt |
-| creator | User | @relation("CreatedItineraries", fields: [userId], references: [id]) |
-| likedBy | User[] | @relation("LikedItineraries") |
+| creator | User | @relation("CreatedItineraries", fields: [userId],
+references: [id], onDelete: Cascade) |
+| likes | Like[] | Join rows for the users who have liked this itinerary; `likeCount` is the denormalized count of these |
+| bookmarks | Bookmark[] | Join rows for the users who have bookmarked this itinerary |
+| sourceItinerary |	Itinerary? |	@relation("ForkedItinerary", fields: [sourceItineraryId], references: [id], onDelete: SetNull) |
+| savedCopies |	Itinerary[] |	@relation("ForkedItinerary") |
 | pins | Pin[] | |
 
 ### Pin
@@ -193,61 +205,96 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 | orderInItinerary | Int | |
 | name | String | |
 | description | String? | |
-| budgetPerPerson | Float | |
+| tags | String[] | |
+| pricePerPerson | Float | |
 | latitude | Float | |
 | longitude | Float | |
 | address | String? | |
-| startTime | DateTime | |
-| endTime | DateTime | |
+| startTime | DateTime | When the group is scheduled to arrive at this activity |
+| endTime | DateTime | When the group is scheduled to leave this activity |
+| travelTimeToNextMinutes | Int? | Estimated travel time (in minutes) from this activity to the next pin in order (US #3). Null for the last pin, which has no next stop |
+| distanceToNextMeters | Float? | Estimated distance (in meters) from this activity to the next pin in order (US #3). Null for the last pin, which has no next stop |
 | locationImageUrl | String | |
-| itinerary | Itinerary | @relation(fields: [itineraryId], references: [id]) |
+| itinerary | Itinerary | @relation( fields: [itineraryId], references: [id], onDelete: Cascade ) | 
 
+**Model Constraints**
+- `@@unique([itineraryId, orderInItinerary])` — Ensures that each pin has a unique position within an itinerary (i.e., no two pins in the same itinerary can have the same `orderInItinerary`).
+
+### Like
+| Attribute | Type | Additional Info |
+| --- | --- | --- |
+| userId | Int | Foreign key → User.id |
+| itineraryId | Int | Foreign key → Itinerary.id |
+| createdAt | DateTime | @default(now()) — when the user liked the itinerary; enables recency ordering |
+| user | User | @relation(fields: [userId], references: [id], onDelete: Cascade) |
+| itinerary | Itinerary | @relation(fields: [itineraryId], references: [id], onDelete: Cascade) |
+
+**Model Constraints**
+- `@@id([userId, itineraryId])` — Composite primary key; a user can like a given itinerary at most once (dedupe), keeping the `Itinerary.likeCount` cache honest.
+
+### Bookmark
+| Attribute | Type | Additional Info |
+| --- | --- | --- |
+| userId | Int | Foreign key → User.id |
+| itineraryId | Int | Foreign key → Itinerary.id |
+| createdAt | DateTime | @default(now()) — when the user bookmarked the itinerary; enables recency ordering |
+| user | User | @relation(fields: [userId], references: [id], onDelete: Cascade) |
+| itinerary | Itinerary | @relation(fields: [itineraryId], references: [id], onDelete: Cascade) |
+
+**Model Constraints**
+- `@@id([userId, itineraryId])` — Composite primary key; a user can bookmark a given itinerary at most once (dedupe).
 ## Endpoints
 
 ### Users
 
-POST /users - Register a new user
+POST /users - Create the profile row for a newly registered Supabase Auth user
 - User story: 13
-- Request: { username, email, password }
-- Response (201): { username, email, createdAt }
-- Errors: 400 if fields are missing or improperly structured
+- Request: { username } — the caller is identified by their Supabase Auth session (access token); email is read from the verified Supabase user, not the request body
+- Response (201): { id, authUserId, username, email, createdAt }
+- Note: the password is handled entirely by Supabase Auth during sign-up; NavQuest never receives, hashes, or stores it (US #13). This endpoint only creates the app-side profile linked via authUserId
+- Errors: 400 if username is missing or improperly structured, 401 if there is no valid Supabase session, 409 if a profile already exists for this authUserId
 
 PUT /users/:id - Update a user's information
 - User story: 14
-- Request: { username, email, password } (all fields optional)
+- Request: { username } (optional) — email and password changes go through Supabase Auth directly, not this endpoint; a changed email is mirrored back into the profile via a Supabase webhook/sync
 - Response (200): the changed fields
-- Errors: 400 if fields are improperly structured, 404 if the user cannot be found
+- Errors: 400 if fields are improperly structured, 401 if the user is not signed in, 403 if the profile does not belong to the authenticated user, 404 if the user cannot be found
 
 GET /users/:id - Get a user's dashboard information
 - User story: 15
-- Request: none
-- Response (200): { username, email, likedItineraries, createdItineraries }
-- Errors: 401 if the user is not signed in, 404 if the user cannot be found
+- Query: id
+- Response (200): { id, authUserId, username, email, createdAt, createdItineraries, bookmarkedItineraries, likedItineraries }
+- Note: bookmarkedItineraries backs the dashboard's "Saved Itineraries" section (read-only references); saved copies are owned itineraries and appear within createdItineraries
+- Note: this is the owner's private dashboard (US #15); a user may only fetch their own record. Email and the saved/liked lists are never exposed for another user's id
+- Errors: 401 if the user is not signed in, 403 if the requested id is not the authenticated user, 404 if the user cannot be found
 
 ### Itineraries
 
 POST /itineraries - Create a new itinerary
 - User stories: 8, 11
-- Request: { title, isPublic, pins }
-- Response (201): { title, creator, isPublic, pins, createdAt }
+- Request: { title, location, description, coverImageUrl, maxBudgetPerPerson, dayStart, dayEnd, interests, foodPreferences, travelRadius, transport, startingLocations, isPublic, pins }
+- Note: title, location, and description are generated by the AI sequencing step (POST /ai-agent), not entered in the wizard; the client passes the AI-generated values through when persisting. They may be edited later via PUT /itineraries/:id (US #7)
+- Response (201): { id, sourceItineraryId, title, location, description, coverImageUrl, maxBudgetPerPerson, dayStart, dayEnd, interests, foodPreferences, travelRadius, transport, startingLocations, creator, isPublic, likeCount, pins, createdAt, updatedAt }
 - Errors: 400 if fields are missing or wrongly structured, 401 if the user is not signed in
 
 GET /itineraries - List itineraries accessible to the user
 - User stories: 9, 11
-- Request: none
-- Response (200): [ { createdAt, updatedAt, title, creator, isPublic, likeCount, pins } ]
-- Errors: 401 if the user is not signed in
+- Request (all query params optional): ?q= (free-text search over title/location), ?location= (filter by location label), ?interests= (comma-separated interest tags; matches itineraries sharing any tag), ?scope= ("mine" for the user's own itineraries, "public" for the Discover feed of public itineraries; defaults to "public"), ?sort= ("recent" | "popular"; defaults to "recent"), ?limit= & ?offset= (pagination; back the Discover page's <LoadMoreButton>)
+- Note: with no q/location/interests params and scope=public, this returns recently made public itineraries — the default Discover feed (US #9)
+- Response (200): [ { id, sourceItineraryId, createdAt, updatedAt, title, location, description, coverImageUrl, creator, isPublic, likeCount, pins } ]
+- Errors: 400 if a query param is malformed, 401 if the user is not signed in
 
 GET /itineraries/:id - Get a single itinerary
 - User stories: 9, 11
 - Request: none
-- Response (200): { createdAt, updatedAt, title, creator, isPublic, likeCount, pins }
+- Response (200): { id, sourceItineraryId, createdAt, updatedAt, title, location, description, coverImageUrl, maxBudgetPerPerson, dayStart, dayEnd, interests, foodPreferences, travelRadius, transport, startingLocations, creator, isPublic, likeCount, pins }
 - Errors: 401 if the user is not signed in, 403 if the user is not authorized to access the resource, 404 if the itinerary cannot be found
 
 PUT /itineraries/:id - Update an itinerary
 - User stories: 7, 8
-- Request: { title, isPublic, likeCount, pins } (all fields optional)
+- Request: { title, location, description, coverImageUrl, maxBudgetPerPerson, dayStart, dayEnd, interests, foodPreferences, travelRadius, transport, startingLocations, isPublic, pins } (all fields optional)
 - Response (200): the changed fields
+- Note: likeCount is not editable here; it is maintained only by the like/unlike endpoints below
 - Errors: 401 if the user is not signed in, 403 if the user does not have access to the itinerary, 404 if the itinerary cannot be found
 
 DELETE /itineraries/:id - Delete an itinerary
@@ -256,23 +303,58 @@ DELETE /itineraries/:id - Delete an itinerary
 - Response (204): none
 - Errors: 401 if the user is not signed in, 403 if the authenticated user does not have access to the itinerary, 404 if the itinerary cannot be found
 
+POST /itineraries/:id/like - Like an itinerary
+- User story: 11
+- Description: Adds the authenticated user to the itinerary's likedBy relation and increments likeCount. Idempotent — liking an already-liked itinerary is a no-op.
+- Request: none
+- Response (200): { likeCount }
+- Errors: 401 if the user is not signed in, 404 if the itinerary cannot be found
+
+DELETE /itineraries/:id/like - Unlike an itinerary
+- User story: 11
+- Description: Removes the authenticated user from the itinerary's likedBy relation and decrements likeCount. Idempotent — unliking a not-liked itinerary is a no-op.
+- Request: none
+- Response (200): { likeCount }
+- Errors: 401 if the user is not signed in, 404 if the itinerary cannot be found
+
+POST /itineraries/:id/bookmark - Bookmark an itinerary
+- User stories: 9, 11
+- Description: Adds the authenticated user to the itinerary's bookmarkedBy relation so it appears in their "Saved Itineraries" list as a read-only reference. Idempotent — bookmarking an already-bookmarked itinerary is a no-op.
+- Request: none
+- Response (204): none
+- Errors: 401 if the user is not signed in, 403 if the itinerary is not public, 404 if the itinerary cannot be found
+
+DELETE /itineraries/:id/bookmark - Remove a bookmark
+- User stories: 9, 11
+- Description: Removes the authenticated user from the itinerary's bookmarkedBy relation. Idempotent — removing a bookmark that does not exist is a no-op.
+- Request: none
+- Response (204): none
+- Errors: 401 if the user is not signed in, 404 if the itinerary cannot be found
+
+POST /itineraries/:id/copy - Save an editable copy of an itinerary
+- User stories: 9, 11
+- Description: Deep-duplicates the itinerary and its pins into a new itinerary owned by the authenticated user, with sourceItineraryId set to the original's id. The copy defaults to isPublic=false and likeCount=0, and appears in the user's "Created Itineraries" list.
+- Request: none
+- Response (201): the created copy (same shape as POST /itineraries response)
+- Errors: 401 if the user is not signed in, 403 if the source itinerary is not public and not owned by the user, 404 if the source itinerary cannot be found
+
 ### Pins
 
 GET /pins/:id - Get a single pin
 - User stories: 3, 5
 - Request: none
-- Response (200): { orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl }
+- Response (200): { id, itineraryId, orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, travelTimeToNextMinutes, distanceToNextMeters, locationImageUrl }
 - Errors: 401 if the user is not signed in, 403 if the authenticated user does not have access to the pin, 404 if the pin cannot be found
 
 POST /pins - Create a pin for an itinerary
 - User stories: 1, 2, 3, 4, 10
-- Request: { itineraryId, orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl }
-- Response (201): the created pin
-- Errors: 400 if fields are missing or wrongly structured, 401 if the user is not signed in
+- Request: { itineraryId, orderInItinerary, name, budgetPerPerson, latitude, longitude, startTime, endTime, locationImageUrl, description?, address? }
+- Response (201): the created pin (including id)
+- Errors: 400 if required fields are missing or wrongly structured (description and address are optional), 401 if the user is not signed in, 403 if the user does not own the target itinerary, 404 if the itinerary cannot be found
 
 PUT /pins/:id - Update a pin
 - User story: 7
-- Request: { orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, locationImageUrl } (all fields optional)
+- Request: { orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, travelTimeToNextMinutes, distanceToNextMeters, locationImageUrl } (all fields optional)
 - Response (200): the changed fields
 - Errors: 400 if fields are missing or wrongly structured, 401 if the user is not signed in, 403 if the authenticated user does not have access to the pin, 404 if the pin cannot be found
 
@@ -285,42 +367,55 @@ DELETE /pins/:id - Delete a pin from an itinerary
 ### AI Agent
 
 POST /ai-agent - Generate a structured itinerary from AI
-- User stories: 1, 2, 3, 4, 5, 6, 10
-- Description: Receives structured input, prompts the AI agent, and returns an itinerary to be stored in the database and rendered on the frontend.
-- Request: { foodPreferences, startingLocation, timeConstraints, interests }
-- Response (200): { itinerary }
+- User stories: 1, 2, 3, 5, 6, 10
+- Description: The deterministic recommendation engine builds a shortlist of real, pre-ranked places from the group's constraints, then the AI sequences them into an ordered one-day itinerary (see "Itinerary Sequencing" in the AI Feature Specification). Returns a structured itinerary to be stored and rendered.
+- Request: { shortlist, timeWindow, budget, groupSize, startingLocations }
+- Response (200): { itinerary } — an ordered set of stops with arrive/depart times, per-stop cost estimate, and travel time and distance to the next stop
+- Errors: 200 with a "constraints too tight" message if no feasible day fits the constraints, 401 if the user is not signed in
+
+POST /ai-agent/edit - Revise an itinerary from a natural-language request
+- User story: 7
+- Description: Interprets a plain-language request (e.g. "make it cheaper," "less walking") into constraint changes, then re-runs the recommendation engine and sequencing step to produce a revised itinerary (see "Natural-Language Itinerary Editing" in the AI Feature Specification). The AI only adjusts constraints — it never edits the list of places directly.
+- Request: { currentItinerary, userRequest, currentConstraints }
+- Response (200): { itinerary } — the revised itinerary, or the unchanged itinerary with a clarification prompt if the request is ambiguous
 - Errors: 401 if the user is not signed in
 
 ## State Architecture
 
-Global (used by auth or App component)
-#1  const [currentUser, setCurrentUser]                       = useState(null);
+```jsx
+// Global (used by auth or App component)
+const [currentUser, setCurrentUser]                       = useState(null);
 
-Database (come from API)
-#3  const [exploreItinerariesList, setExploreItinerariesList] = useState([];
-#4  const [yourItinerariesList, setYourItinerariesList]       = useState([]);
-#5  const [savedItinerariesList, setSavedItinerariesList]     = useState([]);
-#6  const [recentItinerariesList, setRecentItinerariesList]   = useState([]);
+// Database (come from API)
+const [exploreItinerariesList, setExploreItinerariesList]         = useState([]);
+const [createdItinerariesList, setCreatedItinerariesList]         = useState([]);
+const [bookmarkedItinerariesList, setBookmarkedItinerariesList]   = useState([]);  // dashboard "Saved Itineraries" section
+const [likedItinerariesList, setLikedItinerariesList]             = useState([]);
 
-Local to guide page
-#2  const [userSearchQuery, setUserSearchQuery]               = useState("");
+// Local to Discover page
+const [userSearchQuery, setUserSearchQuery]               = useState("");
+const [recentItinerariesList, setRecentItinerariesList]   = useState([]);
 
-Local to Iternerary wizard component
-#8  const [draftPreferences, setDraftPreferences] = useState({
-      timeRange: { start: null, end: null },
-      startingLocations: [],
-      travelRadius: null,
+// Local to Itinerary wizard component
+const [draftPreferences, setDraftPreferences] = useState({
+      // title, location, and description are NOT collected here — the AI
+      // sequencing step generates them from the constraints below.
+      dayStart: null,             // start of the one-day time window
+      dayEnd: null,               // end of the one-day time window
+      startingLocations: [],      // list (tag input)
+      travelRadius: null,         // single value
       transport: "",              // single value
       interests: [],              // list (tag input)
       foodPreferences: [],        // list (tag input)
-      budget: null,               // single value (per person)
+      maxBudgetPerPerson: null,   // single value (per person)
       isPublic: false,            // single boolean
     });
-#10 const [currentWizardStep, setCurrentWizardStep]           = useState(1);
+const [currentWizardStep, setCurrentWizardStep]           = useState(1);
 
-Local to Iternerary page
-#11 const [currentPin, setCurrentPin]                         = useState(null);
-#9  const [currentViewedItinerary, setCurrentViewedItinerary] = useState(null);
+// Local to Itinerary page
+const [currentPin, setCurrentPin]                         = useState(null);
+const [currentViewedItinerary, setCurrentViewedItinerary] = useState(null);
+```
 
 ## Component Hierarchy
 
@@ -332,7 +427,7 @@ Local to Iternerary page
 │   ├── <Logo>
 │   ├── <NavLinks>              (only if authenticated)
 │   │   ├── <NavLink> "Home"
-│   │   └── <NavLink> "Guides"
+│   │   └── <NavLink> "Discover"
 │   ├── <AuthButtons>          (only if unauthenticated)
 │   │   ├── <LoginButton>
 │   │   └── <RegisterButton>
@@ -375,18 +470,23 @@ Local to Iternerary page
 │   │   ├── <ExploreSection>
 │   │   │   ├── <SectionHeader>
 │   │   │   └── <CardCarousel>
-│   │   │       ├── <TripCard> ×N
+│   │   │       ├── <ItineraryCard> ×N
 │   │   │       └── <CarouselArrow>
-│   │   ├── <YourTripsSection>
+│   │   ├── <CreatedItinerariesSection>
 │   │   │   ├── <SectionHeader>
-│   │   │   │   └── <NewTripButton>
+│   │   │   │   └── <NewItineraryButton>
 │   │   │   └── <CardCarousel>
-│   │   │       ├── <TripCard> ×N
+│   │   │       ├── <ItineraryCard> ×N
 │   │   │       └── <CarouselArrow>
-│   │   └── <SavedTripsSection>
+│   │   ├── <BookmarkedItinerariesSection>
+│   │   │   ├── <SectionHeader>
+│   │   │   └── <CardCarousel>
+│   │   │       ├── <ItineraryCard> ×N
+│   │   │       └── <CarouselArrow>
+│   │   └── <LikedItinerariesSection>
 │   │       ├── <SectionHeader>
 │   │       └── <CardCarousel>
-│   │           ├── <TripCard> ×N
+│   │           ├── <ItineraryCard> ×N
 │   │           └── <CarouselArrow>
 │   │
 │   ├── <CreateItineraryPage>
@@ -437,7 +537,10 @@ Local to Iternerary page
 │   │   ├── <ItineraryPanel>
 │   │   │   ├── <ActionBar>
 │   │   │   │   ├── <EditButton> (owner only)
-│   │   │   │   ├── <SaveButton> (owner only)
+│   │   │   │   ├── <SaveButton> (owner only — save edits)
+│   │   │   │   ├── <BookmarkButton> (non-owner — bookmark to "Saved Itineraries", read-only)
+│   │   │   │   ├── <SaveCopyButton> (non-owner — save an editable copy to "Created Itineraries")
+│   │   │   │   ├── <LikeButton> (any signed-in user — toggle like)
 │   │   │   │   └── <DeleteButton> (owner only)
 │   │   │   └── <WrittenItinerary>
 │   │   ├── <MapView>
@@ -450,12 +553,18 @@ Local to Iternerary page
 │   │       ├── <PinCost>
 │   │       └── <PinAddress>
 │   │
-│   └── <GuidePage>
+│   └── <DiscoverPage>
 │       ├── <SearchBar>
-│       ├── <SectionHeader>
-│       ├── <GuidesGrid>
-│       │   └── <GuideCard> ×N
-│       └── <LoadMoreButton>
+│       ├── <SearchResultsSection>        (shown when a query is typed)
+│       │   ├── <SectionHeader>
+│       │   ├── <ItinerariesGrid>
+│       │   │   └── <ItineraryCard> ×N
+│       │   └── <LoadMoreButton>
+│       └── <RecentItinerariesSection>    (shown when no query — US #9)
+│           ├── <SectionHeader>
+│           ├── <ItinerariesGrid>
+│           │   └── <ItineraryCard> ×N
+│           └── <LoadMoreButton>
 │
 └── <Footer>
 ```
@@ -495,9 +604,9 @@ itinerary. The AI sequences only — it does not choose or invent places.
 - Description: Receives the recommendation engine's shortlist plus the group's
   constraints and returns an ordered day to be stored and rendered.
 - Input: { shortlist (places with id, category, coordinates, hours, cost estimate), timeWindow, budget, groupSize, startingLocations }
-- Output (200): a structured JSON itinerary — ordered stops with arrive/depart times, a per-stop cost estimate, and travel time to the next stop
+- Output (200): a structured JSON itinerary — a generated title, location label, and short description for the overall day, plus ordered stops with arrive/depart times, a per-stop cost estimate, and travel time and distance to the next stop
 - Behavior:
-    - Orders stops by geography, inserts meal stops at meal times, and respects each place's opening hours and the trip's time window
+    - Orders stops by geography, inserts meal stops at meal times, and respects each place's opening hours and the itinerary's time window
     - Uses only place IDs from the provided shortlist — no hallucinated places
     - Keeps the estimated total cost within the group's budget; if no feasible day fits the constraints, it returns a "constraints too tight" message instead of an itinerary
     - If the AI call fails or its output fails validation, the system falls back to a deterministic ordering so an itinerary is always produced
@@ -521,12 +630,6 @@ manually editing each stop.
 ## AI Feature Decisions Log
 
 | Decision | Sprint | What Changed | Why|
-| Make filtering of events responsiblity entirely to recommendation engine. | sprint 1 | Not let AI handle filtering of events and let the recommendation system do it. | AI does not add value and the recommendation system already obtains the pins determinsiticly with other constraints so doing some with AI and others with recommendation engine maeks no sense.  |
-| Add AI tag enrichment | sprint 1 | A new addition of AI feature that allows us to get better tagging with letting ai generate tag based on the pin | Lets us have better tags which will result in better recommendations since tagging is a huge part of scoring. |
-| NLP AI editing | sprint 1 | A new addition to AI feature which will be a stretch feature. Will allow users to edit the iternary if they dont like it with a chatbox.| Solves the issue of iternary not being to users' liking . |
-## Feature Decision Log
-
-| Decision | Context | Alternatives | Tradeoffs|
 | --- | --- | --- | --- |
 
 ## Milestones
@@ -536,7 +639,7 @@ Goal: Begin creating the skeleton for what the project will look like
 
 Requirements:
 - Set up the frontend and backend libraries and frameworks
-- Translate the User, Itinerary, and Pin models from project_plan.md into prisma/schema.prisma, including the named relations and the implicit many-to-many for likes.
+- Translate the User, Itinerary, and Pin models from project_plan.md into prisma/schema.prisma, including the named relations and the implicit many-to-many relations for likes and bookmarks.
     - Run an initial migration
 - Add user functionality
     - On the backend, the endpoints POST /users, PUT /users/:id, GET /users/:id should work with proposed request/response structures
@@ -574,19 +677,20 @@ Requirements:
     - The map view should be clearly visible for all views
 - Reopening a saved itinerary should restore all of its information exactly as it was saved
 - Users should have the ability to mark their itineraries as public
-    - If public, the user should be able to access it in a “Itineraries” page
-    - On this “Itineraries” page, users should be able to filter to find certain itineraries
-    - All public itineraries should be displayed on the “Itineraries” page.
+    - If public, the user should be able to access it in a “Discover” page
+    - On this “Discover” page, users should be able to filter to find certain itineraries
+    - All public itineraries should be displayed on the “Discover” page.
     - For these public itineraries, the user should be able to like these itineraries, which changes their like count for all users
 - Users should be able to view the itineraries they have liked from their dashboard
-- Users should be able to save a copy of another user’s public itinerary to their own dashboard
+- Users should be able to bookmark another user’s public itinerary to their "Saved Itineraries" list on their dashboard (a read-only reference to the original)
+- Users should be able to save an editable copy of another user’s public itinerary (the copy and its pins are duplicated under the current user, appearing in "Created Itineraries")
 
 Checkpoint:
 - The user can see a visual itinerary with pins and information surrounding the itinerary
 - The user should be able to set their itinerary as public so other users can use it
 - The user can find other user’s public itineraries
 - The user can like a public itinerary and view their liked itineraries from their dashboard
-- The user can save a copy of a public itinerary to their own dashboard
+- The user can bookmark a public itinerary (read-only) and save an editable copy of it to their own dashboard
 
 Milestone 4: Editing, Deleting, and Polishing
 Goal: Allow users to modify and remove their itineraries, and make sure the app is polished and deployable
@@ -606,19 +710,27 @@ Checkpoint:
 
 Stretch Goals:
 - Google Places enrichment to fill in ratings, price level, and reliable hours for recommended places
-- A written/text version of the itinerary for easy sharing
 
 ## Decision Log
 
 # Sprint 1
 Decision 1:
 
-Decision: Decided to make the Trip Organizer be the only person inputting information about their group’s budgets, interests, and time constraints.
+Decision: Decided to make the Itinerary Organizer be the only person inputting information about their group’s budgets, interests, and time constraints.
 Context: We were creating the wireframe for the itinerary and were unsure whether or not to let the group members individually fill out the form to prevent user fatigue from the event organizer
 
 Alternative Considered:  Each member of the group fills out information about their own interests, budgets, and time constraints by themselves and all this information is used to draft an itinerary. This would require each group member to become users for NavQuest and fill out the form before the itinerary is created.
 
 Tradeoffs: By requiring the organizer to fill out the form themselves, they will need to fill in more fields as their group gets larger. Therefore, the website needs to minimize the amount of information that the organizer is placing on the form. However, by doing this approach, our website now prevents the issue of trying to maintain/store information about incomplete itineraries (since the alternative of requiring all group members to fill out preferences would mean having to store that information) which may waste website storage.
+
+Decision 1:
+
+Decision: Decided that the Itinerary data model should not keep track of information like maxBudgetPerPerson, dayStart/dayEnd, interests, foodPreferences, travelRadius, transport, startingLocations. This information would be extracted from the client side instead. 
+
+Context: Deciding whether or not including the attributes in the data model was too much/would be a privacy issue.
+
+Tradeoffs: This makes it easier to handle data operations now since they will be simplified, but when implementing the edit stretch feature, we might have to add these values back if we want users to see what information about the itinerary was previously saved.
+
 
 # Sprint 2
 
