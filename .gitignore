@@ -1,0 +1,10 @@
+node_modules
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+
+# Prisma generated client
+/generated/prisma
