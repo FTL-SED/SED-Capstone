@@ -186,14 +186,6 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 | location | String | Human-readable city/area label (e.g. "San Francisco, CA") shown on itinerary cards and used to search/filter itineraries by location on the Discover page (US #9) |
 | description | String? | Short overview text shown in the itinerary header (<Description>) |
 | coverImageUrl | String? | Cover image shown in the itinerary header (<CoverImage>). Not user-entered in the wizard; defaults to the first pin's locationImageUrl when the itinerary is created, and is editable later via PUT /itineraries/:id (US #7) |
-| maxBudgetPerPerson | Float? | Organizer's inputted per-person budget cap; the generated itinerary's total cost per person must not exceed this (US #1). Editable via US #7 |
-| dayStart | DateTime | Start of the itinerary's overall one-day time window (US #2). Editable via US #7 |
-| dayEnd | DateTime | End of the itinerary's overall one-day time window (US #2). Editable via US #7 |
-| interests | String[] | Group interest tags used to match activities (US #4). Persisted so they can be edited and re-run (US #7) |
-| foodPreferences | String[] | Group food preference tags used for meal-slot selection (US #10). Editable via US #7 |
-| travelRadius | Float? | Search radius (from the central meeting location) for candidate activities (US #3). Editable via US #7 |
-| transport | String? | Group's mode of transport, used to estimate travel times between activities (US #3). Editable via US #7 |
-| startingLocations | String[] | Each group member's starting location, used to compute the central meeting location for the first activity (US #3). Editable via US #7 |
 | isPublic | Boolean | @default(false) |
 | createdAt | DateTime | @default(now()) |
 | updatedAt | DateTime | @updatedAt |
@@ -213,7 +205,7 @@ references: [id], onDelete: Cascade) |
 | orderInItinerary | Int | |
 | name | String | |
 | description | String? | |
-| budgetPerPerson | Float | |
+| pricePerPerson | Float | |
 | latitude | Float | |
 | longitude | Float | |
 | address | String? | |
@@ -269,7 +261,7 @@ PUT /users/:id - Update a user's information
 
 GET /users/:id - Get a user's dashboard information
 - User story: 15
-- Request: none
+- Query: id
 - Response (200): { id, authUserId, username, email, createdAt, createdItineraries, bookmarkedItineraries, likedItineraries }
 - Note: bookmarkedItineraries backs the dashboard's "Saved Itineraries" section (read-only references); saved copies are owned itineraries and appear within createdItineraries
 - Note: this is the owner's private dashboard (US #15); a user may only fetch their own record. Email and the saved/liked lists are never exposed for another user's id
@@ -729,6 +721,15 @@ Context: We were creating the wireframe for the itinerary and were unsure whethe
 Alternative Considered:  Each member of the group fills out information about their own interests, budgets, and time constraints by themselves and all this information is used to draft an itinerary. This would require each group member to become users for NavQuest and fill out the form before the itinerary is created.
 
 Tradeoffs: By requiring the organizer to fill out the form themselves, they will need to fill in more fields as their group gets larger. Therefore, the website needs to minimize the amount of information that the organizer is placing on the form. However, by doing this approach, our website now prevents the issue of trying to maintain/store information about incomplete itineraries (since the alternative of requiring all group members to fill out preferences would mean having to store that information) which may waste website storage.
+
+Decision 1:
+
+Decision: Decided that the Itinerary data model should not keep track of information like maxBudgetPerPerson, dayStart/dayEnd, interests, foodPreferences, travelRadius, transport, startingLocations. This information would be extracted from the client side instead. 
+
+Context: Deciding whether or not including the attributes in the data model was too much/would be a privacy issue.
+
+Tradeoffs: This makes it easier to handle data operations now since they will be simplified, but when implementing the edit stretch feature, we might have to add these values back if we want users to see what information about the itinerary was previously saved.
+
 
 # Sprint 2
 
