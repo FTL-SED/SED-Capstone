@@ -205,6 +205,7 @@ references: [id], onDelete: Cascade) |
 | orderInItinerary | Int | |
 | name | String | |
 | description | String? | |
+| tags | String[] | |
 | pricePerPerson | Float | |
 | latitude | Float | |
 | longitude | Float | |

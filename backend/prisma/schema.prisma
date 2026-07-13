@@ -4,9 +4,81 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id                 Int         @id @default(autoincrement())
+  authUserId         String      @unique
+  email              String      @unique
+  username           String      @unique
+  createdAt          DateTime    @default(now())
+  createdItineraries Itinerary[] @relation("CreatedItineraries")
+  likes              Like[]
+  bookmarks          Bookmark[]
+}
+
+model Itinerary {
+  id                Int        @id @default(autoincrement())
+  userId            Int
+  likeCount         Int        @default(0)
+  sourceItineraryId Int?
+  title             String
+  location          String
+  description       String?
+  coverImageUrl     String?
+  isPublic          Boolean    @default(false)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  creator           User       @relation("CreatedItineraries", fields: [userId], references: [id], onDelete: Cascade)
+  likes             Like[]
+  bookmarks         Bookmark[]
+  sourceItinerary   Itinerary?  @relation("ForkedItinerary", fields: [sourceItineraryId], references: [id], onDelete: SetNull)
+  savedCopies       Itinerary[] @relation("ForkedItinerary")
+  pins              Pin[]
+}
+
+model Pin {
+  id                      Int       @id @default(autoincrement())
+  itineraryId             Int
+  orderInItinerary        Int
+  name                    String
+  description             String?
+  tags                    String[]
+  pricePerPerson          Float
+  latitude                Float
+  longitude               Float
+  address                 String?
+  startTime               DateTime
+  endTime                 DateTime
+  travelTimeToNextMinutes Int?
+  distanceToNextMeters    Float?
+  locationImageUrl        String
+  itinerary               Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+
+  @@unique([itineraryId, orderInItinerary])
+}
+
+model Like {
+  userId      Int
+  itineraryId Int
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itinerary   Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+
+  @@id([userId, itineraryId])
+}
+
+model Bookmark {
+  userId      Int
+  itineraryId Int
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itinerary   Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+
+  @@id([userId, itineraryId])
 }
