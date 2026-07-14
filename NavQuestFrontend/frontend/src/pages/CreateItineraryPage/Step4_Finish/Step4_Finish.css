@@ -1,0 +1,13 @@
+.step4-finish {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.step4-finish .privacy-field {
+  align-self: flex-end;
+}
+
+.step4-finish .finish-button {
+  align-self: flex-end;
+}

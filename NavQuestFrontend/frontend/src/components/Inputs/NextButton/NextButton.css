@@ -1,0 +1,16 @@
+.next-button {
+  display: inline-block;
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: background 0.15s ease;
+}
+
+.next-button:hover {
+  background: var(--slate-800);
+}

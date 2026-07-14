@@ -1,0 +1,12 @@
+.hero-subheading {
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--slate-500);
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .hero-subheading {
+    font-size: 1.1rem;
+  }
+}

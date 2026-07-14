@@ -1,0 +1,10 @@
+.video-player {
+  width: 100%;
+  max-width: 760px;
+  aspect-ratio: 16 / 9;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  object-fit: cover;
+}

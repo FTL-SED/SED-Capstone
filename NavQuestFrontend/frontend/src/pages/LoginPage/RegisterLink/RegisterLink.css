@@ -1,0 +1,9 @@
+.register-link {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.register-link:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,13 @@
+.itinerary-author {
+  flex-shrink: 0;
+  text-align: right;
+  color: var(--slate-500);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .itinerary-author {
+    text-align: left;
+  }
+}

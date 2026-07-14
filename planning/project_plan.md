@@ -553,18 +553,33 @@ const [currentViewedItinerary, setCurrentViewedItinerary] = useState(null);
 │   │       ├── <PinCost>
 │   │       └── <PinAddress>
 │   │
-│   └── <DiscoverPage>
-│       ├── <SearchBar>
-│       ├── <SearchResultsSection>        (shown when a query is typed)
+│   ├── <DiscoverPage>
+│   │   ├── <SearchBar>
+│   │   ├── <SearchResultsSection>        (shown when a query is typed)
+│   │   │   ├── <SectionHeader>
+│   │   │   ├── <ItinerariesGrid>
+│   │   │   │   └── <ItineraryCard> ×N
+│   │   │   └── <LoadMoreButton>
+│   │   └── <RecentItinerariesSection>    (shown when no query — US #9)
+│   │       ├── <SectionHeader>
+│   │       ├── <ItinerariesGrid>
+│   │       │   └── <ItineraryCard> ×N
+│   │       └── <LoadMoreButton>
+│   │
+│   └── <AccountPage>                    
+│       ├── <AccountAvatar>
+│       │   └── <AvatarUploadButton>       "+"
+│       ├── <AccountNav>
+│       │   ├── <ProfileButton>
+│       │   └── <LogOutButton>
+│       ├── <ProfileSection>
 │       │   ├── <SectionHeader>
-│       │   ├── <ItinerariesGrid>
-│       │   │   └── <ItineraryCard> ×N
-│       │   └── <LoadMoreButton>
-│       └── <RecentItinerariesSection>    (shown when no query — US #9)
+│       │   ├── <UsernameField>            (editable)
+│       │   └── <EmailField>
+│       └── <ChangePasswordSection>
 │           ├── <SectionHeader>
-│           ├── <ItinerariesGrid>
-│           │   └── <ItineraryCard> ×N
-│           └── <LoadMoreButton>
+│           ├── <PasswordInput> ×3         "Old" / "New" / "Confirm new password"
+│           └── <UpdatePasswordButton>
 │
 └── <Footer>
 ```

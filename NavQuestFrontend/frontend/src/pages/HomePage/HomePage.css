@@ -1,0 +1,14 @@
+/* Vertical rhythm: stack the four home sections with consistent spacing */
+.home-page > section {
+  margin-bottom: 40px;
+}
+
+.home-page > section:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 640px) {
+  .home-page > section {
+    margin-bottom: 28px;
+  }
+}

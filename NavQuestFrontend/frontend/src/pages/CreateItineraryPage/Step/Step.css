@@ -1,0 +1,37 @@
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.step__circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--slate-500);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.step__label {
+  color: var(--slate-500);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.step--active .step__circle {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+
+.step--active .step__label {
+  color: var(--ink);
+  font-weight: 600;
+}

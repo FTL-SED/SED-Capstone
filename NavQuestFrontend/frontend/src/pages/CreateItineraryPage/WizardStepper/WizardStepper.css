@@ -1,0 +1,6 @@
+.wizard-stepper {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
