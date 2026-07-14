@@ -343,18 +343,18 @@ POST /itineraries/:id/copy - Save an editable copy of an itinerary
 GET /pins/:id - Get a single pin
 - User stories: 3, 5
 - Request: none
-- Response (200): { id, itineraryId, orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, travelTimeToNextMinutes, distanceToNextMeters, locationImageUrl }
+- Response (200): { id, itineraryId, orderInItinerary, name, description, pricePerPerson, latitude, longitude, address, startTime, endTime, travelTimeToNextMinutes, distanceToNextMeters, locationImageUrl }
 - Errors: 401 if the user is not signed in, 403 if the authenticated user does not have access to the pin, 404 if the pin cannot be found
 
 POST /pins - Create a pin for an itinerary
 - User stories: 1, 2, 3, 4, 10
-- Request: { itineraryId, orderInItinerary, name, budgetPerPerson, latitude, longitude, startTime, endTime, locationImageUrl, description?, address? }
+- Request: { itineraryId, orderInItinerary, name, pricePerPerson, latitude, longitude, startTime, endTime, locationImageUrl, description?, address? }
 - Response (201): the created pin (including id)
 - Errors: 400 if required fields are missing or wrongly structured (description and address are optional), 401 if the user is not signed in, 403 if the user does not own the target itinerary, 404 if the itinerary cannot be found
 
 PUT /pins/:id - Update a pin
 - User story: 7
-- Request: { orderInItinerary, name, description, budgetPerPerson, latitude, longitude, address, startTime, endTime, travelTimeToNextMinutes, distanceToNextMeters, locationImageUrl } (all fields optional)
+- Request: { orderInItinerary, name, description, pricePerPerson, latitude, longitude, address, startTime, endTime, travelTimeToNextMinutes, distanceToNextMeters, locationImageUrl } (all fields optional)
 - Response (200): the changed fields
 - Errors: 400 if fields are missing or wrongly structured, 401 if the user is not signed in, 403 if the authenticated user does not have access to the pin, 404 if the pin cannot be found
 

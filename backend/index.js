@@ -4,6 +4,8 @@ import express from 'express'
 import cors from 'cors'
 
 import userRoutes from './routes/userRoutes.js'
+import itineraryRoutes from './routes/itineraryRoutes.js'
+import pinRoutes from './routes/pinRoutes.js'
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -16,6 +18,8 @@ app.get('/', (req, res) => {
 })
 
 app.use('/users', userRoutes)
+app.use('/itineraries', itineraryRoutes)
+app.use('/pins', pinRoutes)
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`)
