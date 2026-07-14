@@ -1,0 +1,112 @@
+// Step 8 fixtures — three mock trip groups (A/B/C) standing in for the OSM
+// spike's original mock users (never committed to this repo). Each group is
+// built to exercise a different combination of the roadmap's Step 8
+// assertions: fairness for a niche member, tight-budget/diet drops, ratings
+// breaking ties, and missing-data flags surviving to the final shortlist.
+// Data only — no logic, so no accompanying test file.
+
+// --- Group A: museum-going foodie trio, generous budget, full day -----------
+// Exercises: diet hard-filter (Wei is vegetarian), ≥3 categories, normal food
+// quota without needing floor-fill, an activity outside the group's interests
+// (dropped for relevance) and a restaurant open only outside the trip window
+// (dropped for hours).
+const groupA = {
+  trip: { startTime: '09:00', endTime: '19:00', maxBudgetPerPerson: 80 },
+  members: [
+    { name: 'Priya', startLocation: 'FiDi', interestTags: ['museum', 'art', 'history'], foodPrefs: ['italian'] },
+    { name: 'Marcus', startLocation: 'FiDi', interestTags: ['museum', 'architecture'], foodPrefs: ['thai'] },
+    { name: 'Wei', startLocation: 'SoMa', interestTags: ['art', 'gallery'], foodPrefs: ['sushi'], diet: ['vegetarian'] },
+  ],
+  places: [
+    { name: 'SF MoMA', category: 'museum', tags: ['art', 'museum'], rating: 4.6, priceLevel: 2, openingHours: [{ open: '10:00', close: '17:00' }] },
+    { name: 'de Young Museum', category: 'museum', tags: ['art', 'museum', 'history'], rating: 4.5, priceLevel: 2 }, // no hours -> hoursUnknown
+    { name: 'Legion of Honor', category: 'museum', tags: ['art', 'history'], rating: 4.7, priceLevel: 2, openingHours: [{ open: '09:30', close: '17:15' }] },
+    { name: 'Exploratorium', category: 'museum', tags: ['museum', 'science'], rating: 4.6, priceLevel: 3, openingHours: [{ open: '10:00', close: '17:00' }] },
+    { name: 'Cable Car Museum', category: 'museum', tags: ['museum', 'history'], priceLevel: 0, openingHours: [{ open: '10:00', close: '18:00' }] }, // no rating -> quality default
+    { name: 'Chinatown Gallery', category: 'gallery', tags: ['art', 'gallery'], rating: 4.2, openingHours: [{ open: '11:00', close: '18:00' }] }, // no priceLevel -> priceUnknown
+    { name: 'Coit Tower', category: 'landmark', tags: ['history', 'architecture'], rating: 4.5, priceLevel: 1, openingHours: [{ open: '10:00', close: '17:00' }] },
+    { name: 'Palace of Fine Arts', category: 'landmark', tags: ['architecture', 'history'], rating: 4.8, priceLevel: 0 },
+    { name: 'Ferry Building', category: 'landmark', tags: ['architecture'] }, // fully missing rating/price/hours
+    { name: 'Golden Gate Park', category: 'park', tags: ['park'], rating: 4.8, priceLevel: 0, openingHours: [{ open: '05:00', close: '22:00' }] }, // no interest overlap -> dropped
+
+    { name: "Original Joe's", category: 'restaurant', cuisine: ['italian'], rating: 4.3, priceLevel: 2, diet: ['vegetarian'], openingHours: [{ open: '11:00', close: '22:00' }] },
+    { name: 'Thai House', category: 'restaurant', cuisine: ['thai'], rating: 4.4, priceLevel: 2, diet: ['vegetarian', 'vegan'], openingHours: [{ open: '11:00', close: '21:00' }] },
+    { name: 'Sushi Zone', category: 'restaurant', cuisine: ['sushi'], rating: 4.6, priceLevel: 3, diet: ['vegetarian'] },
+    { name: 'North Beach Pizza', category: 'restaurant', cuisine: ['italian'], priceLevel: 1, diet: ['vegetarian'], openingHours: [{ open: '11:00', close: '23:00' }] },
+    { name: 'Bangkok Kitchen', category: 'restaurant', cuisine: ['thai'], rating: 4.1, priceLevel: 2 }, // diet unknown -> kept
+    { name: 'Sushi Hana', category: 'restaurant', cuisine: ['sushi'], rating: 4.5, priceLevel: 2, diet: ['vegetarian', 'vegan'], openingHours: [{ open: '12:00', close: '21:30' }] },
+    { name: 'Meat & Grill BBQ', category: 'restaurant', cuisine: ['bbq'], rating: 4.0, priceLevel: 3, diet: [] }, // no vegetarian -> dropped
+    { name: 'Vegan Vibes', category: 'restaurant', cuisine: ['vegan'], rating: 4.7, priceLevel: 2, diet: ['vegan', 'vegetarian'], openingHours: [{ open: '10:00', close: '20:00' }] },
+    { name: 'Ramen House', category: 'restaurant', cuisine: ['ramen'], rating: 4.2, priceLevel: 2, diet: ['vegetarian'] },
+    { name: 'Steakhouse Prime', category: 'restaurant', cuisine: ['steak'], rating: 4.5, priceLevel: 4, diet: [] }, // no vegetarian -> dropped
+    { name: 'Late Night Diner', category: 'restaurant', cuisine: ['american'], priceLevel: 1, diet: ['vegetarian'], openingHours: [{ open: '22:00', close: '02:00' }] }, // outside 09:00-19:00 -> dropped
+  ],
+}
+
+// --- Group B: budget-conscious outdoorsy quartet, tight budget, half day ---
+// Exercises: fairness injection (Nadia's birdwatching interest is niche and
+// low-scoring), an activity dropped for blowing the absolute budget, and
+// restaurants dropped for both budget and vegan diet (Jess).
+const groupB = {
+  trip: { startTime: '10:00', endTime: '16:00', maxBudgetPerPerson: 25 },
+  members: [
+    { name: 'Sam', startLocation: 'Richmond', interestTags: ['park', 'hiking', 'viewpoint'], foodPrefs: ['mexican'] },
+    { name: 'Jess', startLocation: 'Richmond', interestTags: ['park', 'garden'], foodPrefs: ['vegan'], diet: ['vegan'] },
+    { name: 'Tom', startLocation: 'Sunset', interestTags: ['park'], foodPrefs: ['mexican'] },
+    { name: 'Nadia', startLocation: 'Sunset', interestTags: ['birdwatching'], foodPrefs: [] },
+  ],
+  places: [
+    { name: 'Golden Gate Park', category: 'park', tags: ['park', 'garden'], rating: 4.8, priceLevel: 0, openingHours: [{ open: '05:00', close: '22:00' }] },
+    { name: 'Japanese Tea Garden', category: 'garden', tags: ['garden', 'park'], rating: 4.6, priceLevel: 1, openingHours: [{ open: '09:00', close: '18:00' }] },
+    { name: 'Lands End Trail', category: 'viewpoint', tags: ['hiking', 'viewpoint', 'park'], rating: 4.9, priceLevel: 0 },
+    { name: 'Sutro Baths', category: 'viewpoint', tags: ['viewpoint', 'history'], rating: 4.7, priceLevel: 0, openingHours: [{ open: '06:00', close: '20:00' }] },
+    { name: 'Presidio Park', category: 'park', tags: ['park', 'hiking'], priceLevel: 0, openingHours: [{ open: '06:00', close: '20:00' }] },
+    { name: 'Stow Lake', category: 'park', tags: ['park'], rating: 4.5, priceLevel: 0, openingHours: [{ open: '05:00', close: '22:00' }] },
+    { name: 'Conservatory of Flowers', category: 'garden', tags: ['garden'], rating: 4.4, priceLevel: 2, openingHours: [{ open: '10:00', close: '16:00' }] },
+    { name: 'Golden Gate Park Bird Sanctuary', category: 'park', tags: ['birdwatching'] }, // Nadia's only match — niche, low coverage
+    { name: 'Helicopter Tour', category: 'tour', tags: ['viewpoint'], priceLevel: 4 }, // $80 > $25 budget -> dropped outright
+
+    { name: 'Taco Truck', category: 'restaurant', cuisine: ['mexican'], rating: 4.3, priceLevel: 1, diet: ['vegan', 'vegetarian'], openingHours: [{ open: '11:00', close: '20:00' }] },
+    { name: 'Burrito Bros', category: 'restaurant', cuisine: ['mexican'], rating: 4.0, priceLevel: 1, diet: ['vegan'] },
+    { name: 'Vegan Taco Spot', category: 'restaurant', cuisine: ['mexican', 'vegan'], rating: 4.6, priceLevel: 2, diet: ['vegan', 'vegetarian'], openingHours: [{ open: '10:00', close: '21:00' }] },
+    { name: 'Green Bowl', category: 'restaurant', cuisine: ['vegan'], rating: 4.5, priceLevel: 2, diet: ['vegan'], openingHours: [{ open: '09:00', close: '19:00' }] },
+    { name: 'Salad Stop', category: 'restaurant', cuisine: ['vegan'], priceLevel: 1, diet: ['vegan', 'vegetarian'] },
+    { name: 'Ocean Beach Cafe', category: 'restaurant', cuisine: ['american'], rating: 4.1, priceLevel: 2, diet: ['vegan'] },
+    { name: 'Sunset Diner', category: 'restaurant', cuisine: ['american'], rating: 4.2, priceLevel: 2, diet: ['vegan', 'vegetarian'], openingHours: [{ open: '07:00', close: '15:00' }] },
+    { name: 'Mystery Burger', category: 'restaurant', cuisine: ['american'], rating: 4.0, priceLevel: 1 }, // diet unknown -> kept
+    { name: 'Fancy Steakhouse', category: 'restaurant', cuisine: ['steak'], rating: 4.8, priceLevel: 4, diet: [] }, // dropped by budget AND diet
+    { name: 'Richmond Ramen', category: 'restaurant', cuisine: ['ramen'], rating: 4.4, priceLevel: 2, diet: [] }, // no vegan -> dropped
+  ],
+}
+
+// --- Group C: coffee-loving duo, generous window, tie-break + missing data -
+// Exercises: two identically-tagged cafes that differ only by rating (proves
+// ratings break ties), treats that don't count against the food quota, and
+// places with partially/fully missing data whose flags must survive into the
+// final shortlist rather than being silently dropped.
+const groupC = {
+  trip: { startTime: '10:00', endTime: '18:00', maxBudgetPerPerson: 50 },
+  members: [
+    { name: 'Alex', startLocation: 'Marina', interestTags: ['coffee', 'dessert', 'boba'], foodPrefs: ['ramen'] },
+    { name: 'Jordan', startLocation: 'Marina', interestTags: ['coffee'], foodPrefs: ['ramen'] },
+  ],
+  places: [
+    { name: 'Cafe Presidio', category: 'cafe', tags: ['coffee'], rating: 4.8, priceLevel: 1, openingHours: [{ open: '07:00', close: '18:00' }] }, // tie-break winner
+    { name: 'Blue Bottle Coffee', category: 'cafe', tags: ['coffee'], priceLevel: 1, openingHours: [{ open: '07:00', close: '18:00' }] }, // identical tags, no rating -> should score lower
+    { name: 'Boba Guys', category: 'dessert', tags: ['boba', 'dessert'], rating: 4.5, priceLevel: 1, openingHours: [{ open: '11:00', close: '21:00' }] },
+    { name: "Bob's Donuts", category: 'dessert', tags: ['dessert'], rating: 4.9, priceLevel: 0 }, // no hours -> hoursUnknown
+    { name: 'Third Wave Coffee', category: 'cafe', tags: ['coffee'], rating: 4.3, openingHours: [{ open: '08:00', close: '17:00' }] }, // no priceLevel -> priceUnknown
+    { name: 'Mystery Cafe', category: 'cafe', tags: ['coffee'] }, // fully missing rating/price/hours
+
+    { name: 'Ramen Yokocho', category: 'restaurant', cuisine: ['ramen'], rating: 4.7, priceLevel: 2, openingHours: [{ open: '11:00', close: '22:00' }] },
+    { name: 'Marina Ramen House', category: 'restaurant', cuisine: ['ramen'], rating: 4.4, priceLevel: 2 },
+    { name: 'Noodle Bar', category: 'restaurant', cuisine: ['ramen', 'noodles'], rating: 4.2, priceLevel: 1, openingHours: [{ open: '11:00', close: '20:00' }] },
+    { name: 'Pho Real', category: 'restaurant', cuisine: ['vietnamese'], rating: 4.5, priceLevel: 2, openingHours: [{ open: '10:00', close: '21:00' }] },
+    { name: 'Pizza Marina', category: 'restaurant', cuisine: ['pizza'], rating: 4.0, priceLevel: 2 },
+    { name: 'Sushi Marina', category: 'restaurant', cuisine: ['sushi'], rating: 4.6, priceLevel: 3 },
+    { name: 'Burger Joint', category: 'restaurant', cuisine: ['american'], rating: 4.1, priceLevel: 2 },
+    { name: 'Fine Dining Marina', category: 'restaurant', cuisine: ['french'], rating: 4.9, priceLevel: 4 }, // $80 > $50 budget -> dropped
+  ],
+}
+
+module.exports = { groupA, groupB, groupC }
