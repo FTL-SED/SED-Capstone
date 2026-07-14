@@ -1,20 +1,19 @@
 {
+  "type": "module",
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
     "test": "node --test"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.8.0",
-    "@prisma/client": "^7.8.0",
+    "@prisma/client": "6.7.0",
     "@supabase/supabase-js": "^2.110.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "morgan": "^1.11.0",
-    "pg": "^8.22.0"
+    "morgan": "^1.11.0"
   },
   "devDependencies": {
-    "prisma": "^7.8.0"
+    "prisma": "6.7.0"
   }
 }

@@ -1,11 +1,16 @@
-const express = require('express')
-const requireAuth = require('../middleware/auth')
-const { createUser, updateUser, getUser } = require('../controllers/userController')
+import express from 'express'
+import {
+  registerUser,
+  loginUser,
+  updateUser,
+  getUser,
+} from '../controllers/userController.js'
 
 const router = express.Router()
 
-router.post('/', requireAuth, createUser)
-router.put('/:id', requireAuth, updateUser)
-router.get('/:id', requireAuth, getUser)
+router.post('/register', registerUser)
+router.post('/login', loginUser)
+router.get('/:id', getUser)
+router.put('/:id', updateUser)
 
-module.exports = router
+export default router
