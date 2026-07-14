@@ -11,12 +11,19 @@ const { shareTag, overlap } = require('./helpers')
 
 const isRestaurant = (place) => place.category === 'restaurant'
 
+// True if this one member would "like" the place — cuisine match for
+// restaurants, interest-tag match for everything else. Exported so the
+// fairness guarantee (Step 5) can reuse the exact same notion of "liked".
+function memberLikes(place, member) {
+  return isRestaurant(place)
+    ? overlap(place.cuisine, member.foodPrefs)
+    : shareTag(place.tags, new Set(member.interestTags))
+}
+
 // Members who'd "like" this place — cuisine match for restaurants, interest-tag
 // match for everything else (activities, treats).
 function membersWhoLike(place, members) {
-  return isRestaurant(place)
-    ? members.filter((m) => overlap(place.cuisine, m.foodPrefs))
-    : members.filter((m) => shareTag(place.tags, new Set(m.interestTags)))
+  return members.filter((m) => memberLikes(place, m))
 }
 
 // How many of the group's combined tags/cuisines this place actually matches.
@@ -48,4 +55,4 @@ function softScore(place, members, groupTags, groupFood) {
   )
 }
 
-module.exports = { softScore }
+module.exports = { softScore, memberLikes }
