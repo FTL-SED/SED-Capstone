@@ -1,8 +1,8 @@
 import './NextButton.css'
 
-function NextButton() {
+function NextButton({ onClick }) {
   return (
-    <div>NextButton</div>
+    <button onClick={onClick}>next &gt;</button>
   );
 }
 

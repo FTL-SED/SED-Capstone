@@ -1,8 +1,18 @@
 import './Step2_TravelTransport.css'
+import TagInput from '../../../components/Inputs/TagInput/TagInput.jsx'
+import TravelRadiusField from '../TravelRadiusField/TravelRadiusField.jsx'
+import TransportField from '../TransportField/TransportField.jsx'
+import NextButton from '../../../components/Inputs/NextButton/NextButton.jsx'
 
-function Step2_TravelTransport() {
+function Step2_TravelTransport({ onNext }) {
   return (
-    <div>Step2_TravelTransport</div>
+    <div>
+      <h2>Starting Locations</h2>
+      <TagInput placeholder="Enter starting locations" tags={[]} />
+      <TravelRadiusField />
+      <TransportField />
+      <NextButton onClick={onNext} />
+    </div>
   );
 }
 

@@ -1,8 +1,16 @@
 import './TextInput.css'
 
-function TextInput() {
+function TextInput({ label, placeholder, value, onChange, type = "text" }) {
   return (
-    <div>TextInput</div>
+    <div>
+      {label && <label>{label}</label>}
+      <input
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+      />
+    </div>
   );
 }
 

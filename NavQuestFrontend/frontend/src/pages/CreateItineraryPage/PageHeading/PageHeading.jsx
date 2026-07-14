@@ -2,7 +2,7 @@ import './PageHeading.css'
 
 function PageHeading() {
   return (
-    <div>PageHeading</div>
+    <h1>Plan your next trip</h1>
   );
 }
 

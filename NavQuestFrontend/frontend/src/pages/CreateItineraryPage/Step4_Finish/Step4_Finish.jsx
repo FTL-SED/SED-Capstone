@@ -1,8 +1,15 @@
 import './Step4_Finish.css'
+import ItineraryDetailsPreview from '../ItineraryDetailsPreview/ItineraryDetailsPreview.jsx'
+import PrivacyField from '../PrivacyField/PrivacyField.jsx'
+import FinishButton from '../FinishButton/FinishButton.jsx'
 
 function Step4_Finish() {
   return (
-    <div>Step4_Finish</div>
+    <div>
+      <PrivacyField />
+      <ItineraryDetailsPreview />
+      <FinishButton />
+    </div>
   );
 }
 

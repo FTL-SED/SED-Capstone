@@ -1,8 +1,8 @@
 import './CloseButton.css'
 
-function CloseButton() {
+function CloseButton({ onClick }) {
   return (
-    <div>CloseButton</div>
+    <button onClick={onClick}>X</button>
   );
 }
 

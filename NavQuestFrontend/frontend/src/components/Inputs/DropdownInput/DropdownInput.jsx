@@ -1,8 +1,13 @@
 import './DropdownInput.css'
 
-function DropdownInput() {
+function DropdownInput({ placeholder, value, onChange }) {
   return (
-    <div>DropdownInput</div>
+    <input
+      type="text"
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+    />
   );
 }
 

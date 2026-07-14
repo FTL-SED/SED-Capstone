@@ -1,8 +1,29 @@
 import './ActionBar.css'
+import EditButton from '../EditButton/EditButton.jsx'
+import SaveButton from '../SaveButton/SaveButton.jsx'
+import DeleteButton from '../DeleteButton/DeleteButton.jsx'
+import BookmarkButton from '../BookmarkButton/BookmarkButton.jsx'
+import SaveCopyButton from '../SaveCopyButton/SaveCopyButton.jsx'
+import LikeButton from '../LikeButton/LikeButton.jsx'
 
-function ActionBar() {
+function ActionBar({ isOwner = true }) {
   return (
-    <div>ActionBar</div>
+    <div>
+      {isOwner ? (
+        <>
+          <EditButton />
+          <SaveButton />
+          <DeleteButton />
+          <LikeButton />
+        </>
+      ) : (
+        <>
+          <BookmarkButton />
+          <SaveCopyButton />
+          <LikeButton />
+        </>
+      )}
+    </div>
   );
 }
 

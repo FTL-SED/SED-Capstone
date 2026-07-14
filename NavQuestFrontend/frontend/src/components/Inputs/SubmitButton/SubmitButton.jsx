@@ -1,8 +1,8 @@
 import './SubmitButton.css'
 
-function SubmitButton() {
+function SubmitButton({ label = "Submit", onClick }) {
   return (
-    <div>SubmitButton</div>
+    <button type="submit" onClick={onClick}>{label}</button>
   );
 }
 

@@ -1,8 +1,8 @@
 import './PinTiming.css'
 
-function PinTiming() {
+function PinTiming({ startTime, endTime }) {
   return (
-    <div>PinTiming</div>
+    <p>{startTime} - {endTime}</p>
   );
 }
 

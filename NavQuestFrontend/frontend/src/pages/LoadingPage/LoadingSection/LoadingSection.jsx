@@ -1,8 +1,13 @@
 import './LoadingSection.css'
+import LoadingText from '../LoadingText/LoadingText.jsx'
+import LoadingSpinner from '../LoadingSpinner/LoadingSpinner.jsx'
 
 function LoadingSection() {
   return (
-    <div>LoadingSection</div>
+    <section>
+      <LoadingText />
+      <LoadingSpinner />
+    </section>
   );
 }
 

@@ -1,8 +1,8 @@
 import './Step.css'
 
-function Step() {
+function Step({ number, label }) {
   return (
-    <div>Step</div>
+    <div><span>{number}</span> <span>{label}</span></div>
   );
 }
 

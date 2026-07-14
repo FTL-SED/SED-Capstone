@@ -1,8 +1,8 @@
 import './CoverImage.css'
 
-function CoverImage() {
+function CoverImage({ src, alt }) {
   return (
-    <div>CoverImage</div>
+    <img src={src} alt={alt || "cover"} />
   );
 }
 

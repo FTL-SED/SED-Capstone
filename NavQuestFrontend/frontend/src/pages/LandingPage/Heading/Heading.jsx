@@ -1,8 +1,8 @@
 import './Heading.css'
 
-function Heading() {
+function Heading({ text = "NavQuest" }) {
   return (
-    <div>Heading</div>
+    <h1>{text}</h1>
   );
 }
 

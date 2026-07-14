@@ -1,8 +1,8 @@
 import './PinImage.css'
 
-function PinImage() {
+function PinImage({ src, alt }) {
   return (
-    <div>PinImage</div>
+    <img src={src} alt={alt || "pin"} />
   );
 }
 

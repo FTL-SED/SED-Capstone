@@ -1,8 +1,8 @@
 import './MapPin.css'
 
-function MapPin() {
+function MapPin({ number, onClick }) {
   return (
-    <div>MapPin</div>
+    <button onClick={onClick}>#{number}</button>
   );
 }
 

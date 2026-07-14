@@ -1,8 +1,8 @@
 import './LikeButton.css'
 
-function LikeButton() {
+function LikeButton({ onClick }) {
   return (
-    <div>LikeButton</div>
+    <button onClick={onClick}>like</button>
   );
 }
 

@@ -2,7 +2,7 @@ import './LoadingSpinner.css'
 
 function LoadingSpinner() {
   return (
-    <div>LoadingSpinner</div>
+    <div>Loading...</div>
   );
 }
 

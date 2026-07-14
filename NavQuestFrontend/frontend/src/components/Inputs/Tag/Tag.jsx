@@ -1,8 +1,8 @@
 import './Tag.css'
 
-function Tag() {
+function Tag({ label }) {
   return (
-    <div>Tag</div>
+    <span>{label}</span>
   );
 }
 

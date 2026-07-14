@@ -1,8 +1,13 @@
+import SectionHeader from '../../../components/SectionHeader/SectionHeader.jsx'
+import CardCarousel from '../../../components/CardCarousel/CardCarousel.jsx'
 import './ExploreSection.css'
 
 function ExploreSection() {
   return (
-    <div>ExploreSection</div>
+    <section>
+      <SectionHeader title="Explore" />
+      <CardCarousel itineraries={[]} />
+    </section>
   );
 }
 

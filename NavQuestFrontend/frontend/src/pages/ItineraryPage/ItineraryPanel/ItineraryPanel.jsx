@@ -1,8 +1,13 @@
 import './ItineraryPanel.css'
+import ActionBar from '../ActionBar/ActionBar.jsx'
+import WrittenItinerary from '../WrittenItinerary/WrittenItinerary.jsx'
 
-function ItineraryPanel() {
+function ItineraryPanel({ isOwner }) {
   return (
-    <div>ItineraryPanel</div>
+    <div>
+      <ActionBar isOwner={isOwner} />
+      <WrittenItinerary />
+    </div>
   );
 }
 

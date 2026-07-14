@@ -1,8 +1,8 @@
 import './FinishButton.css'
 
-function FinishButton() {
+function FinishButton({ onClick }) {
   return (
-    <div>FinishButton</div>
+    <button onClick={onClick}>finish</button>
   );
 }
 

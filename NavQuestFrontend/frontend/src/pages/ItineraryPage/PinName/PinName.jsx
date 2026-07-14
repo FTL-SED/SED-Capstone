@@ -1,8 +1,8 @@
 import './PinName.css'
 
-function PinName() {
+function PinName({ name }) {
   return (
-    <div>PinName</div>
+    <h3>{name}</h3>
   );
 }
 

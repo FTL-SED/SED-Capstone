@@ -1,8 +1,13 @@
+import SignUpText from '../SignUpText/SignUpText.jsx';
+import RegisterLink from '../RegisterLink/RegisterLink.jsx';
 import './SignUpSection.css'
 
 function SignUpSection() {
   return (
-    <div>SignUpSection</div>
+    <div>
+      <SignUpText />
+      <RegisterLink />
+    </div>
   );
 }
 

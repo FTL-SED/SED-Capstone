@@ -1,8 +1,8 @@
 import './LoadingText.css'
 
-function LoadingText() {
+function LoadingText({ text = 'Generating Itinerary' }) {
   return (
-    <div>LoadingText</div>
+    <p>{text}</p>
   );
 }
 

@@ -1,8 +1,13 @@
 import './ItinerariesGrid.css'
+import ItineraryCard from '../ItineraryCard/ItineraryCard.jsx'
 
-function ItinerariesGrid() {
+function ItinerariesGrid({ itineraries = [] }) {
   return (
-    <div>ItinerariesGrid</div>
+    <div>
+      {itineraries.map((itinerary) => (
+        <ItineraryCard key={itinerary.id} itinerary={itinerary} />
+      ))}
+    </div>
   );
 }
 

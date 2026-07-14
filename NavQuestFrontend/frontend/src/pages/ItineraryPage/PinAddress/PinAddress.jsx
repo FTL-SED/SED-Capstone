@@ -1,8 +1,8 @@
 import './PinAddress.css'
 
-function PinAddress() {
+function PinAddress({ address }) {
   return (
-    <div>PinAddress</div>
+    <p>{address}</p>
   );
 }
 

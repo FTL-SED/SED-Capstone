@@ -1,8 +1,8 @@
 import './Description.css'
 
-function Description() {
+function Description({ text }) {
   return (
-    <div>Description</div>
+    <p>{text || "description"}</p>
   );
 }
 

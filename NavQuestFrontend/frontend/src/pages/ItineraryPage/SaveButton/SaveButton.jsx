@@ -1,8 +1,8 @@
 import './SaveButton.css'
 
-function SaveButton() {
+function SaveButton({ onClick }) {
   return (
-    <div>SaveButton</div>
+    <button onClick={onClick}>save</button>
   );
 }
 

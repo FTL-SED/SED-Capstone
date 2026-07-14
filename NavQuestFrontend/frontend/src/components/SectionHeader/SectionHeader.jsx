@@ -1,8 +1,11 @@
 import './SectionHeader.css'
 
-function SectionHeader() {
+function SectionHeader({ title, children }) {
   return (
-    <div>SectionHeader</div>
+    <div>
+      <h2>{title}</h2>
+      {children}
+    </div>
   );
 }
 

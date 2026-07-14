@@ -1,8 +1,13 @@
 import './SearchBar.css'
 
-function SearchBar() {
+function SearchBar({ value, onChange }) {
   return (
-    <div>SearchBar</div>
+    <input
+      type="search"
+      placeholder="Explore Destinations"
+      value={value}
+      onChange={onChange}
+    />
   );
 }
 

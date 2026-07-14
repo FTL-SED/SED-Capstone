@@ -1,8 +1,8 @@
 import './LoadMoreButton.css'
 
-function LoadMoreButton() {
+function LoadMoreButton({ onClick }) {
   return (
-    <div>LoadMoreButton</div>
+    <button onClick={onClick}>Load More</button>
   );
 }
 

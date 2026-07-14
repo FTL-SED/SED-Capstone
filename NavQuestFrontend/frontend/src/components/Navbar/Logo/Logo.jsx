@@ -1,8 +1,11 @@
+import { Link } from 'react-router-dom'
 import './Logo.css'
 
 function Logo() {
   return (
-    <h3> NavQuest </h3>
+    <Link to="/">
+      <h3> NavQuest </h3>
+    </Link>
   );
 }
 

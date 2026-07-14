@@ -1,8 +1,8 @@
 import './Author.css'
 
-function Author() {
+function Author({ name }) {
   return (
-    <div>Author</div>
+    <p>{name || "author"}</p>
   );
 }
 

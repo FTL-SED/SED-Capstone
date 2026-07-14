@@ -1,8 +1,10 @@
 import './AuthCard.css'
 
-function AuthCard() {
+function AuthCard({ children }) {
   return (
-    <div>AuthCard</div>
+    <div>
+      {children}
+    </div>
   );
 }
 

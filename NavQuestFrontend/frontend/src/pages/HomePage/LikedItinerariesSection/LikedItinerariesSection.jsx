@@ -1,8 +1,13 @@
+import SectionHeader from '../../../components/SectionHeader/SectionHeader.jsx'
+import CardCarousel from '../../../components/CardCarousel/CardCarousel.jsx'
 import './LikedItinerariesSection.css'
 
 function LikedItinerariesSection() {
   return (
-    <div>LikedItinerariesSection</div>
+    <section>
+      <SectionHeader title="Liked" />
+      <CardCarousel itineraries={[]} />
+    </section>
   );
 }
 

@@ -1,8 +1,11 @@
 import './LoadingPage.css'
+import LoadingSection from './LoadingSection/LoadingSection.jsx'
 
 function LoadingPage() {
   return (
-    <div>LoadingPage</div>
+    <div>
+      <LoadingSection />
+    </div>
   );
 }
 

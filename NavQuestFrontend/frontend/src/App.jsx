@@ -1,10 +1,32 @@
-import { useState } from 'react'
-import Logo from "../src/components/Navbar/Logo"; 
+import { Routes, Route } from 'react-router-dom'
+import Navbar from './components/Navbar/Navbar'
+import Footer from './components/Footer/Footer'
+import LandingPage from './pages/LandingPage/LandingPage'
+import LoginPage from './pages/LoginPage/LoginPage'
+import RegisterPage from './pages/RegisterPage/RegisterPage'
+import HomePage from './pages/HomePage/HomePage'
+import DiscoverPage from './pages/DiscoverPage/DiscoverPage'
+import CreateItineraryPage from './pages/CreateItineraryPage/CreateItineraryPage'
+import LoadingPage from './pages/LoadingPage/LoadingPage'
+import ItineraryPage from './pages/ItineraryPage/ItineraryPage'
+import AccountPage from './pages/AccountPage/AccountPage'
 
 function App() {
   return (
     <div>
-      <Logo />
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/home" element={<HomePage />} />
+        <Route path="/discover" element={<DiscoverPage />} />
+        <Route path="/create" element={<CreateItineraryPage />} />
+        <Route path="/loading" element={<LoadingPage />} />
+        <Route path="/itinerary/:id" element={<ItineraryPage />} />
+        <Route path="/account" element={<AccountPage />} />
+      </Routes>
+      <Footer />
     </div>
   );
 }

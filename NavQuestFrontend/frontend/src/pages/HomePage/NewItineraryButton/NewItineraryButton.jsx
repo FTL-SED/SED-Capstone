@@ -1,8 +1,9 @@
+import { Link } from 'react-router-dom'
 import './NewItineraryButton.css'
 
 function NewItineraryButton() {
   return (
-    <div>NewItineraryButton</div>
+    <Link to="/create"><button>New Trip</button></Link>
   );
 }
 

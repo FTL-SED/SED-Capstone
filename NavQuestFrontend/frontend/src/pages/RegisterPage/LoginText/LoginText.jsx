@@ -2,7 +2,7 @@ import './LoginText.css'
 
 function LoginText() {
   return (
-    <div>LoginText</div>
+    <span>Already have an account? </span>
   );
 }
 

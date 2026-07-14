@@ -1,8 +1,13 @@
+import SectionHeader from '../../../components/SectionHeader/SectionHeader.jsx'
+import CardCarousel from '../../../components/CardCarousel/CardCarousel.jsx'
 import './BookmarkedItinerariesSection.css'
 
 function BookmarkedItinerariesSection() {
   return (
-    <div>BookmarkedItinerariesSection</div>
+    <section>
+      <SectionHeader title="Bookmarked" />
+      <CardCarousel itineraries={[]} />
+    </section>
   );
 }
 

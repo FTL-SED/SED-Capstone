@@ -1,8 +1,8 @@
 import './SaveCopyButton.css'
 
-function SaveCopyButton() {
+function SaveCopyButton({ onClick }) {
   return (
-    <div>SaveCopyButton</div>
+    <button onClick={onClick}>copy</button>
   );
 }
 

@@ -1,8 +1,8 @@
 import './Title.css'
 
-function Title() {
+function Title({ text }) {
   return (
-    <div>Title</div>
+    <h1>{text || "TITLE"}</h1>
   );
 }
 

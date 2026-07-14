@@ -1,8 +1,9 @@
+import { Link } from 'react-router-dom'
 import './StartPlanningButton.css'
 
 function StartPlanningButton() {
   return (
-    <div>StartPlanningButton</div>
+    <Link to="/register"><button>Start Planning</button></Link>
   );
 }
 

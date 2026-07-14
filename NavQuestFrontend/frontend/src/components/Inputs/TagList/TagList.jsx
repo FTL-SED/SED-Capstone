@@ -1,8 +1,13 @@
 import './TagList.css'
+import Tag from '../Tag/Tag.jsx'
 
-function TagList() {
+function TagList({ tags = [] }) {
   return (
-    <div>TagList</div>
+    <div>
+      {tags.map((tag, index) => (
+        <Tag key={index} label={tag} />
+      ))}
+    </div>
   );
 }
 

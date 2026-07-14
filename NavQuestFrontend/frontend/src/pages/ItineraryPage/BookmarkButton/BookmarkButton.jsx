@@ -1,8 +1,8 @@
 import './BookmarkButton.css'
 
-function BookmarkButton() {
+function BookmarkButton({ onClick }) {
   return (
-    <div>BookmarkButton</div>
+    <button onClick={onClick}>bookmark</button>
   );
 }
 

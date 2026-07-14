@@ -1,8 +1,13 @@
+import LoginText from '../LoginText/LoginText.jsx'
+import LoginLink from '../LoginLink/LoginLink.jsx'
 import './LoginSection.css'
 
 function LoginSection() {
   return (
-    <div>LoginSection</div>
+    <div>
+      <LoginText />
+      <LoginLink />
+    </div>
   );
 }
 

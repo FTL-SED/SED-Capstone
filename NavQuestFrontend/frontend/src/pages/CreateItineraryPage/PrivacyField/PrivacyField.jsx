@@ -2,7 +2,13 @@ import './PrivacyField.css'
 
 function PrivacyField() {
   return (
-    <div>PrivacyField</div>
+    <div>
+      <label>Private/Public</label>
+      <select>
+        <option>Private</option>
+        <option>Public</option>
+      </select>
+    </div>
   );
 }
 

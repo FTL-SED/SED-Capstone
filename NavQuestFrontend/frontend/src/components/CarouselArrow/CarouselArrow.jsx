@@ -1,8 +1,8 @@
 import './CarouselArrow.css'
 
-function CarouselArrow() {
+function CarouselArrow({ onClick }) {
   return (
-    <div>CarouselArrow</div>
+    <button onClick={onClick}>&gt;</button>
   );
 }
 

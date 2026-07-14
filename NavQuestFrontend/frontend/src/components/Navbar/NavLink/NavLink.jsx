@@ -1,8 +1,9 @@
 import './NavLink.css'
+import { Link } from 'react-router-dom'
 
-function NavLink() {
+function NavLink({label, to}) {
   return (
-    <div>NavLink</div>
+    <Link to={to}>{label}</Link>
   );
 }
 

@@ -1,8 +1,8 @@
 import './Subheading.css'
 
-function Subheading() {
+function Subheading({ text = "The AI-Itinerary Planner" }) {
   return (
-    <div>Subheading</div>
+    <p>{text}</p>
   );
 }
 

@@ -1,8 +1,9 @@
+import { Link } from 'react-router-dom'
 import './LoginLink.css'
 
 function LoginLink() {
   return (
-    <div>LoginLink</div>
+    <Link to="/login">Log in.</Link>
   );
 }
 

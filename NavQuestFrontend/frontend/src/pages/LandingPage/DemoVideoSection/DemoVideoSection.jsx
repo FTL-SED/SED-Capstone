@@ -1,8 +1,11 @@
+import VideoPlayer from '../VideoPlayer/VideoPlayer.jsx'
 import './DemoVideoSection.css'
 
 function DemoVideoSection() {
   return (
-    <div>DemoVideoSection</div>
+    <section>
+      <VideoPlayer />
+    </section>
   );
 }
 

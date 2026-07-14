@@ -1,8 +1,15 @@
 import './CardCarousel.css'
+import ItineraryCard from '../ItineraryCard/ItineraryCard.jsx'
+import CarouselArrow from '../CarouselArrow/CarouselArrow.jsx'
 
-function CardCarousel() {
+function CardCarousel({ itineraries = [] }) {
   return (
-    <div>CardCarousel</div>
+    <div>
+      {itineraries.map((itinerary) => (
+        <ItineraryCard key={itinerary.id} itinerary={itinerary} />
+      ))}
+      <CarouselArrow />
+    </div>
   );
 }
 

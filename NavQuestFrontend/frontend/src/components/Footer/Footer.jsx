@@ -2,7 +2,9 @@ import './Footer.css'
 
 function Footer() {
   return (
-    <div>Footer</div>
+    <footer>
+      <p>© 2026 NavQuest</p>
+    </footer>
   );
 }
 

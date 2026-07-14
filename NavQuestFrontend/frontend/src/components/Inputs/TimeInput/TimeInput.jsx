@@ -1,8 +1,11 @@
 import './TimeInput.css'
 
-function TimeInput() {
+function TimeInput({ label, value, onChange }) {
   return (
-    <div>TimeInput</div>
+    <div>
+      {label && <label>{label}</label>}
+      <input type="time" value={value} onChange={onChange} />
+    </div>
   );
 }
 

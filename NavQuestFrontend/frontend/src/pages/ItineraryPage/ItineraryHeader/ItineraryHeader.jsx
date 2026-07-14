@@ -1,8 +1,17 @@
 import './ItineraryHeader.css'
+import Title from '../Title/Title.jsx'
+import Description from '../Description/Description.jsx'
+import Author from '../Author/Author.jsx'
+import CoverImage from '../CoverImage/CoverImage.jsx'
 
-function ItineraryHeader() {
+function ItineraryHeader({ coverImageUrl, title, description, author }) {
   return (
-    <div>ItineraryHeader</div>
+    <header>
+      <CoverImage src={coverImageUrl} />
+      <Title text={title} />
+      <Description text={description} />
+      <Author name={author} />
+    </header>
   );
 }
 

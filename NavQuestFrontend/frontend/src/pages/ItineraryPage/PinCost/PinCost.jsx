@@ -1,8 +1,8 @@
 import './PinCost.css'
 
-function PinCost() {
+function PinCost({ cost }) {
   return (
-    <div>PinCost</div>
+    <p>${cost} per person</p>
   );
 }
 

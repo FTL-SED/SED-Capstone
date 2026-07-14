@@ -1,8 +1,8 @@
 import './EditButton.css'
 
-function EditButton() {
+function EditButton({ onClick }) {
   return (
-    <div>EditButton</div>
+    <button onClick={onClick}>edit</button>
   );
 }
 
