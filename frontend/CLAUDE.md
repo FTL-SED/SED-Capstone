@@ -1,0 +1,1 @@
+#1 Follow the folder and file structure exactly as defined in the specification document. Do not create, rename, move, or delete any folders or files unless the specification explicitly requires it. Do not add extra files, components, utilities, configuration files, or directories that are not requested.
