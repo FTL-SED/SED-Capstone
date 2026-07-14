@@ -1,0 +1,20 @@
+/* Small neutral gray pill shown on the right of the "Created" section header */
+.new-itinerary-button {
+  display: inline-flex;
+}
+
+.new-itinerary-button__btn {
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--slate-600);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 6px 14px;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.new-itinerary-button__btn:hover {
+  background: var(--slate-800);
+}

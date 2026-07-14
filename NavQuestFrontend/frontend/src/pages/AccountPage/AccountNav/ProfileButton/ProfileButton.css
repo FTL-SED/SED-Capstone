@@ -1,0 +1,11 @@
+.profile-button {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  text-align: left;
+}

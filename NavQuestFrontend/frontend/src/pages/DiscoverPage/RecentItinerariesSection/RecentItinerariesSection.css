@@ -1,0 +1,5 @@
+/* Grid of recent itineraries followed by a centered Load More button */
+.recent-itineraries-section .load-more-button {
+  display: block;
+  margin: 28px auto 0;
+}

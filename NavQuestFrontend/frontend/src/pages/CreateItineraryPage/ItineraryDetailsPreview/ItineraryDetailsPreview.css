@@ -1,0 +1,22 @@
+.itinerary-details-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 320px;
+  padding: 32px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+  text-align: center;
+}
+
+.itinerary-details-preview h2 {
+  font-size: 1.4rem;
+}
+
+.itinerary-details-preview p {
+  color: var(--slate-500);
+  max-width: 40ch;
+}

@@ -1,0 +1,15 @@
+.register-button {
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.register-button:hover {
+  background: var(--slate-800);
+  border-color: var(--slate-800);
+}

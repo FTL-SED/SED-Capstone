@@ -1,0 +1,15 @@
+.finish-button {
+  padding: 10px 24px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  text-transform: capitalize;
+  transition: background 0.15s ease;
+}
+
+.finish-button:hover {
+  background: var(--slate-800);
+}

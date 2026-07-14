@@ -1,0 +1,16 @@
+.load-more-button {
+  display: block;
+  margin: 32px auto 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--slate-600);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 10px 24px;
+  transition: background 0.15s ease;
+}
+
+.load-more-button:hover {
+  background: var(--slate-800);
+}

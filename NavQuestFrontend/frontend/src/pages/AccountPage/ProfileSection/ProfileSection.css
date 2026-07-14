@@ -1,0 +1,16 @@
+.profile-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.profile-section .section-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-section .text-input + .text-input {
+  margin-top: 16px;
+}

@@ -1,0 +1,37 @@
+.itinerary-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.itinerary-page__body {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.itinerary-page__body > .itinerary-panel {
+  flex: 0 0 440px;
+  max-width: 440px;
+}
+
+.itinerary-page__body > .map-view {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media (max-width: 880px) {
+  .itinerary-page__body {
+    flex-direction: column;
+  }
+
+  .itinerary-page__body > .itinerary-panel {
+    flex: 1 1 auto;
+    max-width: none;
+    width: 100%;
+  }
+
+  .itinerary-page__body > .map-view {
+    width: 100%;
+  }
+}

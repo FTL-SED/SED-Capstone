@@ -1,0 +1,11 @@
+.tag-input {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tag-input > label {
+  color: var(--slate-600);
+  font-size: 0.875rem;
+  font-weight: 500;
+}

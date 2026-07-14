@@ -1,0 +1,16 @@
+.map-pin {
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--slate-800);
+  border: none;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.map-pin:hover {
+  background: var(--ink);
+  transform: translateY(-1px);
+}

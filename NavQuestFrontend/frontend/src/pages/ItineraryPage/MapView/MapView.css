@@ -1,0 +1,21 @@
+.map-view {
+  position: relative;
+  min-height: 560px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background-color: var(--surface-muted);
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 39px, var(--border) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, var(--border) 40px);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.map-view__pins {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}

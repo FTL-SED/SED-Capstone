@@ -1,0 +1,30 @@
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.navbar__inner {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  height: var(--nav-h);
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Push the account icon / auth buttons to the far right */
+.navbar__inner > .account-icon,
+.navbar__inner > .auth-buttons {
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .navbar__inner {
+    gap: 18px;
+    padding: 0 16px;
+  }
+}
