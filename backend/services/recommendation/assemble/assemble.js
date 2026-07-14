@@ -1,7 +1,7 @@
 // Step 6 — food quota + shortlist assembly. Turns one ranked, scored list of
 // candidates into the final shortlist the AI sequences: activities lead, but
 // meals are bounded to a quota so they neither dominate nor disappear. Per
-// ../../.claude/docs/recommendation-engine.md ("One ranked shortlist with a
+// ../../../../.claude/docs/recommendation-engine.md ("One ranked shortlist with a
 // food quota"). Pure: no DB, no Express.
 
 const {
@@ -9,8 +9,8 @@ const {
   FOOD_MAX,
   AVG_STOP_DURATION_MIN,
   SHORTLIST_MULTIPLIER,
-} = require('../../config/recommendation')
-const { toMinutes } = require('./helpers')
+} = require('../../../config/recommendation')
+const { toMinutes } = require('../helpers/helpers')
 
 // Only category === "restaurant" counts against the food quota. Treats
 // (coffee/dessert/boba) live under other categories (e.g. "cafe") and are

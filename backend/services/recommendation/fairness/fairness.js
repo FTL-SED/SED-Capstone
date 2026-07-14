@@ -2,10 +2,10 @@
 // niche interest completely unrepresented (their best match just never scores
 // high enough to make the cut). This is the last check before the shortlist
 // ships: every member gets ≥1 place they'd like, or we inject their best one.
-// Per ../../.claude/docs/recommendation-engine.md ("Fairness guarantee"). Pure:
+// Per ../../../../.claude/docs/recommendation-engine.md ("Fairness guarantee"). Pure:
 // returns a new array, never mutates `shortlist` or `candidates`.
 
-const { memberLikes } = require('./score')
+const { memberLikes } = require('../score/score')
 
 const identity = (place) => place.id ?? place.name
 

@@ -1,13 +1,13 @@
 // Stage 2 of the recommendation engine: the soft score. Ranks the survivors of
 // Stage 1 (filters.js) on one normalized 0–1 scale, per
-// ../../.claude/docs/recommendation-engine.md ("Stage 2 — Soft score").
+// ../../../../.claude/docs/recommendation-engine.md ("Stage 2 — Soft score").
 //
 // Two matching signals, one score: activities are scored on interest-tag
 // overlap, restaurants on cuisine overlap — so both land on the same scale and
 // rank together in a single list. Pure: no DB, no Express.
 
-const { WEIGHTS, INTENSITY_SATURATION, QUALITY_DEFAULT } = require('../../config/recommendation')
-const { shareTag, overlap } = require('./helpers')
+const { WEIGHTS, INTENSITY_SATURATION, QUALITY_DEFAULT } = require('../../../config/recommendation')
+const { shareTag, overlap } = require('../helpers/helpers')
 
 const isRestaurant = (place) => place.category === 'restaurant'
 
