@@ -79,4 +79,5 @@ module.exports = {
   estPricePerPerson,
   budgetSanityOk,
   isOpenInWindow,
+  toMinutes,
 }
