@@ -4,13 +4,13 @@
 // ../../../../.claude/docs/recommendation-engine.md ("One ranked shortlist with a
 // food quota"). Pure: no DB, no Express.
 
-const {
+import {
   FOOD_MIN,
   FOOD_MAX,
   AVG_STOP_DURATION_MIN,
   SHORTLIST_MULTIPLIER,
-} = require('../../../config/recommendation')
-const { toMinutes } = require('../helpers/helpers')
+} from '../../../config/recommendation.js'
+import { toMinutes } from '../helpers/helpers.js'
 
 // Only category === "restaurant" counts against the food quota. Treats
 // (coffee/dessert/boba) live under other categories (e.g. "cafe") and are
@@ -66,4 +66,4 @@ function assembleWithFoodQuota(ranked, candidates, shortlistSize) {
   return shortlist
 }
 
-module.exports = { computeShortlistSize, assembleWithFoodQuota }
+export { computeShortlistSize, assembleWithFoodQuota }

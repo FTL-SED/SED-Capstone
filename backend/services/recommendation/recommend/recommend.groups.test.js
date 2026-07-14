@@ -4,14 +4,14 @@
 // categories, food quota bounds, ratings breaking ties, missing-data flags
 // surviving (not dropped), and per-person budget sanity at the shortlist level.
 
-const { test } = require('node:test')
-const assert = require('node:assert/strict')
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
 
-const { recommend } = require('./recommend')
-const { memberLikes } = require('../score/score')
-const { estPricePerPerson } = require('../helpers/helpers')
-const { FOOD_MIN, FOOD_MAX } = require('../../../config/recommendation')
-const { groupA, groupB, groupC } = require('./mockGroups')
+import { recommend } from './recommend.js'
+import { memberLikes } from '../score/score.js'
+import { estPricePerPerson } from '../helpers/helpers.js'
+import { FOOD_MIN, FOOD_MAX } from '../../../config/recommendation.js'
+import { groupA, groupB, groupC } from './mockGroups.js'
 
 const groups = { A: groupA, B: groupB, C: groupC }
 

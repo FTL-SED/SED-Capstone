@@ -5,7 +5,7 @@
 // Per ../../../../.claude/docs/recommendation-engine.md ("Fairness guarantee"). Pure:
 // returns a new array, never mutates `shortlist` or `candidates`.
 
-const { memberLikes } = require('../score/score')
+import { memberLikes } from '../score/score.js'
 
 const identity = (place) => place.id ?? place.name
 
@@ -35,4 +35,4 @@ function ensureEveryMemberCovered(shortlist, members, candidates) {
   return covered
 }
 
-module.exports = { ensureEveryMemberCovered }
+export { ensureEveryMemberCovered }

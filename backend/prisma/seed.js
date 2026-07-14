@@ -1,6 +1,6 @@
-require('dotenv').config()
+import 'dotenv/config'
 
-const { PrismaClient } = require('@prisma/client')
+import { PrismaClient } from '@prisma/client'
 
 // Self-contained client for the seed so it doesn't depend on the app's
 // lib/prisma.js (which uses a driver adapter — a preview feature under Prisma

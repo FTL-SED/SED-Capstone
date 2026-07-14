@@ -6,8 +6,8 @@
 // overlap, restaurants on cuisine overlap — so both land on the same scale and
 // rank together in a single list. Pure: no DB, no Express.
 
-const { WEIGHTS, INTENSITY_SATURATION, QUALITY_DEFAULT } = require('../../../config/recommendation')
-const { shareTag, overlap } = require('../helpers/helpers')
+import { WEIGHTS, INTENSITY_SATURATION, QUALITY_DEFAULT } from '../../../config/recommendation.js'
+import { shareTag, overlap } from '../helpers/helpers.js'
 
 const isRestaurant = (place) => place.category === 'restaurant'
 
@@ -55,4 +55,4 @@ function softScore(place, members, groupTags, groupFood) {
   )
 }
 
-module.exports = { softScore, memberLikes }
+export { softScore, memberLikes }

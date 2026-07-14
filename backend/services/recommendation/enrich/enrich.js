@@ -10,4 +10,4 @@ function enrichMissing(places) {
   return places
 }
 
-module.exports = { enrichMissing }
+export { enrichMissing }

@@ -1,7 +1,7 @@
-const { test } = require('node:test')
-const assert = require('node:assert/strict')
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
 
-const { hardFilter } = require('./filters')
+import { hardFilter } from './filters.js'
 
 // A group that likes art + coffee, one vegan member, a generous budget and a
 // wide daytime window — the baseline most tests tweak one place against.

@@ -1,7 +1,7 @@
-const { test } = require('node:test')
-const assert = require('node:assert/strict')
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
 
-const { computeShortlistSize, assembleWithFoodQuota } = require('./assemble')
+import { computeShortlistSize, assembleWithFoodQuota } from './assemble.js'
 
 test('computeShortlistSize scales with the trip window (stops * multiplier)', () => {
   // 9 hours / 90 min avg stop = 6 stops * 3x multiplier = 18.

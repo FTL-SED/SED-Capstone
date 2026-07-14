@@ -10,7 +10,7 @@
 //     diet         = list of diets the place can serve, e.g. ['vegetarian']
 //   member = { name, interestTags[], foodPrefs[], diet[]? }
 
-const { PRICE_LEVEL_USD } = require('../../../config/recommendation')
+import { PRICE_LEVEL_USD } from '../../../config/recommendation.js'
 
 // True if the place carries at least one of the group's interest tags. Used to
 // keep activities relevant to what the group actually likes.
@@ -39,8 +39,11 @@ function passesDiet(place, members) {
   return [...required].every((d) => offered.has(d))
 }
 
-// Estimated per-person cost from the tunable price table, or null if unknown.
+// Estimated per-person cost. Prefers an already-known exact price (e.g. from
+// a seeded Pin) over the priceLevel (0-4) bucket estimate; null if neither is
+// known.
 function estPricePerPerson(place) {
+  if (typeof place.pricePerPerson === 'number') return place.pricePerPerson
   if (place.priceLevel == null) return null
   return PRICE_LEVEL_USD[place.priceLevel] ?? null
 }
@@ -72,7 +75,7 @@ function isOpenInWindow(place, startTime, endTime) {
   })
 }
 
-module.exports = {
+export {
   shareTag,
   overlap,
   passesDiet,

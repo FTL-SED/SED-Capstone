@@ -1,7 +1,7 @@
-const { test } = require('node:test')
-const assert = require('node:assert/strict')
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
 
-const { softScore } = require('./score')
+import { softScore } from './score.js'
 
 test('a whole-group-liked place outranks a niche one', () => {
   const members = [

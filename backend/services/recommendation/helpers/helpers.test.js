@@ -1,14 +1,14 @@
-const { test } = require('node:test')
-const assert = require('node:assert/strict')
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
 
-const {
+import {
   shareTag,
   overlap,
   passesDiet,
   estPricePerPerson,
   budgetSanityOk,
   isOpenInWindow,
-} = require('./helpers')
+} from './helpers.js'
 
 test('shareTag: true when a place tag is in the group set', () => {
   assert.equal(shareTag(['museum', 'art'], new Set(['art', 'coffee'])), true)
@@ -59,6 +59,11 @@ test('estPricePerPerson: maps priceLevel via the table', () => {
 
 test('estPricePerPerson: null when priceLevel missing (missing data)', () => {
   assert.equal(estPricePerPerson({}), null)
+})
+
+test('estPricePerPerson: prefers an already-known exact price over priceLevel', () => {
+  assert.equal(estPricePerPerson({ pricePerPerson: 18.5, priceLevel: 4 }), 18.5)
+  assert.equal(estPricePerPerson({ pricePerPerson: 0 }), 0) // falsy but known, must not fall through
 })
 
 test('budgetSanityOk: drops only when one visit exceeds the whole budget', () => {

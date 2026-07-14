@@ -1,7 +1,7 @@
-const { test } = require('node:test')
-const assert = require('node:assert/strict')
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
 
-const { recommend } = require('./recommend')
+import { recommend } from './recommend.js'
 
 const members = [
   { name: 'Alice', startLocation: 'Downtown', interestTags: ['art', 'museum'], foodPrefs: ['sushi'] },

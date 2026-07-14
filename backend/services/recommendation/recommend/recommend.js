@@ -4,12 +4,12 @@
 // ../../../../.claude/docs/recommendation-engine.md ("Pseudocode (Node)").
 // Pure: no DB, no Express — `places` is passed in, never queried here.
 
-const { hardFilter } = require('../filters/filters')
-const { softScore } = require('../score/score')
-const { enrichMissing } = require('../enrich/enrich')
-const { computeShortlistSize, assembleWithFoodQuota } = require('../assemble/assemble')
-const { ensureEveryMemberCovered } = require('../fairness/fairness')
-const { ENRICHMENT_POOL_SIZE } = require('../../../config/recommendation')
+import { hardFilter } from '../filters/filters.js'
+import { softScore } from '../score/score.js'
+import { enrichMissing } from '../enrich/enrich.js'
+import { computeShortlistSize, assembleWithFoodQuota } from '../assemble/assemble.js'
+import { ensureEveryMemberCovered } from '../fairness/fairness.js'
+import { ENRICHMENT_POOL_SIZE } from '../../../config/recommendation.js'
 
 // Attach a fresh .score to each place and sort best-first. Re-run whenever the
 // underlying data changes (e.g. after enrichment) since scores can shift.
@@ -57,4 +57,4 @@ function recommend(trip, members, places) {
   }
 }
 
-module.exports = { recommend }
+export { recommend }

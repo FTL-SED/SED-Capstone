@@ -109,4 +109,4 @@ const groupC = {
   ],
 }
 
-module.exports = { groupA, groupB, groupC }
+export { groupA, groupB, groupC }
