@@ -4,7 +4,7 @@ import TagList from '../TagList/TagList.jsx'
 
 function TagInput({ label, placeholder, tags = [] }) {
   return (
-    <div>
+    <div className="tag-input">
       {label && <label>{label}</label>}
       <DropdownInput placeholder={placeholder} />
       <TagList tags={tags} />

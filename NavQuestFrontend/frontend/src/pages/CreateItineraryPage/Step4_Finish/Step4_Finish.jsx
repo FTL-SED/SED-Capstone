@@ -5,7 +5,7 @@ import FinishButton from '../FinishButton/FinishButton.jsx'
 
 function Step4_Finish() {
   return (
-    <div>
+    <div className="step4-finish">
       <PrivacyField />
       <ItineraryDetailsPreview />
       <FinishButton />

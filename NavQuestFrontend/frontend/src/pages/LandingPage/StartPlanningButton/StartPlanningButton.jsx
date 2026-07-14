@@ -3,7 +3,7 @@ import './StartPlanningButton.css'
 
 function StartPlanningButton() {
   return (
-    <Link to="/register"><button>Start Planning</button></Link>
+    <Link to="/register" className="start-planning-button"><button className="start-planning-button__btn">Start Planning</button></Link>
   );
 }
 

@@ -5,7 +5,7 @@ import './ProfileSection.css'
 
 function ProfileSection() {
   return (
-    <section>
+    <section className="profile-section">
       <SectionHeader title="Profile" />
       <UsernameField />
       <EmailField />

@@ -2,7 +2,7 @@ import './LikeButton.css'
 
 function LikeButton({ onClick }) {
   return (
-    <button onClick={onClick}>like</button>
+    <button className="like-button" onClick={onClick}>like</button>
   );
 }
 

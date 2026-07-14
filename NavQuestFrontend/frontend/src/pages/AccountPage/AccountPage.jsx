@@ -6,12 +6,12 @@ import './AccountPage.css'
 
 function AccountPage() {
   return (
-    <div>
-      <div>
+    <div className="account-page">
+      <div className="account-page__aside">
         <AccountAvatar />
         <AccountNav />
       </div>
-      <div>
+      <div className="account-page__main">
         <ProfileSection />
         <ChangePasswordSection />
       </div>

@@ -2,7 +2,7 @@ import './Description.css'
 
 function Description({ text }) {
   return (
-    <p>{text || "description"}</p>
+    <p className="itinerary-description">{text || "description"}</p>
   );
 }
 

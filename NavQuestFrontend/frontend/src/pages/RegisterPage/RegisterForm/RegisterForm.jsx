@@ -5,7 +5,7 @@ import './RegisterForm.css'
 
 function RegisterForm() {
   return (
-    <form>
+    <form className="register-form">
       <TextInput placeholder="Email" type="email" />
       <TextInput placeholder="Username" />
       <PasswordInput placeholder="Password" />

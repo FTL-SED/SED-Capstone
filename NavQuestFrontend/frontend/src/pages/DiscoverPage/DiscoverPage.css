@@ -1,0 +1,6 @@
+/* Discover page: centered search near the top, results section below */
+.discover-page {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}

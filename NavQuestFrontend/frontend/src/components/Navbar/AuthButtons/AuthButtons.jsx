@@ -5,7 +5,7 @@ import RegisterButton from '../RegisterButton/RegisterButton.jsx';
 
 function AuthButtons() {
   return (
-    <div>
+    <div className="auth-buttons">
       <LoginButton/>
       <RegisterButton/>
     </div>

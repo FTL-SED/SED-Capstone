@@ -3,7 +3,7 @@ import Tag from '../Tag/Tag.jsx'
 
 function TagList({ tags = [] }) {
   return (
-    <div>
+    <div className="tag-list">
       {tags.map((tag, index) => (
         <Tag key={index} label={tag} />
       ))}

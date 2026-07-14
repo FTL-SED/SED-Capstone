@@ -2,7 +2,7 @@ import './PasswordInput.css'
 
 function PasswordInput({ label, placeholder = "Password", value, onChange }) {
   return (
-    <div>
+    <div className="password-input">
       {label && <label>{label}</label>}
       <input
         type="password"

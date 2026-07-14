@@ -4,7 +4,7 @@ import './LoginSection.css'
 
 function LoginSection() {
   return (
-    <div>
+    <div className="login-section">
       <LoginText />
       <LoginLink />
     </div>

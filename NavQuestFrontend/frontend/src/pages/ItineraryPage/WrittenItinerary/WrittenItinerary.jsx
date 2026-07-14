@@ -2,7 +2,7 @@ import './WrittenItinerary.css'
 
 function WrittenItinerary() {
   return (
-    <div><h3>Written Itinerary</h3></div>
+    <div className="written-itinerary"><h3 className="written-itinerary__label">Written Itinerary</h3></div>
   );
 }
 

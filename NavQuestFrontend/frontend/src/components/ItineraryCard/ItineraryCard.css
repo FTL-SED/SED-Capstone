@@ -1,0 +1,10 @@
+/* Base .itinerary-card visuals live in App.css. */
+
+.itinerary-card {
+  text-decoration: none;
+  color: var(--slate-600);
+}
+
+.itinerary-card h3 {
+  color: var(--ink);
+}

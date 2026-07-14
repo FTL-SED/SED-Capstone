@@ -4,7 +4,7 @@ import WrittenItinerary from '../WrittenItinerary/WrittenItinerary.jsx'
 
 function ItineraryPanel({ isOwner }) {
   return (
-    <div>
+    <div className="itinerary-panel">
       <ActionBar isOwner={isOwner} />
       <WrittenItinerary />
     </div>

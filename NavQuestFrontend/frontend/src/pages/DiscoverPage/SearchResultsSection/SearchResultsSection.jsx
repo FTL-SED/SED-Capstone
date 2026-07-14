@@ -5,7 +5,7 @@ import LoadMoreButton from '../../../components/LoadMoreButton/LoadMoreButton.js
 
 function SearchResultsSection() {
   return (
-    <section>
+    <section className="search-results-section">
       <SectionHeader title="Search Results" />
       <ItinerariesGrid itineraries={[]} />
       <LoadMoreButton />

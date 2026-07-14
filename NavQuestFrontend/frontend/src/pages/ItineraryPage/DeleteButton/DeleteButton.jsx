@@ -2,7 +2,7 @@ import './DeleteButton.css'
 
 function DeleteButton({ onClick }) {
   return (
-    <button onClick={onClick}>delete</button>
+    <button className="delete-button" onClick={onClick}>delete</button>
   );
 }
 

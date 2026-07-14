@@ -2,7 +2,7 @@ import './PinCost.css'
 
 function PinCost({ cost }) {
   return (
-    <p>${cost} per person</p>
+    <p className="pin-cost">${cost} per person</p>
   );
 }
 

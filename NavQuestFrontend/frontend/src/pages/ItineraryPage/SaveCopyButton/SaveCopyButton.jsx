@@ -2,7 +2,7 @@ import './SaveCopyButton.css'
 
 function SaveCopyButton({ onClick }) {
   return (
-    <button onClick={onClick}>copy</button>
+    <button className="save-copy-button" onClick={onClick}>copy</button>
   );
 }
 

@@ -5,7 +5,7 @@ import ItineraryWizard from './ItineraryWizard/ItineraryWizard.jsx'
 
 function CreateItineraryPage() {
   return (
-    <div>
+    <div className="create-itinerary-page">
       <PageHeading />
       <WizardStepper />
       <ItineraryWizard />

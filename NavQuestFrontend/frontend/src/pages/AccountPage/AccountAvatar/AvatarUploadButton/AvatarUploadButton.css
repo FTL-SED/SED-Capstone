@@ -1,0 +1,21 @@
+.avatar-upload-button {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: background 0.15s ease;
+}
+
+.avatar-upload-button:hover {
+  background: var(--slate-800);
+}

@@ -2,7 +2,7 @@ import './Title.css'
 
 function Title({ text }) {
   return (
-    <h1>{text || "TITLE"}</h1>
+    <h1 className="itinerary-title">{text || "TITLE"}</h1>
   );
 }
 

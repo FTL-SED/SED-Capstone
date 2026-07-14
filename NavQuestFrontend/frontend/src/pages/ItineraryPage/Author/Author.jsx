@@ -2,7 +2,7 @@ import './Author.css'
 
 function Author({ name }) {
   return (
-    <p>{name || "author"}</p>
+    <p className="itinerary-author">{name || "author"}</p>
   );
 }
 

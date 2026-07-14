@@ -2,7 +2,7 @@ import './FinishButton.css'
 
 function FinishButton({ onClick }) {
   return (
-    <button onClick={onClick}>finish</button>
+    <button className="finish-button" type="button" onClick={onClick}>finish</button>
   );
 }
 

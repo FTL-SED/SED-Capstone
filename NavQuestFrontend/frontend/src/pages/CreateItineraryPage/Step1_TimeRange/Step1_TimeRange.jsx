@@ -4,7 +4,7 @@ import NextButton from '../../../components/Inputs/NextButton/NextButton.jsx'
 
 function Step1_TimeRange({ onNext }) {
   return (
-    <div>
+    <div className="step1-time-range">
       <TimeRangeField />
       <NextButton onClick={onNext} />
     </div>

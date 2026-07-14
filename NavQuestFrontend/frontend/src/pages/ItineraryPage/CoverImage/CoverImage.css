@@ -1,0 +1,16 @@
+.cover-image {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--surface-muted);
+  opacity: 0.9;
+}
+
+/* Placeholder look when no src is provided (broken img box) */
+.cover-image:not([src]),
+.cover-image[src=""] {
+  background: var(--surface-muted);
+}

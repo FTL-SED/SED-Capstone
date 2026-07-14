@@ -5,7 +5,7 @@ import './HeroSection.css'
 
 function HeroSection() {
   return (
-    <section>
+    <section className="hero-section">
       <Heading />
       <Subheading />
       <StartPlanningButton />

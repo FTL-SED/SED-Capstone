@@ -7,7 +7,7 @@ import PinAddress from '../PinAddress/PinAddress.jsx'
 
 function PinDetailModal({ pin = {} }) {
   return (
-    <div>
+    <div className="pin-detail-modal">
       <PinImage src={pin.locationImageUrl} />
       <PinName name={pin.name} />
       <PinTiming startTime={pin.startTime} endTime={pin.endTime} />

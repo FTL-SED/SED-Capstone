@@ -3,7 +3,7 @@ import './DemoVideoSection.css'
 
 function DemoVideoSection() {
   return (
-    <section>
+    <section className="demo-video-section">
       <VideoPlayer />
     </section>
   );

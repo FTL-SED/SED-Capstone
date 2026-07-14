@@ -6,9 +6,11 @@ import NextButton from '../../../components/Inputs/NextButton/NextButton.jsx'
 
 function Step2_TravelTransport({ onNext }) {
   return (
-    <div>
-      <h2>Starting Locations</h2>
-      <TagInput placeholder="Enter starting locations" tags={[]} />
+    <div className="step2-travel-transport">
+      <div className="step2-travel-transport__group">
+        <h2>Starting Locations</h2>
+        <TagInput placeholder="Enter starting locations" tags={[]} />
+      </div>
       <TravelRadiusField />
       <TransportField />
       <NextButton onClick={onNext} />

@@ -5,11 +5,13 @@ import './LoginPage.css'
 
 function LoginPage() {
   return (
-    <AuthCard>
-      <h1>Log into NavQuest</h1>
-      <LoginForm />
-      <SignUpSection />
-    </AuthCard>
+    <div className="login-page">
+      <AuthCard>
+        <h1 className="auth-title">Log into NavQuest</h1>
+        <LoginForm />
+        <SignUpSection />
+      </AuthCard>
+    </div>
   );
 }
 

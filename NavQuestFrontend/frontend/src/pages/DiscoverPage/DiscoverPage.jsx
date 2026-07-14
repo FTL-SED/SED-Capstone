@@ -8,7 +8,7 @@ function DiscoverPage() {
   const [query, setQuery] = useState("");
 
   return (
-    <div>
+    <div className="discover-page">
       <SearchBar value={query} onChange={(e) => setQuery(e.target.value)} />
       {query ? <SearchResultsSection /> : <RecentItinerariesSection />}
     </div>

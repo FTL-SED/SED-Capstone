@@ -3,8 +3,8 @@ import './Logo.css'
 
 function Logo() {
   return (
-    <Link to="/">
-      <h3> NavQuest </h3>
+    <Link to="/" className="logo">
+      <h3>NavQuest</h3>
     </Link>
   );
 }

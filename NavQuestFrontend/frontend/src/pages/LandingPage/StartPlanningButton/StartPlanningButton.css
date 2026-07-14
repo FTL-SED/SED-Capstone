@@ -1,0 +1,33 @@
+.start-planning-button {
+  display: inline-block;
+  margin-top: 0.75rem;
+  text-decoration: none;
+}
+
+.start-planning-button__btn {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 0.85rem 2.25rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.start-planning-button__btn:hover {
+  background: var(--accent-strong);
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.start-planning-button__btn:focus-visible {
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
+.start-planning-button__btn:active {
+  transform: translateY(0);
+}

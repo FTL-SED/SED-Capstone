@@ -2,7 +2,7 @@ import './VideoPlayer.css'
 
 function VideoPlayer() {
   return (
-    <video controls></video>
+    <video className="video-player" controls></video>
   );
 }
 

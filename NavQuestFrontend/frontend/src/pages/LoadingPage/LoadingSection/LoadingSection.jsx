@@ -4,7 +4,7 @@ import LoadingSpinner from '../LoadingSpinner/LoadingSpinner.jsx'
 
 function LoadingSection() {
   return (
-    <section>
+    <section className="loading-section">
       <LoadingText />
       <LoadingSpinner />
     </section>

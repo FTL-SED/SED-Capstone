@@ -6,7 +6,7 @@ import './HomePage.css'
 
 function HomePage() {
   return (
-    <div>
+    <div className="home-page">
       <ExploreSection />
       <CreatedItinerariesSection />
       <LikedItinerariesSection />

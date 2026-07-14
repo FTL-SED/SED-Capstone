@@ -2,7 +2,7 @@ import './Tag.css'
 
 function Tag({ label }) {
   return (
-    <span>{label}</span>
+    <span className="tag">{label}</span>
   );
 }
 

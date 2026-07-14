@@ -1,0 +1,33 @@
+/* Centered destination search input with a subtle search-icon feel via padding */
+.search-bar {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  margin: 8px auto 0;
+  padding: 14px 20px 14px 44px;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.search-bar::placeholder {
+  color: var(--slate-400);
+}
+
+.search-bar:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+@media (max-width: 640px) {
+  .search-bar {
+    padding: 12px 16px 12px 40px;
+    font-size: 0.9375rem;
+  }
+}

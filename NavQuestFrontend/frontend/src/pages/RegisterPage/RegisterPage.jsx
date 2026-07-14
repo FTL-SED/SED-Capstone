@@ -5,11 +5,13 @@ import './RegisterPage.css'
 
 function RegisterPage() {
   return (
-    <AuthCard>
-      <h1>Create Account</h1>
-      <RegisterForm />
-      <LoginSection />
-    </AuthCard>
+    <div className="register-page">
+      <AuthCard>
+        <h1 className="auth-title">Create Account</h1>
+        <RegisterForm />
+        <LoginSection />
+      </AuthCard>
+    </div>
   );
 }
 

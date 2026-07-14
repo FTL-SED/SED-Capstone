@@ -2,7 +2,7 @@ import './CarouselArrow.css'
 
 function CarouselArrow({ onClick }) {
   return (
-    <button onClick={onClick}>&gt;</button>
+    <button className="carousel-arrow" onClick={onClick}>&gt;</button>
   );
 }
 

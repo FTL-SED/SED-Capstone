@@ -1,8 +1,11 @@
 import './Step.css'
 
-function Step({ number, label }) {
+function Step({ number, label, active }) {
   return (
-    <div><span>{number}</span> <span>{label}</span></div>
+    <div className={active ? "step step--active" : "step"}>
+      <span className="step__circle">{number}</span>
+      <span className="step__label">{label}</span>
+    </div>
   );
 }
 

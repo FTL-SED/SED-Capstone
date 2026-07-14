@@ -5,7 +5,7 @@ import LoadMoreButton from '../../../components/LoadMoreButton/LoadMoreButton.js
 
 function RecentItinerariesSection() {
   return (
-    <section>
+    <section className="recent-itineraries-section">
       <SectionHeader title="Recent Itineraries" />
       <ItinerariesGrid itineraries={[]} />
       <LoadMoreButton />

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 
 function AccountIcon() {
   return (
-    <Link to="/account">
+    <Link to="/account" className="account-icon">
         <img src={accountIcon} alt="Account" />
     </Link>
 

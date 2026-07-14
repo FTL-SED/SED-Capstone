@@ -4,7 +4,7 @@ import './LandingPage.css'
 
 function LandingPage() {
   return (
-    <div>
+    <div className="landing-page">
       <HeroSection />
       <DemoVideoSection />
     </div>

@@ -4,7 +4,7 @@ import './LikedItinerariesSection.css'
 
 function LikedItinerariesSection() {
   return (
-    <section>
+    <section className="liked-section">
       <SectionHeader title="Liked" />
       <CardCarousel itineraries={[]} />
     </section>

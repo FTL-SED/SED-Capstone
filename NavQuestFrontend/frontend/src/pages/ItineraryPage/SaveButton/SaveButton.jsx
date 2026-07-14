@@ -2,7 +2,7 @@ import './SaveButton.css'
 
 function SaveButton({ onClick }) {
   return (
-    <button onClick={onClick}>save</button>
+    <button className="save-button" onClick={onClick}>save</button>
   );
 }
 

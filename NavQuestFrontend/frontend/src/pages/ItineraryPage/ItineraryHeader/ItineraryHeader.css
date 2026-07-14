@@ -1,0 +1,41 @@
+.itinerary-header {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
+  box-shadow: var(--shadow-sm);
+  min-height: 200px;
+  padding: 28px 32px;
+}
+
+.itinerary-header__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.itinerary-header__text {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 70%;
+}
+
+@media (max-width: 640px) {
+  .itinerary-header {
+    padding: 22px 20px;
+  }
+
+  .itinerary-header__content {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .itinerary-header__text {
+    max-width: 100%;
+  }
+}

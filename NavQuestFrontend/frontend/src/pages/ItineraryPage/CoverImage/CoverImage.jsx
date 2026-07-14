@@ -2,7 +2,7 @@ import './CoverImage.css'
 
 function CoverImage({ src, alt }) {
   return (
-    <img src={src} alt={alt || "cover"} />
+    <img className="cover-image" src={src} alt={alt || "cover"} />
   );
 }
 

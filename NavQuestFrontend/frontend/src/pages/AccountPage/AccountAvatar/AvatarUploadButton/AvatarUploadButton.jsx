@@ -2,7 +2,7 @@ import './AvatarUploadButton.css'
 
 function AvatarUploadButton() {
   return (
-    <button>+</button>
+    <button className="avatar-upload-button" type="button">+</button>
   );
 }
 

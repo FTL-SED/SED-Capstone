@@ -4,7 +4,7 @@ import CarouselArrow from '../CarouselArrow/CarouselArrow.jsx'
 
 function CardCarousel({ itineraries = [] }) {
   return (
-    <div>
+    <div className="card-carousel">
       {itineraries.map((itinerary) => (
         <ItineraryCard key={itinerary.id} itinerary={itinerary} />
       ))}

@@ -10,7 +10,7 @@ function ItineraryWizard() {
   const next = () => setStep((s) => s + 1);
 
   return (
-    <div>
+    <div className="itinerary-wizard">
       {step === 1 && <Step1_TimeRange onNext={next} />}
       {step === 2 && <Step2_TravelTransport onNext={next} />}
       {step === 3 && <Step3_Preferences onNext={next} />}

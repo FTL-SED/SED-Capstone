@@ -1,0 +1,6 @@
+.loading-text {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--slate-600);
+  margin: 0;
+}

@@ -2,7 +2,7 @@ import './PinAddress.css'
 
 function PinAddress({ address }) {
   return (
-    <p>{address}</p>
+    <p className="pin-address">{address}</p>
   );
 }
 

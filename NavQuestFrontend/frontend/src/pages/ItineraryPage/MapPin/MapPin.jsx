@@ -2,7 +2,7 @@ import './MapPin.css'
 
 function MapPin({ number, onClick }) {
   return (
-    <button onClick={onClick}>#{number}</button>
+    <button className="map-pin" onClick={onClick}>#{number}</button>
   );
 }
 

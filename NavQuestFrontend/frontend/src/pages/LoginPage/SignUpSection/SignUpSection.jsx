@@ -4,7 +4,7 @@ import './SignUpSection.css'
 
 function SignUpSection() {
   return (
-    <div>
+    <div className="signup-section">
       <SignUpText />
       <RegisterLink />
     </div>

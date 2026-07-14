@@ -2,7 +2,7 @@ import './SignUpText.css'
 
 function SignUpText() {
   return (
-    <span>Don't have an account yet? </span>
+    <span className="signup-text">Don't have an account yet? </span>
   );
 }
 

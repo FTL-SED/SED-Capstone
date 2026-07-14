@@ -4,7 +4,7 @@ import './AccountNav.css'
 
 function AccountNav() {
   return (
-    <nav>
+    <nav className="account-nav">
       <ProfileButton />
       <LogOutButton />
     </nav>

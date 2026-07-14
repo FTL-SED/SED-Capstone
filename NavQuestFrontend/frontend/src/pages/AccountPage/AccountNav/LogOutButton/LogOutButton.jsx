@@ -2,7 +2,7 @@ import './LogOutButton.css'
 
 function LogOutButton() {
   return (
-    <button>Log Out</button>
+    <button className="logout-button" type="button">Log Out</button>
   );
 }
 

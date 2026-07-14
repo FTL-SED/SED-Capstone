@@ -2,7 +2,7 @@ import './ProfileButton.css'
 
 function ProfileButton() {
   return (
-    <button>Profile</button>
+    <button className="profile-button" type="button">Profile</button>
   );
 }
 

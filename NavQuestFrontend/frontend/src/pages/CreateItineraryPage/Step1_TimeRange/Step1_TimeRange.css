@@ -1,0 +1,9 @@
+.step1-time-range {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.step1-time-range .next-button {
+  align-self: flex-end;
+}

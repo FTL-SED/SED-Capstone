@@ -2,7 +2,7 @@ import './SectionHeader.css'
 
 function SectionHeader({ title, children }) {
   return (
-    <div>
+    <div className="section-header">
       <h2>{title}</h2>
       {children}
     </div>

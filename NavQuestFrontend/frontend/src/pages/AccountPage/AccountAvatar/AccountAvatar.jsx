@@ -3,8 +3,8 @@ import './AccountAvatar.css'
 
 function AccountAvatar() {
   return (
-    <div>
-      <img alt="avatar" />
+    <div className="account-avatar">
+      <img className="account-avatar__img" alt="avatar" />
       <AvatarUploadButton />
     </div>
   );

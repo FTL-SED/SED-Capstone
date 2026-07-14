@@ -1,0 +1,14 @@
+.account-avatar {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.account-avatar__img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface-muted);
+  border: 1px solid var(--border-strong);
+}

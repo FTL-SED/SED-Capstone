@@ -2,7 +2,7 @@ import './PinTiming.css'
 
 function PinTiming({ startTime, endTime }) {
   return (
-    <p>{startTime} - {endTime}</p>
+    <p className="pin-timing">{startTime} - {endTime}</p>
   );
 }
 

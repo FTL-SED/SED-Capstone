@@ -3,7 +3,7 @@ import './RegisterLink.css'
 
 function RegisterLink() {
   return (
-    <Link to="/register">Sign Up.</Link>
+    <Link className="register-link" to="/register">Sign Up.</Link>
   );
 }
 

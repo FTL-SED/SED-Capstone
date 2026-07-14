@@ -3,7 +3,7 @@ import LoadingSection from './LoadingSection/LoadingSection.jsx'
 
 function LoadingPage() {
   return (
-    <div>
+    <div className="loading-page">
       <LoadingSection />
     </div>
   );

@@ -4,7 +4,7 @@ import './BookmarkedItinerariesSection.css'
 
 function BookmarkedItinerariesSection() {
   return (
-    <section>
+    <section className="bookmarked-section">
       <SectionHeader title="Bookmarked" />
       <CardCarousel itineraries={[]} />
     </section>

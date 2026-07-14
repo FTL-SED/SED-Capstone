@@ -2,7 +2,7 @@ import './PinImage.css'
 
 function PinImage({ src, alt }) {
   return (
-    <img src={src} alt={alt || "pin"} />
+    <img className="pin-image" src={src} alt={alt || "pin"} />
   );
 }
 

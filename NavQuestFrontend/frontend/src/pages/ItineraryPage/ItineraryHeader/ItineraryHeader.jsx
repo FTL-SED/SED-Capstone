@@ -6,11 +6,15 @@ import CoverImage from '../CoverImage/CoverImage.jsx'
 
 function ItineraryHeader({ coverImageUrl, title, description, author }) {
   return (
-    <header>
+    <header className="itinerary-header">
       <CoverImage src={coverImageUrl} />
-      <Title text={title} />
-      <Description text={description} />
-      <Author name={author} />
+      <div className="itinerary-header__content">
+        <div className="itinerary-header__text">
+          <Title text={title} />
+          <Description text={description} />
+        </div>
+        <Author name={author} />
+      </div>
     </header>
   );
 }

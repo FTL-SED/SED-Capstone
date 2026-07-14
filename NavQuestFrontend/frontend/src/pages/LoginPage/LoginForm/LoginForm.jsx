@@ -5,7 +5,7 @@ import './LoginForm.css'
 
 function LoginForm() {
   return (
-    <form>
+    <form className="login-form">
       <TextInput placeholder="Email" type="email" />
       <PasswordInput placeholder="Password" />
       <SubmitButton label="Log in" />

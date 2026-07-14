@@ -3,7 +3,7 @@ import ItineraryCard from '../ItineraryCard/ItineraryCard.jsx'
 
 function ItinerariesGrid({ itineraries = [] }) {
   return (
-    <div>
+    <div className="itineraries-grid">
       {itineraries.map((itinerary) => (
         <ItineraryCard key={itinerary.id} itinerary={itinerary} />
       ))}

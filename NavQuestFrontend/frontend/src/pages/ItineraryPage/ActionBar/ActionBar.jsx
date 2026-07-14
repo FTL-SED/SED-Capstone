@@ -8,7 +8,7 @@ import LikeButton from '../LikeButton/LikeButton.jsx'
 
 function ActionBar({ isOwner = true }) {
   return (
-    <div>
+    <div className="action-bar">
       {isOwner ? (
         <>
           <EditButton />

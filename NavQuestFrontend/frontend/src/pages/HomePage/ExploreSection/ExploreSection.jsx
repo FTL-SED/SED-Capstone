@@ -4,7 +4,7 @@ import './ExploreSection.css'
 
 function ExploreSection() {
   return (
-    <section>
+    <section className="explore-section">
       <SectionHeader title="Explore" />
       <CardCarousel itineraries={[]} />
     </section>

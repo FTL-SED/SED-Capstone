@@ -5,7 +5,7 @@ import './ChangePasswordSection.css'
 
 function ChangePasswordSection() {
   return (
-    <section>
+    <section className="change-password-section">
       <SectionHeader title="Change Password" />
       <PasswordInput label="Old password" />
       <PasswordInput label="New password" />

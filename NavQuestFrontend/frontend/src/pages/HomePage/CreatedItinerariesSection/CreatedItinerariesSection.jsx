@@ -5,7 +5,7 @@ import './CreatedItinerariesSection.css'
 
 function CreatedItinerariesSection() {
   return (
-    <section>
+    <section className="created-section">
       <SectionHeader title="Created">
         <NewItineraryButton />
       </SectionHeader>

@@ -5,9 +5,9 @@ import MapView from './MapView/MapView.jsx'
 
 function ItineraryPage() {
   return (
-    <div>
+    <div className="itinerary-page">
       <ItineraryHeader />
-      <div>
+      <div className="itinerary-page__body">
         <ItineraryPanel />
         <MapView />
       </div>

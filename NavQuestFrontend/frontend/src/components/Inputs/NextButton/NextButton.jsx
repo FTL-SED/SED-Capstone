@@ -2,7 +2,7 @@ import './NextButton.css'
 
 function NextButton({ onClick }) {
   return (
-    <button onClick={onClick}>next &gt;</button>
+    <button className="next-button" onClick={onClick}>next &gt;</button>
   );
 }
 

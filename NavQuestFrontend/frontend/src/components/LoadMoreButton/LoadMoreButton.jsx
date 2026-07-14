@@ -2,7 +2,7 @@ import './LoadMoreButton.css'
 
 function LoadMoreButton({ onClick }) {
   return (
-    <button onClick={onClick}>Load More</button>
+    <button className="load-more-button" onClick={onClick}>Load More</button>
   );
 }
 

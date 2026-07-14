@@ -2,7 +2,7 @@ import './UpdatePasswordButton.css'
 
 function UpdatePasswordButton({ onClick }) {
   return (
-    <button onClick={onClick}>Update password</button>
+    <button className="update-password-button" type="button" onClick={onClick}>Update password</button>
   );
 }
 

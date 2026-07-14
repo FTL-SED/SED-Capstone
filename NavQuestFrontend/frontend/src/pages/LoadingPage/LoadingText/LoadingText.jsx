@@ -2,7 +2,7 @@ import './LoadingText.css'
 
 function LoadingText({ text = 'Generating Itinerary' }) {
   return (
-    <p>{text}</p>
+    <p className="loading-text">{text}</p>
   );
 }
 

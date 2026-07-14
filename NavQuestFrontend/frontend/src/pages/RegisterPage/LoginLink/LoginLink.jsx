@@ -3,7 +3,7 @@ import './LoginLink.css'
 
 function LoginLink() {
   return (
-    <Link to="/login">Log in.</Link>
+    <Link className="login-link" to="/login">Log in.</Link>
   );
 }
 

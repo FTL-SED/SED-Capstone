@@ -2,7 +2,7 @@ import './AuthCard.css'
 
 function AuthCard({ children }) {
   return (
-    <div>
+    <div className="auth-card">
       {children}
     </div>
   );
