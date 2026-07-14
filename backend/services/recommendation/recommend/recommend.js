@@ -1,0 +1,60 @@
+// Step 7 — the top-level pure function. Wires Stages 1–2 and the fairness /
+// food-quota passes (Steps 3–6) into one call: raw places in, a ranked,
+// budget-fitting, fairness-checked shortlist out. Per
+// ../../../../.claude/docs/recommendation-engine.md ("Pseudocode (Node)").
+// Pure: no DB, no Express — `places` is passed in, never queried here.
+
+const { hardFilter } = require('../filters/filters')
+const { softScore } = require('../score/score')
+const { enrichMissing } = require('../enrich/enrich')
+const { computeShortlistSize, assembleWithFoodQuota } = require('../assemble/assemble')
+const { ensureEveryMemberCovered } = require('../fairness/fairness')
+const { ENRICHMENT_POOL_SIZE } = require('../../../config/recommendation')
+
+// Attach a fresh .score to each place and sort best-first. Re-run whenever the
+// underlying data changes (e.g. after enrichment) since scores can shift.
+function scoreAndSort(places, members, groupTags, groupFood) {
+  return places
+    .map((place) => ({ ...place, score: softScore(place, members, groupTags, groupFood) }))
+    .sort((a, b) => b.score - a.score)
+}
+
+// trip    = { startTime, endTime, maxBudgetPerPerson, ... }
+// members = [ { name, startLocation, interestTags[], foodPrefs[], diet[]? }, ... ]
+// places  = seeded place data (see helpers.js for the normalized shape)
+//
+// Returns { shortlist, constraints } — constraints travel with the shortlist
+// so the AI sequencing step (POST /ai-agent) has the raw numbers it needs
+// without re-deriving them from members/trip itself.
+function recommend(trip, members, places) {
+  const groupTags = new Set(members.flatMap((m) => m.interestTags ?? []))
+  const groupFood = new Set(members.flatMap((m) => m.foodPrefs ?? []))
+
+  // Stage 1: hard filters (relevance, diet, budget sanity, hours).
+  const { candidates } = hardFilter(places, members, trip)
+
+  // Stage 2: soft score + rank the full survivor pool.
+  const scoredCandidates = scoreAndSort(candidates, members, groupTags, groupFood)
+
+  // Enrich only the top slice (lazy Google + cache, no-op today), then
+  // re-score + re-sort since enrichment can change ratings/price/hours.
+  const enrichedTop = enrichMissing(scoredCandidates.slice(0, ENRICHMENT_POOL_SIZE))
+  const rankedTop = scoreAndSort(enrichedTop, members, groupTags, groupFood)
+
+  // Assemble the food-quota'd shortlist, then guarantee every member is
+  // represented — both draw on the full scored pool, not just the top slice.
+  const shortlistSize = computeShortlistSize(trip)
+  const assembled = assembleWithFoodQuota(rankedTop, scoredCandidates, shortlistSize)
+  const shortlist = ensureEveryMemberCovered(assembled, members, scoredCandidates)
+
+  return {
+    shortlist,
+    constraints: {
+      maxBudgetPerPerson: trip.maxBudgetPerPerson,
+      groupSize: members.length,
+      startingLocations: members.map((m) => m.startLocation),
+    },
+  }
+}
+
+module.exports = { recommend }

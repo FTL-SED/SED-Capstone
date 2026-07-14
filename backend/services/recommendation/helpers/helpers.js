@@ -10,7 +10,7 @@
 //     diet         = list of diets the place can serve, e.g. ['vegetarian']
 //   member = { name, interestTags[], foodPrefs[], diet[]? }
 
-const { PRICE_LEVEL_USD } = require('../../config/recommendation')
+const { PRICE_LEVEL_USD } = require('../../../config/recommendation')
 
 // True if the place carries at least one of the group's interest tags. Used to
 // keep activities relevant to what the group actually likes.
@@ -79,4 +79,5 @@ module.exports = {
   estPricePerPerson,
   budgetSanityOk,
   isOpenInWindow,
+  toMinutes,
 }

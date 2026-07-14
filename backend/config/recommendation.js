@@ -30,6 +30,11 @@ const INTENSITY_SATURATION = 3
 const AVG_STOP_DURATION_MIN = 90
 const SHORTLIST_MULTIPLIER = 3
 
+// How many top-scoring candidates get a shot at enrichment (Step 7 / stretch).
+// Bounds the (future) Google API spend to at most this many lookups per
+// generation, per ../.claude/docs/data-strategy.md.
+const ENRICHMENT_POOL_SIZE = 40
+
 module.exports = {
   PRICE_LEVEL_USD,
   WEIGHTS,
@@ -39,4 +44,5 @@ module.exports = {
   INTENSITY_SATURATION,
   AVG_STOP_DURATION_MIN,
   SHORTLIST_MULTIPLIER,
+  ENRICHMENT_POOL_SIZE,
 }

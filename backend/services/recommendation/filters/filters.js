@@ -1,6 +1,6 @@
 // Stage 1 of the recommendation engine: the hard filters. Composes the pure
 // primitives in helpers.js into the candidate filter described in
-// ../../.claude/docs/recommendation-engine.md (the "Hard filters" table).
+// ../../../../.claude/docs/recommendation-engine.md (the "Hard filters" table).
 //
 // Guiding rule: a place is dropped ONLY when it fails a real constraint. Missing
 // data must never silently kill a place — instead we keep it and attach a flag
@@ -13,7 +13,7 @@ const {
   estPricePerPerson,
   budgetSanityOk,
   isOpenInWindow,
-} = require('./helpers')
+} = require('../helpers/helpers')
 
 const isRestaurant = (place) => place.category === 'restaurant'
 
