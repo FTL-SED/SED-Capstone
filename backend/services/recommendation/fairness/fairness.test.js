@@ -1,7 +1,7 @@
-const { test } = require('node:test')
-const assert = require('node:assert/strict')
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
 
-const { ensureEveryMemberCovered } = require('./fairness')
+import { ensureEveryMemberCovered } from './fairness.js'
 
 test('injects a member\'s best match when their niche interest ranked too low to make the shortlist', () => {
   const members = [

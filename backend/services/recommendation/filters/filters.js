@@ -7,13 +7,13 @@
 // (`priceUnknown` / `hoursUnknown`) so downstream steps (and the AI) know the
 // data is soft. Pure: no DB, no Express — everything is passed in.
 
-const {
+import {
   shareTag,
   passesDiet,
   estPricePerPerson,
   budgetSanityOk,
   isOpenInWindow,
-} = require('../helpers/helpers')
+} from '../helpers/helpers.js'
 
 const isRestaurant = (place) => place.category === 'restaurant'
 
@@ -61,4 +61,4 @@ function hardFilter(places, members, trip) {
   return { candidates, flags }
 }
 
-module.exports = { hardFilter }
+export { hardFilter }

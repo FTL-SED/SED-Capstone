@@ -1,7 +1,7 @@
-const { test } = require('node:test')
-const assert = require('node:assert/strict')
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
 
-const { enrichMissing } = require('./enrich')
+import { enrichMissing } from './enrich.js'
 
 test('enrichMissing is currently a no-op that returns the input unchanged', () => {
   const places = [{ name: 'MoMA', category: 'museum' }]
