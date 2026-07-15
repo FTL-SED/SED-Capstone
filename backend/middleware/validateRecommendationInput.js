@@ -1,8 +1,9 @@
 // Validates the constraints payload for POST /recommendations before it
 // reaches the controller, per .claude/rules/backend.md → Middleware.
 // Shape expected by recommend(trip, members, places):
-//   trip:    { startTime: 'HH:MM', endTime: 'HH:MM', maxBudgetPerPerson: number }
-//   members: [{ name, startLocation?, interestTags?[], foodPrefs?[], diet?[] }]
+//   trip:    { startTime: 'HH:MM', endTime: 'HH:MM', maxBudgetPerPerson: number,
+//              travelRadius?: number }
+//   members: [{ name, startLocation, interestTags?[], foodPrefs?[], diet?[] }]
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
 
 function isStringArray(value) {
@@ -20,6 +21,13 @@ function validateTrip(trip) {
   if (typeof trip.maxBudgetPerPerson !== 'number' || trip.maxBudgetPerPerson < 0) {
     return 'trip.maxBudgetPerPerson is required and must be a non-negative number'
   }
+  // travelRadius is optional (engine no-ops without it), but reject an invalid one.
+  if (
+    trip.travelRadius !== undefined &&
+    (typeof trip.travelRadius !== 'number' || trip.travelRadius <= 0)
+  ) {
+    return 'trip.travelRadius must be a positive number when provided'
+  }
   return null
 }
 
@@ -31,6 +39,11 @@ function validateMembers(members) {
     const member = members[i]
     if (!member || typeof member !== 'object' || typeof member.name !== 'string' || member.name.trim() === '') {
       return `members[${i}].name is required`
+    }
+    // startLocation is the geocoder's input, so it must be a present, non-empty
+    // address string (it's resolved to coordinates before the engine runs).
+    if (typeof member.startLocation !== 'string' || member.startLocation.trim() === '') {
+      return `members[${i}].startLocation is required and must be a non-empty string`
     }
     if (member.interestTags !== undefined && !isStringArray(member.interestTags)) {
       return `members[${i}].interestTags must be an array of strings`

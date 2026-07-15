@@ -5,10 +5,16 @@
 // filters/, etc. stay pure and DB-free (see .claude/rules/backend.md).
 import { getAllPins } from './pinsRepository/pinsRepository.js'
 import { recommend } from './recommend/recommend.js'
+import { geocodeMembers } from '../../lib/geocode.js'
 
 async function getRecommendations(trip, members) {
+  // Resolve each member's typed start address to coordinates (Mapbox) so
+  // Stage 0's meeting point + travel-radius filter can run. Throws a tagged
+  // GEOCODE_FAILED error (surfaced as 422 by the controller) if an address
+  // can't be located. Kept in the service — the engine stays network-free.
+  const geocodedMembers = await geocodeMembers(members)
   const pins = await getAllPins()
-  return recommend(trip, members, pins)
+  return recommend(trip, geocodedMembers, pins)
 }
 
 export { getRecommendations }

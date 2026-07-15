@@ -35,9 +35,14 @@ const trip = { startTime: '09:00', endTime: '18:00', maxBudgetPerPerson: 60 }
 // ("Hawk Hill") lives on a private draft itinerary and must NOT be
 // reachable, so a fixture relying on it to prove fairness coverage would be
 // testing the bug, not the feature. See the private-Pin test below.
+//
+// startLocation is given as coordinates (not a text address) so getRecommendations'
+// geocoding step is a no-op passthrough — this integration test exercises the
+// DB → engine path, not the Mapbox network call (geocoding is unit-tested in
+// lib/geocode.test.js).
 const members = [
-  { name: 'Alex', startLocation: 'Downtown', interestTags: ['art', 'scenic_views'], foodPrefs: ['mexican'] },
-  { name: 'Sam', startLocation: 'Mission', interestTags: ['nature'], foodPrefs: ['ramen'] },
+  { name: 'Alex', startLocation: { latitude: 37.7749, longitude: -122.4194 }, interestTags: ['art', 'scenic_views'], foodPrefs: ['mexican'] },
+  { name: 'Sam', startLocation: { latitude: 37.7599, longitude: -122.4148 }, interestTags: ['nature'], foodPrefs: ['ramen'] },
 ]
 
 test(
@@ -49,7 +54,7 @@ test(
     assert.ok(Array.isArray(shortlist))
     assert.ok(shortlist.length > 0, 'expected at least one recommended pin from the seeded catalog')
     assert.equal(constraints.groupSize, members.length)
-    assert.deepEqual(constraints.startingLocations, ['Downtown', 'Mission'])
+    assert.deepEqual(constraints.startingLocations, members.map((m) => m.startLocation))
 
     for (const pin of shortlist) {
       assert.equal(typeof pin.name, 'string')
@@ -114,7 +119,7 @@ test(
     // was a real leak (fixed by scoping getAllPins() to isPublic: true),
     // not a hypothetical.
     const hikerMember = [
-      { name: 'Hiker', startLocation: 'Richmond', interestTags: ['hiking', 'scenic_views'], foodPrefs: [] },
+      { name: 'Hiker', startLocation: { latitude: 37.7801, longitude: -122.4644 }, interestTags: ['hiking', 'scenic_views'], foodPrefs: [] },
     ]
     const { shortlist } = await getRecommendations(trip, hikerMember)
     assert.ok(

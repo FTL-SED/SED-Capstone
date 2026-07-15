@@ -13,6 +13,12 @@ async function postRecommendations(req, res) {
     const result = await getRecommendations(trip, members)
     return res.status(200).json(result)
   } catch (err) {
+    // A member's address couldn't be geocoded — that's bad user input, not a
+    // server fault, so surface the specific message as 422 for the organizer
+    // to fix rather than a generic 500.
+    if (err.code === 'GEOCODE_FAILED') {
+      return res.status(422).json({ error: err.message })
+    }
     // Without this, an unreachable DB or a bug deep in the recommendation
     // service falls through to Express's default handler — a generic HTML
     // error page instead of a JSON response the frontend can parse.
