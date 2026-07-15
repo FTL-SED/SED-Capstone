@@ -5,12 +5,13 @@ import {
   updatePin,
   deletePin,
 } from '../controllers/pinController.js'
+import { requireAuth } from '../middleware/auth.js'
 
 const router = express.Router()
 
-router.post('/', createPin)
-router.get('/:id', getPin)
-router.put('/:id', updatePin)
-router.delete('/:id', deletePin)
+router.post('/', requireAuth, createPin)
+router.get('/:id', requireAuth, getPin)
+router.put('/:id', requireAuth, updatePin)
+router.delete('/:id', requireAuth, deletePin)
 
 export default router
