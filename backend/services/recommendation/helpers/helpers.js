@@ -11,6 +11,7 @@
 //   member = { name, interestTags[], foodPrefs[], diet[]? }
 
 import { PRICE_LEVEL_USD } from '../../../config/recommendation.js'
+import { haversineMiles } from '../../../utils/geo.js'
 
 // True if the pin carries at least one of the group's interest tags. Used to
 // keep activities relevant to what the group actually likes.
@@ -75,6 +76,13 @@ function isOpenInWindow(pin, startTime, endTime) {
   })
 }
 
+// True if the pin is within `travelRadius` miles of the meeting point. Unlike
+// price/hours, coordinates are always known, so this is a plain hard check with
+// no "unknown ⇒ keep" escape hatch (Stage 0 radius filter).
+function withinRadius(pin, center, travelRadius) {
+  return haversineMiles(pin, center) <= travelRadius
+}
+
 export {
   shareTag,
   overlap,
@@ -83,4 +91,5 @@ export {
   budgetSanityOk,
   isOpenInWindow,
   toMinutes,
+  withinRadius,
 }
