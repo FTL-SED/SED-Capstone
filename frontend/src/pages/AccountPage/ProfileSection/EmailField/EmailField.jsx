@@ -3,7 +3,7 @@ import './EmailField.css'
 
 function EmailField() {
   return (
-    <TextInput label="Email" type="email" value="example@codepath.org" />
+    <TextInput label="Email" type="email" value="example@codepath.org" readOnly />
   );
 }
 

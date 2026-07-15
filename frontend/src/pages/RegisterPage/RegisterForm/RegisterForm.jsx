@@ -20,11 +20,19 @@ function RegisterForm() {
     const userData = { email, username, password };
 
     e.preventDefault();
+
+    // Basic email-format check before hitting the server.
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      setSuccess("");
+      setError("Please enter a valid email address.");
+      return;
+    }
+
     try {
       const response = await axios.post(`${BASE_URL}/users/register`, userData);
       setError("");
       setSuccess("Account created! You can now log in.");
-      setCurrentUser(response.data.user);
     } catch (err) {
       setSuccess("")
       setError(err.response?.data?.error || "Something went wrong. Please try again.");
