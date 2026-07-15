@@ -11,7 +11,7 @@ export { AVG_STOP_DURATION_MIN } from './recommendation.js'
 // try before giving up to the deterministic fallback. Retries are for
 // transient errors only (5xx, network timeout).
 export const AI_MODEL =
-  process.env.AI_MODEL || 'meta-llama/llama-3.3-70b-instruct:free'
+  'openrouter/free'
 export const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS) || 20_000
 export const AI_MAX_RETRIES = Number(process.env.AI_MAX_RETRIES) || 2
 
@@ -22,6 +22,10 @@ export const MEAL_TIME_WINDOWS = {
   lunch: { start: '11:30', end: '13:30' },
   dinner: { start: '17:30', end: '19:30' },
 }
+
+// Assumed average city travel speed, used by the fallback sequencer to turn a
+// straight-line distance between two stops into a rough travel-time estimate.
+export const FALLBACK_TRAVEL_MPH = Number(process.env.FALLBACK_TRAVEL_MPH) || 25
 
 // Output schema, shared by the OpenRouter call, response validation (Step 4),
 // and the fallback (Step 5) so downstream code never cares which produced the

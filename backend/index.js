@@ -7,6 +7,7 @@ import userRoutes from './routes/userRoutes.js'
 import itineraryRoutes from './routes/itineraryRoutes.js'
 import pinRoutes from './routes/pinRoutes.js'
 import recommendationRoutes from './routes/recommendationRoutes.js'
+import aiRoutes from './routes/aiRoutes.js'
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -22,6 +23,7 @@ app.use('/users', userRoutes)
 app.use('/itineraries', itineraryRoutes)
 app.use('/pins', pinRoutes)
 app.use('/recommendations', recommendationRoutes)
+app.use('/ai-agent', aiRoutes)
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`)
