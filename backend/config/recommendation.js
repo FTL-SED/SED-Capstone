@@ -34,3 +34,9 @@ export const SHORTLIST_MULTIPLIER = 3
 // Bounds the (future) Google API spend to at most this many lookups per
 // generation, per ../.claude/docs/data-strategy.md.
 export const ENRICHMENT_POOL_SIZE = 40
+
+// Weiszfeld's algorithm (geometric-median meeting point, Stage 0) stops after
+// this many iterations or once the estimate moves less than EPSILON miles —
+// whichever comes first. See utils/geo.js and the Stage 0 design doc.
+export const MEETING_POINT_MAX_ITERATIONS = 100
+export const MEETING_POINT_EPSILON = 1e-6
