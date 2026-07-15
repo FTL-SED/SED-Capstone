@@ -2,33 +2,64 @@
 // ../../../../.claude/docs/database-schema.md — into the plain place shape
 // the recommendation engine expects (see helpers/helpers.js's assumed shape).
 //
-// Pin has no category/cuisine/diet/priceLevel/openingHours/rating columns.
-// Per the team's decision, we don't add them to the schema: cuisine, diet,
-// rating, and openingHours are simply always "unknown" to the engine, which
-// already has first-class handling for that (flags + graceful defaults, see
-// filters/filters.js and score/score.js). `category` still has to be derived
-// from `tags`, since the engine needs it to separate the meal pool from
-// activities — Step 0's INTEREST_MAP/CUISINE_MAP canonical vocab is still
-// open, so this is a minimal interim stand-in, not that vocab.
+// Pin has no dedicated category/cuisine/diet/openingHours columns (only
+// `rating` was added — see the roadmap's Step 9 decision log). Instead:
+//   - category/cuisine/diet are all derived from the free-form `tags` array
+//     via the shared vocab in ../../../config/tagVocab.js.
+//   - openingHours is approximated from the Pin's own scheduled
+//     startTime/endTime, since no real business-hours data exists yet.
 import prisma from '../../../lib/prisma.js'
+import { FOOD_INDICATOR_TAGS, CUISINE_TAGS, DIET_TAGS } from '../../../config/tagVocab.js'
 
-const FOOD_TAGS = new Set(['food'])
+// Pin.startTime/endTime are stored as bare UTC instants (TIMESTAMP(3), no
+// tz) representing SF-local wall-clock times. Always read them back through
+// this specific zone — never `.getHours()`, which is server-timezone
+// dependent and will silently give the wrong answer off a Pacific-time box.
+const PACIFIC_HHMM = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/Los_Angeles',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+})
+
+function toPacificHHMM(date) {
+  return PACIFIC_HHMM.format(date)
+}
 
 // Pure: Pin -> place. No DB access, so it's directly unit-testable.
 function mapPinToPlace(pin) {
   const tags = pin.tags ?? []
-  const category = tags.some((tag) => FOOD_TAGS.has(tag)) ? 'restaurant' : 'activity'
+  const cuisineMatches = tags.filter((tag) => CUISINE_TAGS.has(tag))
+  const dietMatches = tags.filter((tag) => DIET_TAGS.has(tag))
+
+  const isFoodPlace =
+    tags.some((tag) => FOOD_INDICATOR_TAGS.has(tag)) ||
+    cuisineMatches.length > 0 ||
+    dietMatches.length > 0
+  const category = isFoodPlace ? 'restaurant' : 'activity'
 
   return {
     id: pin.id,
     name: pin.name,
     category,
     tags,
+    cuisine: cuisineMatches.length > 0 ? cuisineMatches : undefined,
+    // Absence of a diet tag means "we don't know", NOT "confirmed to serve
+    // none" - must stay undefined (never []) so passesDiet's missing-data
+    // ⇒ keep rule applies. See helpers/helpers.js.
+    diet: dietMatches.length > 0 ? dietMatches : undefined,
+    rating: pin.rating ?? undefined,
     pricePerPerson: pin.pricePerPerson,
     latitude: pin.latitude,
     longitude: pin.longitude,
     address: pin.address,
     locationImageUrl: pin.locationImageUrl,
+    // Proxy for real business hours (which don't exist yet): the window this
+    // Pin happened to be scheduled in on whatever itinerary it came from.
+    // Weak positive evidence at best - a place open all day but only ever
+    // visited 9-10am would look closed outside that window. See the Known
+    // Limitations note in ../../../../.claude/roadmap/recommendation-engine.md.
+    openingHours: [{ open: toPacificHHMM(pin.startTime), close: toPacificHHMM(pin.endTime) }],
   }
 }
 
@@ -48,12 +79,16 @@ function dedupePins(pins) {
   return deduped
 }
 
-// Every Pin ever created, across all itineraries, doubles as the seeded
-// place catalog for now (see the Step 9 decision log in the roadmap) — there
-// is no separate place-catalog table.
+// Every Pin on a PUBLIC itinerary doubles as the seeded place catalog for
+// now (see the Step 9 decision log in the roadmap) — there is no separate
+// place-catalog table. Scoped to `itinerary.isPublic: true` so a private
+// draft's places never leak into someone else's recommendations (that
+// leaked previously — see the Known Limitations fix log in the roadmap).
 async function getAllPlaces() {
-  const pins = await prisma.pin.findMany()
+  const pins = await prisma.pin.findMany({
+    where: { itinerary: { isPublic: true } },
+  })
   return dedupePins(pins).map(mapPinToPlace)
 }
 
-export { mapPinToPlace, dedupePins, getAllPlaces }
+export { mapPinToPlace, dedupePins, getAllPlaces, toPacificHHMM }

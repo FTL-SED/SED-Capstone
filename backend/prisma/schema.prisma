@@ -51,6 +51,7 @@ model Pin {
   name                    String
   description             String?
   tags                    String[]
+  rating                  Float?
   pricePerPerson          Float
   latitude                Float
   longitude               Float
