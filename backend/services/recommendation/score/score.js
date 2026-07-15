@@ -9,44 +9,44 @@
 import { WEIGHTS, INTENSITY_SATURATION, QUALITY_DEFAULT } from '../../../config/recommendation.js'
 import { shareTag, overlap } from '../helpers/helpers.js'
 
-const isRestaurant = (place) => place.category === 'restaurant'
+const isRestaurant = (pin) => pin.category === 'restaurant'
 
-// True if this one member would "like" the place — cuisine match for
+// True if this one member would "like" the pin — cuisine match for
 // restaurants, interest-tag match for everything else. Exported so the
 // fairness guarantee (Step 5) can reuse the exact same notion of "liked".
-function memberLikes(place, member) {
-  return isRestaurant(place)
-    ? overlap(place.cuisine, member.foodPrefs)
-    : shareTag(place.tags, new Set(member.interestTags))
+function memberLikes(pin, member) {
+  return isRestaurant(pin)
+    ? overlap(pin.cuisine, member.foodPrefs)
+    : shareTag(pin.tags, new Set(member.interestTags))
 }
 
-// Members who'd "like" this place — cuisine match for restaurants, interest-tag
+// Members who'd "like" this pin — cuisine match for restaurants, interest-tag
 // match for everything else (activities, treats).
-function membersWhoLike(place, members) {
-  return members.filter((m) => memberLikes(place, m))
+function membersWhoLike(pin, members) {
+  return members.filter((m) => memberLikes(pin, m))
 }
 
-// How many of the group's combined tags/cuisines this place actually matches.
+// How many of the group's combined tags/cuisines this pin actually matches.
 // Feeds intensity — the strength of the match, independent of who it's for.
-function matchCount(place, groupTags, groupFood) {
-  if (isRestaurant(place)) {
-    return (place.cuisine ?? []).filter((c) => groupFood.has(c)).length
+function matchCount(pin, groupTags, groupFood) {
+  if (isRestaurant(pin)) {
+    return (pin.cuisine ?? []).filter((c) => groupFood.has(c)).length
   }
-  return (place.tags ?? []).filter((t) => groupTags.has(t)).length
+  return (pin.tags ?? []).filter((t) => groupTags.has(t)).length
 }
 
-// score(place) = 0.5*coverage + 0.3*intensity + 0.2*quality (weights configurable).
+// score(pin) = 0.5*coverage + 0.3*intensity + 0.2*quality (weights configurable).
 //   coverage  = fraction of the group who'd like it (fairness signal).
 //   intensity = min(1, matches / INTENSITY_SATURATION) — strength of match.
 //   quality   = rating/5, or QUALITY_DEFAULT when unrated (missing data ⇒ neutral).
-function softScore(place, members, groupTags, groupFood) {
-  const liked = membersWhoLike(place, members)
+function softScore(pin, members, groupTags, groupFood) {
+  const liked = membersWhoLike(pin, members)
   const coverage = liked.length / members.length
 
-  const matched = matchCount(place, groupTags, groupFood)
+  const matched = matchCount(pin, groupTags, groupFood)
   const intensity = Math.min(1, matched / INTENSITY_SATURATION)
 
-  const quality = place.rating != null ? place.rating / 5 : QUALITY_DEFAULT
+  const quality = pin.rating != null ? pin.rating / 5 : QUALITY_DEFAULT
 
   return (
     WEIGHTS.coverage * coverage +

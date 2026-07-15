@@ -1,8 +1,8 @@
 // Step 7 — the top-level pure function. Wires Stages 1–2 and the fairness /
-// food-quota passes (Steps 3–6) into one call: raw places in, a ranked,
+// food-quota passes (Steps 3–6) into one call: raw pins in, a ranked,
 // budget-fitting, fairness-checked shortlist out. Per
 // ../../../../.claude/docs/recommendation-engine.md ("Pseudocode (Node)").
-// Pure: no DB, no Express — `places` is passed in, never queried here.
+// Pure: no DB, no Express — `pins` is passed in, never queried here.
 
 import { hardFilter } from '../filters/filters.js'
 import { softScore } from '../score/score.js'
@@ -11,27 +11,27 @@ import { computeShortlistSize, assembleWithFoodQuota } from '../assemble/assembl
 import { ensureEveryMemberCovered } from '../fairness/fairness.js'
 import { ENRICHMENT_POOL_SIZE } from '../../../config/recommendation.js'
 
-// Attach a fresh .score to each place and sort best-first. Re-run whenever the
+// Attach a fresh .score to each pin and sort best-first. Re-run whenever the
 // underlying data changes (e.g. after enrichment) since scores can shift.
-function scoreAndSort(places, members, groupTags, groupFood) {
-  return places
-    .map((place) => ({ ...place, score: softScore(place, members, groupTags, groupFood) }))
+function scoreAndSort(pins, members, groupTags, groupFood) {
+  return pins
+    .map((pin) => ({ ...pin, score: softScore(pin, members, groupTags, groupFood) }))
     .sort((a, b) => b.score - a.score)
 }
 
 // trip    = { startTime, endTime, maxBudgetPerPerson, ... }
 // members = [ { name, startLocation, interestTags[], foodPrefs[], diet[]? }, ... ]
-// places  = seeded place data (see helpers.js for the normalized shape)
+// pins  = seeded pin data (see helpers.js for the normalized shape)
 //
 // Returns { shortlist, constraints } — constraints travel with the shortlist
 // so the AI sequencing step (POST /ai-agent) has the raw numbers it needs
 // without re-deriving them from members/trip itself.
-function recommend(trip, members, places) {
+function recommend(trip, members, pins) {
   const groupTags = new Set(members.flatMap((m) => m.interestTags ?? []))
   const groupFood = new Set(members.flatMap((m) => m.foodPrefs ?? []))
 
   // Stage 1: hard filters (relevance, diet, budget sanity, hours).
-  const { candidates } = hardFilter(places, members, trip)
+  const { candidates } = hardFilter(pins, members, trip)
 
   // Stage 2: soft score + rank the full survivor pool.
   const scoredCandidates = scoreAndSort(candidates, members, groupTags, groupFood)

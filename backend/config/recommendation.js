@@ -3,7 +3,7 @@
 // changed by editing config, not code. See ../.claude/docs/recommendation-engine.md.
 
 // priceLevel (0–4) → estimated cost per person in USD. Used for the budget
-// sanity filter and to attach pricePerPerson to each place.
+// sanity filter and to attach pricePerPerson to each pin.
 export const PRICE_LEVEL_USD = { 0: 0, 1: 10, 2: 22, 3: 45, 4: 80 }
 
 // Soft-score weights (must sum to 1). coverage = group fairness, intensity =
@@ -15,11 +15,11 @@ export const WEIGHTS = { coverage: 0.5, intensity: 0.3, quality: 0.2 }
 export const FOOD_MIN = 6
 export const FOOD_MAX = 10
 
-// Neutral rating for unrated places, so missing data isn't punished to the
-// bottom (0.6 ≈ 3/5). Enriched places with real ratings float up naturally.
+// Neutral rating for unrated pins, so missing data isn't punished to the
+// bottom (0.6 ≈ 3/5). Enriched pins with real ratings float up naturally.
 export const QUALITY_DEFAULT = 0.6
 
-// intensity saturates at this many matches, so a place isn't rewarded forever
+// intensity saturates at this many matches, so a pin isn't rewarded forever
 // for piling on tag/cuisine overlaps: min(1, matches / INTENSITY_SATURATION).
 export const INTENSITY_SATURATION = 3
 

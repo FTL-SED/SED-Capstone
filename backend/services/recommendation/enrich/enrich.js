@@ -4,10 +4,10 @@
 // improve ranking. Until then this is a pure no-op — the engine ranks on seed
 // (OSM) data alone. Per ../../../../.claude/docs/data-strategy.md.
 
-function enrichMissing(places) {
-  // TODO(stretch): for each place missing rating/price/hours, call Google
+function enrichMissing(pins) {
+  // TODO(stretch): for each pin missing rating/price/hours, call Google
   // Places once, UPDATE + cache the result, then return the enriched copies.
-  return places
+  return pins
 }
 
 export { enrichMissing }

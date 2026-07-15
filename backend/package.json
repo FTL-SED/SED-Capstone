@@ -3,7 +3,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
-    "test": "node --test"
+    "test": "node --test",
+    "quality-report": "node scripts/recommendationQualityReport.js"
   },
   "dependencies": {
     "@prisma/client": "6.7.0",
