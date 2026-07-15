@@ -10,6 +10,7 @@ import { enrichMissing } from '../enrich/enrich.js'
 import { computeShortlistSize, assembleWithFoodQuota } from '../assemble/assemble.js'
 import { ensureEveryMemberCovered } from '../fairness/fairness.js'
 import { ENRICHMENT_POOL_SIZE } from '../../../config/recommendation.js'
+import { maxDistanceFrom } from '../../../utils/geo.js'
 
 // Attach a fresh .score to each pin and sort best-first. Re-run whenever the
 // underlying data changes (e.g. after enrichment) since scores can shift.
@@ -30,8 +31,9 @@ function recommend(trip, members, pins) {
   const groupTags = new Set(members.flatMap((m) => m.interestTags ?? []))
   const groupFood = new Set(members.flatMap((m) => m.foodPrefs ?? []))
 
-  // Stage 1: hard filters (relevance, diet, budget sanity, hours).
-  const { candidates } = hardFilter(pins, members, trip)
+  // Stage 1: hard filters (relevance, diet, budget sanity, hours) + Stage 0's
+  // meeting point / travel-radius drop. meetingPoint is null pre-geocoding.
+  const { candidates, meetingPoint } = hardFilter(pins, members, trip)
 
   // Stage 2: soft score + rank the full survivor pool.
   const scoredCandidates = scoreAndSort(candidates, members, groupTags, groupFood)
@@ -47,12 +49,24 @@ function recommend(trip, members, pins) {
   const assembled = assembleWithFoodQuota(rankedTop, scoredCandidates, shortlistSize)
   const shortlist = ensureEveryMemberCovered(assembled, members, scoredCandidates)
 
+  // Fairness metric: how far the worst-off member travels to the meeting point.
+  // Only meaningful once locations are geocoded (meetingPoint !== null).
+  const memberCoords = members
+    .map((m) => m.startLocation)
+    .filter((loc) => loc && typeof loc.latitude === 'number' && typeof loc.longitude === 'number')
+  const maxMemberDistance =
+    meetingPoint && memberCoords.length > 0 ? maxDistanceFrom(meetingPoint, memberCoords) : null
+
   return {
     shortlist,
     constraints: {
       maxBudgetPerPerson: trip.maxBudgetPerPerson,
       groupSize: members.length,
       startingLocations: members.map((m) => m.startLocation),
+      timeWindow: { startTime: trip.startTime, endTime: trip.endTime },
+      meetingPoint,
+      travelRadius: trip.travelRadius ?? null,
+      maxMemberDistance,
     },
   }
 }

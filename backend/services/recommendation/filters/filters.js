@@ -13,24 +13,43 @@ import {
   estPricePerPerson,
   budgetSanityOk,
   isOpenInWindow,
+  withinRadius,
 } from '../helpers/helpers.js'
+import { geometricMedian } from '../../../utils/geo.js'
 
 const isRestaurant = (pin) => pin.category === 'restaurant'
 
 const hasNoHours = (pin) =>
   !pin.openingHours || pin.openingHours.length === 0
 
+// A member's start location is usable for the meeting point only once it's been
+// geocoded to numeric coordinates (see Stage 0 design — geocoding is upstream).
+// String addresses (pre-geocoding) and missing data are simply skipped.
+const hasCoords = (m) =>
+  m?.startLocation &&
+  typeof m.startLocation.latitude === 'number' &&
+  typeof m.startLocation.longitude === 'number'
+
 // Filter seeded pins down to the eligible candidate pool for a trip.
 //   pins  = normalized pin objects (see helpers.js for the shape)
 //   members = [ { interestTags[], foodPrefs[], diet[]? }, ... ]
 //   trip    = { startTime, endTime, maxBudgetPerPerson, ... }
-// Returns { candidates, flags }: candidates are shallow copies carrying
-// per-pin `priceUnknown` / `hoursUnknown` booleans; flags aggregates the
-// names of pins with missing data for visibility.
+// Returns { candidates, flags, meetingPoint }: candidates are shallow copies
+// carrying per-pin `priceUnknown` / `hoursUnknown` booleans; flags aggregates
+// the names of pins with missing data for visibility; meetingPoint is the fair
+// group anchor (or null when it can't be computed).
 function hardFilter(pins, members, trip) {
   const groupTags = new Set(members.flatMap((m) => m.interestTags ?? []))
   const candidates = []
   const flags = { priceUnknown: [], hoursUnknown: [] }
+
+  // Stage 0: fair meeting point from members with real coordinates, then the
+  // travel-radius drop is measured from it. Both are no-ops (radius skipped)
+  // when we lack coordinates or the trip sets no radius — so pre-geocoding
+  // callers behave exactly as before.
+  const memberCoords = members.filter(hasCoords).map((m) => m.startLocation)
+  const meetingPoint = memberCoords.length > 0 ? geometricMedian(memberCoords) : null
+  const applyRadius = meetingPoint !== null && typeof trip.travelRadius === 'number'
 
   for (const pin of pins) {
     // Relevance: restaurants are the meal pool (always eligible, diet-gated);
@@ -39,6 +58,10 @@ function hardFilter(pins, members, trip) {
       ? passesDiet(pin, members)
       : shareTag(pin.tags, groupTags)
     if (!relevant) continue
+
+    // Travel radius: hard drop pins too far from the meeting point. No flag —
+    // coordinates are always known, so this is never "missing data".
+    if (applyRadius && !withinRadius(pin, meetingPoint, trip.travelRadius)) continue
 
     // Budget sanity: drop only if one person's visit alone blows the whole
     // per-person budget. Real enforcement is summing the chosen itinerary.
@@ -58,7 +81,7 @@ function hardFilter(pins, members, trip) {
     candidates.push({ ...pin, priceUnknown, hoursUnknown })
   }
 
-  return { candidates, flags }
+  return { candidates, flags, meetingPoint }
 }
 
 export { hardFilter }

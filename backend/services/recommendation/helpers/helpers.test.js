@@ -8,6 +8,7 @@ import {
   estPricePerPerson,
   budgetSanityOk,
   isOpenInWindow,
+  withinRadius,
 } from './helpers.js'
 
 test('shareTag: true when a pin tag is in the group set', () => {
@@ -88,4 +89,17 @@ test('isOpenInWindow: false when hours fall entirely outside the window', () => 
 test('isOpenInWindow: keeps pin when hours unknown (missing data)', () => {
   assert.equal(isOpenInWindow({}, '09:00', '17:00'), true)
   assert.equal(isOpenInWindow({ openingHours: [] }, '09:00', '17:00'), true)
+})
+
+test('withinRadius: keeps a pin inside the radius, drops one outside', () => {
+  const center = { latitude: 37.7955, longitude: -122.3937 } // Ferry Building
+  const near = { latitude: 37.7845, longitude: -122.4079 } // ~1 mile away
+  const far = { latitude: 37.7694, longitude: -122.4862 } // ~5 miles away
+  assert.equal(withinRadius(near, center, 2), true)
+  assert.equal(withinRadius(far, center, 2), false)
+})
+
+test('withinRadius: a pin exactly at the center is always within radius', () => {
+  const center = { latitude: 37.7955, longitude: -122.3937 }
+  assert.equal(withinRadius({ ...center }, center, 0), true)
 })

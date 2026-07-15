@@ -87,3 +87,45 @@ test('returns { candidates, flags } and does not mutate the input pins', () => {
   assert.ok(result.flags && Array.isArray(result.flags.priceUnknown))
   assert.equal('priceUnknown' in pins[0], false) // original untouched
 })
+
+// --- Stage 0: meeting point + travel radius ---
+
+// Members with real coordinates clustered downtown SF, and a trip radius.
+const geoMembers = [
+  { name: 'A', interestTags: ['art'], startLocation: { latitude: 37.7955, longitude: -122.3937 } },
+  { name: 'B', interestTags: ['art'], startLocation: { latitude: 37.7845, longitude: -122.4079 } },
+  { name: 'C', interestTags: ['art'], startLocation: { latitude: 37.7749, longitude: -122.4194 } },
+]
+
+test('computes a meeting point when members carry coordinates', () => {
+  const { meetingPoint } = hardFilter([], geoMembers, { ...trip, travelRadius: 3 })
+  assert.equal(typeof meetingPoint.latitude, 'number')
+  assert.equal(typeof meetingPoint.longitude, 'number')
+})
+
+test('meetingPoint is null when no member has coordinates', () => {
+  const { meetingPoint } = run([{ name: 'MoMA', category: 'museum', tags: ['art'] }])
+  assert.equal(meetingPoint, null)
+})
+
+test('drops a pin outside travelRadius of the meeting point', () => {
+  const nearPin = { name: 'Downtown Gallery', category: 'museum', tags: ['art'], latitude: 37.7845, longitude: -122.4079 }
+  const farPin = { name: 'Ocean Beach Art', category: 'museum', tags: ['art'], latitude: 37.7594, longitude: -122.5107 } // ~5+ mi west
+  const { candidates } = hardFilter([nearPin, farPin], geoMembers, { ...trip, travelRadius: 3 })
+  const names = candidates.map((p) => p.name)
+  assert.ok(names.includes('Downtown Gallery'))
+  assert.ok(!names.includes('Ocean Beach Art'))
+})
+
+test('no travelRadius set => radius filter is a no-op (keeps a far pin)', () => {
+  const farPin = { name: 'Ocean Beach Art', category: 'museum', tags: ['art'], latitude: 37.7594, longitude: -122.5107 }
+  const { candidates } = hardFilter([farPin], geoMembers, trip) // trip has no travelRadius
+  assert.equal(candidates.length, 1)
+})
+
+test('travelRadius set but no member coords => radius filter is a no-op', () => {
+  const farPin = { name: 'Ocean Beach Art', category: 'museum', tags: ['art'], latitude: 37.7594, longitude: -122.5107 }
+  const { candidates, meetingPoint } = hardFilter([farPin], members, { ...trip, travelRadius: 1 })
+  assert.equal(meetingPoint, null)
+  assert.equal(candidates.length, 1) // not dropped — can't anchor without coords
+})

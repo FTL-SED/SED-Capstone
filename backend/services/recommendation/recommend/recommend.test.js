@@ -45,6 +45,35 @@ test('constraints carry maxBudgetPerPerson, groupSize, and startingLocations', (
   assert.deepEqual(constraints.startingLocations, ['Downtown', 'Mission', 'Sunset'])
 })
 
+test('constraints carry timeWindow, and meetingPoint/travelRadius are null pre-geocoding', () => {
+  const { constraints } = recommend(trip, members, pins)
+  assert.deepEqual(constraints.timeWindow, { startTime: '09:00', endTime: '18:00' })
+  // string startLocations (no coords) + no travelRadius => nothing to anchor on
+  assert.equal(constraints.meetingPoint, null)
+  assert.equal(constraints.travelRadius, null)
+  assert.equal(constraints.maxMemberDistance, null)
+})
+
+test('Stage 0: with geocoded members + a radius, constraints carry the meeting point and drop far pins', () => {
+  const geoMembers = [
+    { name: 'A', interestTags: ['art'], foodPrefs: [], startLocation: { latitude: 37.7955, longitude: -122.3937 } },
+    { name: 'B', interestTags: ['art'], foodPrefs: [], startLocation: { latitude: 37.7845, longitude: -122.4079 } },
+    { name: 'C', interestTags: ['art'], foodPrefs: [], startLocation: { latitude: 37.7749, longitude: -122.4194 } },
+  ]
+  const geoTrip = { startTime: '09:00', endTime: '18:00', maxBudgetPerPerson: 60, travelRadius: 3 }
+  const geoPins = [
+    { name: 'Near Gallery', category: 'museum', tags: ['art'], priceLevel: 1, latitude: 37.7845, longitude: -122.4079 },
+    { name: 'Far Gallery', category: 'museum', tags: ['art'], priceLevel: 1, latitude: 37.7594, longitude: -122.5107 }, // ~5+ mi
+  ]
+  const { shortlist, constraints } = recommend(geoTrip, geoMembers, geoPins)
+
+  assert.equal(typeof constraints.meetingPoint.latitude, 'number')
+  assert.equal(constraints.travelRadius, 3)
+  assert.ok(constraints.maxMemberDistance >= 0)
+  assert.ok(shortlist.some((p) => p.name === 'Near Gallery'))
+  assert.ok(!shortlist.some((p) => p.name === 'Far Gallery'))
+})
+
 test('food count stays within [FOOD_MIN, FOOD_MAX] on a well-stocked catalog', () => {
   const { shortlist } = recommend(trip, members, pins)
   const foodCount = shortlist.filter((p) => p.category === 'restaurant').length
