@@ -3,10 +3,11 @@ import LoginButton from '../LoginButton/LoginButton.jsx';
 import RegisterButton from '../RegisterButton/RegisterButton.jsx';
 
 
-function AuthButtons() {
+function AuthButtons({isAuthenticated}) {
+
   return (
     <div className="auth-buttons">
-      <LoginButton/>
+      <LoginButton isAuthenticated={isAuthenticated}/>
       <RegisterButton/>
     </div>
   );

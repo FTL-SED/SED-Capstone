@@ -1,4 +1,5 @@
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
+import { useState, useEffect} from 'react'
 import './App.css'
 import Navbar from './components/Navbar/Navbar'
 import Footer from './components/Footer/Footer'
@@ -12,18 +13,39 @@ import LoadingPage from './pages/LoadingPage/LoadingPage'
 import ItineraryPage from './pages/ItineraryPage/ItineraryPage'
 import AccountPage from './pages/AccountPage/AccountPage'
 
+
+
 function App() {
   const { pathname } = useLocation();
   const isAuthPage = pathname === '/login' || pathname === '/register';
 
+  // by using local storage, if the page references, but current user still stays same,
+  // the isAuthenticated details wont be forgotted
+  const [currentUser, setCurrentUser] = useState(
+    () => JSON.parse(localStorage.getItem("currentUser")) || null
+  );
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem("currentUser", JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem("currentUser");
+    }
+  }, [currentUser]);
+
+  const isAuthenticated = currentUser !== null;
+
   return (
     <div className="app">
-      <Navbar />
+      <Navbar isAuthenticated={isAuthenticated}/>
       <main className={`app__main${isAuthPage ? ' app__main--bare' : ''}`}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route
+            path="/login"
+            element={isAuthenticated ? <Navigate to="/home" replace /> : <LoginPage setCurrentUser={setCurrentUser} />}
+          />
+          <Route path="/register" element={<RegisterPage/>} />
           <Route path="/home" element={<HomePage />} />
           <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/create" element={<CreateItineraryPage />} />
