@@ -9,7 +9,7 @@ async function registerUser(req, res) {
   if (!email || !password || !username || typeof username !== 'string') {
     return res
       .status(400)
-      .json({ error: 'email, password, and username are required' })
+      .json({ error: 'Email, Password, and Username are required.' })
   }
 
   const { data, error } = await supabase.auth.signUp({ email, password })
