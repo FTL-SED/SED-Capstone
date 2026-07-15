@@ -2,11 +2,11 @@ import ProfileButton from './ProfileButton/ProfileButton.jsx'
 import LogOutButton from './LogOutButton/LogOutButton.jsx'
 import './AccountNav.css'
 
-function AccountNav() {
+function AccountNav({ setCurrentUser }) {
   return (
     <nav className="account-nav">
       <ProfileButton />
-      <LogOutButton />
+      <LogOutButton setCurrentUser={setCurrentUser} />
     </nav>
   );
 }

@@ -19,10 +19,22 @@ function LoginForm({setCurrentUser}) {
     const userData = { email, password };
 
     e.preventDefault();
+
+    // Basic email-format check before hitting the server.
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
     try {
       const response = await axios.post(`${BASE_URL}/users/login`, userData);
+      const { user, session } = response.data;
       setError("");
-      setCurrentUser(response.data.user);
+ 
+      localStorage.setItem("accessToken", session.access_token);
+      localStorage.setItem("sessionExpiresAt", String(session.expires_at * 1000));
+      setCurrentUser(user);
       navigate("/home");
     } catch (err) {
       setError(err.response?.data?.error || "Something went wrong. Please try again.");
