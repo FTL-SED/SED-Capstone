@@ -15,9 +15,9 @@ import { toMinutes } from '../helpers/helpers.js'
 // Only category === "restaurant" counts against the food quota. Treats
 // (coffee/dessert/boba) live under other categories (e.g. "cafe") and are
 // treated as ordinary activities the user explicitly picked.
-const isRestaurant = (place) => place.category === 'restaurant'
+const isRestaurant = (pin) => pin.category === 'restaurant'
 
-const identity = (place) => place.id ?? place.name
+const identity = (pin) => pin.id ?? pin.name
 
 // Estimate how many stops fit the trip's time window, then give the AI a
 // multiple of that many options to choose from (see AVG_STOP_DURATION_MIN /
@@ -32,7 +32,7 @@ function computeShortlistSize(trip) {
   return Math.max(FOOD_MIN, Math.round(stops * SHORTLIST_MULTIPLIER))
 }
 
-// Walk the ranked (score-descending) list, taking places up to shortlistSize
+// Walk the ranked (score-descending) list, taking pins up to shortlistSize
 // while capping restaurants at FOOD_MAX so food can't crowd out activities.
 // If that pass leaves food below FOOD_MIN (e.g. a "parks + museums, no food
 // prefs" group whose restaurants all ranked low), float-fill with the
@@ -42,10 +42,10 @@ function assembleWithFoodQuota(ranked, candidates, shortlistSize) {
   const shortlist = []
   let food = 0
 
-  for (const place of ranked) {
-    const isFood = isRestaurant(place)
+  for (const pin of ranked) {
+    const isFood = isRestaurant(pin)
     if (isFood && food >= FOOD_MAX) continue
-    shortlist.push(place)
+    shortlist.push(pin)
     if (isFood) food++
     if (shortlist.length >= shortlistSize) break
   }
@@ -56,9 +56,9 @@ function assembleWithFoodQuota(ranked, candidates, shortlistSize) {
       .filter((p) => isRestaurant(p) && !already.has(identity(p)))
       .sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1))
 
-    for (const place of remainingRestaurants) {
+    for (const pin of remainingRestaurants) {
       if (food >= FOOD_MIN) break
-      shortlist.push(place)
+      shortlist.push(pin)
       food++
     }
   }

@@ -17,7 +17,7 @@ const groupA = {
     { name: 'Marcus', startLocation: 'FiDi', interestTags: ['museum', 'architecture'], foodPrefs: ['thai'] },
     { name: 'Wei', startLocation: 'SoMa', interestTags: ['art', 'gallery'], foodPrefs: ['sushi'], diet: ['vegetarian'] },
   ],
-  places: [
+  pins: [
     { name: 'SF MoMA', category: 'museum', tags: ['art', 'museum'], rating: 4.6, priceLevel: 2, openingHours: [{ open: '10:00', close: '17:00' }] },
     { name: 'de Young Museum', category: 'museum', tags: ['art', 'museum', 'history'], rating: 4.5, priceLevel: 2 }, // no hours -> hoursUnknown
     { name: 'Legion of Honor', category: 'museum', tags: ['art', 'history'], rating: 4.7, priceLevel: 2, openingHours: [{ open: '09:30', close: '17:15' }] },
@@ -55,7 +55,7 @@ const groupB = {
     { name: 'Tom', startLocation: 'Sunset', interestTags: ['park'], foodPrefs: ['mexican'] },
     { name: 'Nadia', startLocation: 'Sunset', interestTags: ['birdwatching'], foodPrefs: [] },
   ],
-  places: [
+  pins: [
     { name: 'Golden Gate Park', category: 'park', tags: ['park', 'garden'], rating: 4.8, priceLevel: 0, openingHours: [{ open: '05:00', close: '22:00' }] },
     { name: 'Japanese Tea Garden', category: 'garden', tags: ['garden', 'park'], rating: 4.6, priceLevel: 1, openingHours: [{ open: '09:00', close: '18:00' }] },
     { name: 'Lands End Trail', category: 'viewpoint', tags: ['hiking', 'viewpoint', 'park'], rating: 4.9, priceLevel: 0 },
@@ -82,7 +82,7 @@ const groupB = {
 // --- Group C: coffee-loving duo, generous window, tie-break + missing data -
 // Exercises: two identically-tagged cafes that differ only by rating (proves
 // ratings break ties), treats that don't count against the food quota, and
-// places with partially/fully missing data whose flags must survive into the
+// pins with partially/fully missing data whose flags must survive into the
 // final shortlist rather than being silently dropped.
 const groupC = {
   trip: { startTime: '10:00', endTime: '18:00', maxBudgetPerPerson: 50 },
@@ -90,7 +90,7 @@ const groupC = {
     { name: 'Alex', startLocation: 'Marina', interestTags: ['coffee', 'dessert', 'boba'], foodPrefs: ['ramen'] },
     { name: 'Jordan', startLocation: 'Marina', interestTags: ['coffee'], foodPrefs: ['ramen'] },
   ],
-  places: [
+  pins: [
     { name: 'Cafe Presidio', category: 'cafe', tags: ['coffee'], rating: 4.8, priceLevel: 1, openingHours: [{ open: '07:00', close: '18:00' }] }, // tie-break winner
     { name: 'Blue Bottle Coffee', category: 'cafe', tags: ['coffee'], priceLevel: 1, openingHours: [{ open: '07:00', close: '18:00' }] }, // identical tags, no rating -> should score lower
     { name: 'Boba Guys', category: 'dessert', tags: ['boba', 'dessert'], rating: 4.5, priceLevel: 1, openingHours: [{ open: '11:00', close: '21:00' }] },

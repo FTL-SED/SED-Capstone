@@ -46,12 +46,12 @@ test('floor-fills to FOOD_MIN with best-rated remaining restaurants when few foo
   const candidates = [...ranked, ...extraRestaurants]
 
   const result = assembleWithFoodQuota(ranked, candidates, 20)
-  const foodPlaces = result.filter((p) => p.category === 'restaurant')
+  const foodPins = result.filter((p) => p.category === 'restaurant')
 
-  assert.ok(foodPlaces.length >= 6) // FOOD_MIN
+  assert.ok(foodPins.length >= 6) // FOOD_MIN
   // best-rated ones should have been pulled in ahead of the unrated one
-  assert.ok(foodPlaces.some((p) => p.name === 'FiveStar'))
-  assert.ok(foodPlaces.some((p) => p.name === 'FourStar'))
+  assert.ok(foodPins.some((p) => p.name === 'FiveStar'))
+  assert.ok(foodPins.some((p) => p.name === 'FourStar'))
 })
 
 test('treats (non-restaurant categories) never count against the food quota', () => {

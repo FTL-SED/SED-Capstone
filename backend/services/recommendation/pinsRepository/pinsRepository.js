@@ -1,5 +1,5 @@
-// Bridges the seeded `Pin` rows — the app's only place data today, see
-// ../../../../.claude/docs/database-schema.md — into the plain place shape
+// Bridges the seeded `Pin` rows — the app's only pin data today, see
+// ../../../../.claude/docs/database-schema.md — into the plain pin shape
 // the recommendation engine expects (see helpers/helpers.js's assumed shape).
 //
 // Pin has no dedicated category/cuisine/diet/openingHours columns (only
@@ -26,17 +26,17 @@ function toPacificHHMM(date) {
   return PACIFIC_HHMM.format(date)
 }
 
-// Pure: Pin -> place. No DB access, so it's directly unit-testable.
-function mapPinToPlace(pin) {
+// Pure: Pin -> pin. No DB access, so it's directly unit-testable.
+function mapPin(pin) {
   const tags = pin.tags ?? []
   const cuisineMatches = tags.filter((tag) => CUISINE_TAGS.has(tag))
   const dietMatches = tags.filter((tag) => DIET_TAGS.has(tag))
 
-  const isFoodPlace =
+  const isFoodPin =
     tags.some((tag) => FOOD_INDICATOR_TAGS.has(tag)) ||
     cuisineMatches.length > 0 ||
     dietMatches.length > 0
-  const category = isFoodPlace ? 'restaurant' : 'activity'
+  const category = isFoodPin ? 'restaurant' : 'activity'
 
   return {
     id: pin.id,
@@ -56,14 +56,14 @@ function mapPinToPlace(pin) {
     locationImageUrl: pin.locationImageUrl,
     // Proxy for real business hours (which don't exist yet): the window this
     // Pin happened to be scheduled in on whatever itinerary it came from.
-    // Weak positive evidence at best - a place open all day but only ever
+    // Weak positive evidence at best - a pin open all day but only ever
     // visited 9-10am would look closed outside that window. See the Known
     // Limitations note in ../../../../.claude/roadmap/recommendation-engine.md.
     openingHours: [{ open: toPacificHHMM(pin.startTime), close: toPacificHHMM(pin.endTime) }],
   }
 }
 
-// A real-world place can appear as a Pin in more than one itinerary. Dedupe
+// A real-world pin can appear as a Pin in more than one itinerary. Dedupe
 // by name + coordinates so it isn't offered to the engine twice.
 function dedupePins(pins) {
   const seen = new Set()
@@ -79,16 +79,16 @@ function dedupePins(pins) {
   return deduped
 }
 
-// Every Pin on a PUBLIC itinerary doubles as the seeded place catalog for
+// Every Pin on a PUBLIC itinerary doubles as the seeded pin catalog for
 // now (see the Step 9 decision log in the roadmap) — there is no separate
-// place-catalog table. Scoped to `itinerary.isPublic: true` so a private
-// draft's places never leak into someone else's recommendations (that
+// pin-catalog table. Scoped to `itinerary.isPublic: true` so a private
+// draft's pins never leak into someone else's recommendations (that
 // leaked previously — see the Known Limitations fix log in the roadmap).
-async function getAllPlaces() {
+async function getAllPins() {
   const pins = await prisma.pin.findMany({
     where: { itinerary: { isPublic: true } },
   })
-  return dedupePins(pins).map(mapPinToPlace)
+  return dedupePins(pins).map(mapPin)
 }
 
-export { mapPinToPlace, dedupePins, getAllPlaces, toPacificHHMM }
+export { mapPin, dedupePins, getAllPins, toPacificHHMM }

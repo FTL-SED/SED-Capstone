@@ -1,8 +1,8 @@
-// Integration test for Step 9: runs the full pipeline (DB -> placesRepository
+// Integration test for Step 9: runs the full pipeline (DB -> pinsRepository
 // -> recommend()) against the REAL seeded `Pin` catalog, not mock data. This
 // is what actually catches "the unit tests pass but real recommendations are
 // broken/empty/over-budget" — the mock-group tests in recommend/ can't, since
-// they supply their own places.
+// they supply their own pins.
 //
 // Skips (doesn't fail) when there's no reachable/seeded DB, so `npm test`
 // stays green on a machine without a local Postgres set up — see Step 9 in
@@ -47,30 +47,30 @@ test(
     const { shortlist, constraints } = await getRecommendations(trip, members)
 
     assert.ok(Array.isArray(shortlist))
-    assert.ok(shortlist.length > 0, 'expected at least one recommended place from the seeded catalog')
+    assert.ok(shortlist.length > 0, 'expected at least one recommended pin from the seeded catalog')
     assert.equal(constraints.groupSize, members.length)
     assert.deepEqual(constraints.startingLocations, ['Downtown', 'Mission'])
 
-    for (const place of shortlist) {
-      assert.equal(typeof place.name, 'string')
-      assert.equal(typeof place.latitude, 'number')
-      assert.equal(typeof place.longitude, 'number')
-      assert.ok(place.category === 'restaurant' || place.category === 'activity')
+    for (const pin of shortlist) {
+      assert.equal(typeof pin.name, 'string')
+      assert.equal(typeof pin.latitude, 'number')
+      assert.equal(typeof pin.longitude, 'number')
+      assert.ok(pin.category === 'restaurant' || pin.category === 'activity')
     }
   }
 )
 
 test(
-  'getRecommendations never lets a real place through over budget',
+  'getRecommendations never lets a real pin through over budget',
   { skip: dbReason },
   async () => {
     const { shortlist } = await getRecommendations(trip, members)
 
-    for (const place of shortlist) {
-      const price = estPricePerPerson(place)
+    for (const pin of shortlist) {
+      const price = estPricePerPerson(pin)
       assert.ok(
         price == null || price <= trip.maxBudgetPerPerson,
-        `${place.name} costs $${price}, over the $${trip.maxBudgetPerPerson} budget`
+        `${pin.name} costs $${price}, over the $${trip.maxBudgetPerPerson} budget`
       )
     }
   }
@@ -97,8 +97,8 @@ test(
     const { shortlist } = await getRecommendations(trip, members)
     for (const member of members) {
       assert.ok(
-        shortlist.some((place) => memberLikes(place, member)),
-        `${member.name} has no liked place in the real-data shortlist`
+        shortlist.some((pin) => memberLikes(pin, member)),
+        `${member.name} has no liked pin in the real-data shortlist`
       )
     }
   }
@@ -111,14 +111,14 @@ test(
     // "Hawk Hill" only exists on the seeded private draft itinerary
     // ("Weekend Draft: Marin Headlands", isPublic: false). A member whose
     // interests match it exactly must still never see it recommended - this
-    // was a real leak (fixed by scoping getAllPlaces() to isPublic: true),
+    // was a real leak (fixed by scoping getAllPins() to isPublic: true),
     // not a hypothetical.
     const hikerMember = [
       { name: 'Hiker', startLocation: 'Richmond', interestTags: ['hiking', 'scenic_views'], foodPrefs: [] },
     ]
     const { shortlist } = await getRecommendations(trip, hikerMember)
     assert.ok(
-      !shortlist.some((place) => place.name === 'Hawk Hill'),
+      !shortlist.some((pin) => pin.name === 'Hawk Hill'),
       'Hawk Hill (private draft itinerary) leaked into recommendations'
     )
   }

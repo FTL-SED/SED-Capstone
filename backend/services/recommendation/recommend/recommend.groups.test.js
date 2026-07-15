@@ -16,13 +16,13 @@ import { groupA, groupB, groupC } from './mockGroups.js'
 const groups = { A: groupA, B: groupB, C: groupC }
 
 for (const [label, group] of Object.entries(groups)) {
-  const { shortlist } = recommend(group.trip, group.members, group.places)
+  const { shortlist } = recommend(group.trip, group.members, group.pins)
 
-  test(`Group ${label}: every member is covered by ≥1 liked place`, () => {
+  test(`Group ${label}: every member is covered by ≥1 liked pin`, () => {
     for (const member of group.members) {
       assert.ok(
-        shortlist.some((place) => memberLikes(place, member)),
-        `${member.name} has no liked place in the Group ${label} shortlist`
+        shortlist.some((pin) => memberLikes(pin, member)),
+        `${member.name} has no liked pin in the Group ${label} shortlist`
       )
     }
   })
@@ -40,19 +40,19 @@ for (const [label, group] of Object.entries(groups)) {
     )
   })
 
-  test(`Group ${label}: per-person budget sanity holds for every shortlisted place`, () => {
-    for (const place of shortlist) {
-      const price = estPricePerPerson(place)
+  test(`Group ${label}: per-person budget sanity holds for every shortlisted pin`, () => {
+    for (const pin of shortlist) {
+      const price = estPricePerPerson(pin)
       assert.ok(
         price == null || price <= group.trip.maxBudgetPerPerson,
-        `${place.name} costs $${price}, over Group ${label}'s $${group.trip.maxBudgetPerPerson} budget`
+        `${pin.name} costs $${price}, over Group ${label}'s $${group.trip.maxBudgetPerPerson} budget`
       )
     }
   })
 }
 
 test('Group A: diet and hours hard filters still drop disqualified restaurants', () => {
-  const { shortlist } = recommend(groupA.trip, groupA.members, groupA.places)
+  const { shortlist } = recommend(groupA.trip, groupA.members, groupA.pins)
   const names = shortlist.map((p) => p.name)
   assert.ok(!names.includes('Meat & Grill BBQ')) // no vegetarian option for Wei
   assert.ok(!names.includes('Steakhouse Prime')) // no vegetarian option for Wei
@@ -61,12 +61,12 @@ test('Group A: diet and hours hard filters still drop disqualified restaurants',
 })
 
 test("Group B: Nadia's niche birdwatching interest is covered via the fairness guarantee", () => {
-  const { shortlist } = recommend(groupB.trip, groupB.members, groupB.places)
+  const { shortlist } = recommend(groupB.trip, groupB.members, groupB.pins)
   assert.ok(shortlist.some((p) => p.name === 'Golden Gate Park Bird Sanctuary'))
 })
 
 test('Group B: absolute-budget and vegan-diet drops hold under a tight budget', () => {
-  const { shortlist } = recommend(groupB.trip, groupB.members, groupB.places)
+  const { shortlist } = recommend(groupB.trip, groupB.members, groupB.pins)
   const names = shortlist.map((p) => p.name)
   assert.ok(!names.includes('Helicopter Tour')) // $80 > $25 budget, dropped outright
   assert.ok(!names.includes('Fancy Steakhouse')) // over budget AND no vegan option
@@ -74,7 +74,7 @@ test('Group B: absolute-budget and vegan-diet drops hold under a tight budget', 
 })
 
 test('Group C: ratings break ties between identically-tagged cafes', () => {
-  const { shortlist } = recommend(groupC.trip, groupC.members, groupC.places)
+  const { shortlist } = recommend(groupC.trip, groupC.members, groupC.pins)
   const presidio = shortlist.find((p) => p.name === 'Cafe Presidio')
   const blueBottle = shortlist.find((p) => p.name === 'Blue Bottle Coffee')
 
@@ -88,7 +88,7 @@ test('Group C: ratings break ties between identically-tagged cafes', () => {
 })
 
 test('Group C: missing-data flags survive to the final shortlist instead of being dropped', () => {
-  const { shortlist } = recommend(groupC.trip, groupC.members, groupC.places)
+  const { shortlist } = recommend(groupC.trip, groupC.members, groupC.pins)
   const donuts = shortlist.find((p) => p.name === "Bob's Donuts")
   const thirdWave = shortlist.find((p) => p.name === 'Third Wave Coffee')
   const mysteryCafe = shortlist.find((p) => p.name === 'Mystery Cafe')
@@ -105,7 +105,7 @@ test('Group C: missing-data flags survive to the final shortlist instead of bein
 })
 
 test('Group C: over-budget fine dining is dropped, and treats never count against the food quota', () => {
-  const { shortlist } = recommend(groupC.trip, groupC.members, groupC.places)
+  const { shortlist } = recommend(groupC.trip, groupC.members, groupC.pins)
   assert.ok(!shortlist.some((p) => p.name === 'Fine Dining Marina')) // $80 > $50 budget
 
   const treats = shortlist.filter((p) => p.category === 'cafe' || p.category === 'dessert')

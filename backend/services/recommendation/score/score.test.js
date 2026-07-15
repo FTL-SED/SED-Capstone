@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 
 import { softScore } from './score.js'
 
-test('a whole-group-liked place outranks a niche one', () => {
+test('a whole-group-liked pin outranks a niche one', () => {
   const members = [
     { name: 'A', interestTags: ['art'] },
     { name: 'B', interestTags: ['coffee'] },
@@ -20,7 +20,7 @@ test('a whole-group-liked place outranks a niche one', () => {
   assert.ok(scoreAll > scoreNiche, `${scoreAll} should be > ${scoreNiche}`)
 })
 
-test('rating breaks ties between otherwise-identical places', () => {
+test('rating breaks ties between otherwise-identical pins', () => {
   const members = [{ name: 'A', interestTags: ['art'] }]
   const groupTags = new Set(['art'])
   const groupFood = new Set()
@@ -76,7 +76,7 @@ test('returns 0 coverage/intensity (not a crash) when tags/cuisine are missing',
   assert.equal(softScore(bareRestaurant, members, groupTags, groupFood), 0.2 * 0.6)
 })
 
-test('score stays within [0, 1] for a maximally-liked, top-rated place', () => {
+test('score stays within [0, 1] for a maximally-liked, top-rated pin', () => {
   const members = [{ name: 'A', interestTags: ['art'] }, { name: 'B', interestTags: ['art'] }]
   const groupTags = new Set(['art'])
   const groupFood = new Set()
