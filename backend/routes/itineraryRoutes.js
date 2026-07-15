@@ -11,21 +11,22 @@ import {
   removeBookmark,
   copyItinerary,
 } from '../controllers/itineraryController.js'
+import { requireAuth } from '../middleware/auth.js'
 
 const router = express.Router()
 
-router.post('/', createItinerary)
-router.get('/', listItineraries)
-router.get('/:id', getItinerary)
-router.put('/:id', updateItinerary)
-router.delete('/:id', deleteItinerary)
+router.post('/', requireAuth, createItinerary)
+router.get('/', requireAuth, listItineraries)
+router.get('/:id', requireAuth, getItinerary)
+router.put('/:id', requireAuth, updateItinerary)
+router.delete('/:id', requireAuth, deleteItinerary)
 
-router.post('/:id/like', likeItinerary)
-router.delete('/:id/like', unlikeItinerary)
+router.post('/:id/like', requireAuth, likeItinerary)
+router.delete('/:id/like', requireAuth, unlikeItinerary)
 
-router.post('/:id/bookmark', bookmarkItinerary)
-router.delete('/:id/bookmark', removeBookmark)
+router.post('/:id/bookmark', requireAuth, bookmarkItinerary)
+router.delete('/:id/bookmark', requireAuth, removeBookmark)
 
-router.post('/:id/copy', copyItinerary)
+router.post('/:id/copy', requireAuth, copyItinerary)
 
 export default router

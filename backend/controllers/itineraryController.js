@@ -1,56 +1,6 @@
-import { PrismaClient } from '@prisma/client'
-import { createClient } from '@supabase/supabase-js'
-
-const prisma = new PrismaClient()
-
-// Supabase client used only to verify the caller's access token.
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-)
-
-// Reads the "Authorization: Bearer <token>" header and asks Supabase who the
-// token belongs to. Returns the verified user, or null if not signed in.
-async function getAuthUser(req) {
-  const authHeader = req.headers.authorization || ''
-  const token = authHeader.startsWith('Bearer ')
-    ? authHeader.slice('Bearer '.length).trim()
-    : null
-
-  if (!token) return null
-
-  const { data, error } = await supabase.auth.getUser(token)
-  if (error || !data || !data.user) return null
-
-  return { id: data.user.id, email: data.user.email }
-}
-
-// Resolves the app-side profile for the verified caller. Sends the appropriate
-// error response and returns null when the caller is not usable, so handlers can
-// simply `return` after a falsy result.
-async function authenticateProfile(req, res) {
-  const authUser = await getAuthUser(req)
-  if (!authUser) {
-    res.status(401).json({ error: 'You must be signed in' })
-    return null
-  }
-
-  const profile = await prisma.user.findUnique({
-    where: { authUserId: authUser.id },
-  })
-  if (!profile) {
-    res.status(401).json({ error: 'You must be signed in' })
-    return null
-  }
-
-  return profile
-}
-
-// Shared shape for itinerary responses: the creator summary and pins in order.
-const itineraryInclude = {
-  creator: { select: { id: true, username: true } },
-  pins: { orderBy: { orderInItinerary: 'asc' } },
-}
+import * as itineraries from '../models/itineraries.js'
+import * as likes from '../models/likes.js'
+import * as bookmarks from '../models/bookmarks.js'
 
 // POST /itineraries
 // Creates an itinerary owned by the caller, with its pins created in the same
@@ -58,10 +8,8 @@ const itineraryInclude = {
 // through here; constraint fields (budget, interests, etc.) are intentionally
 // not persisted (see Decision Log). Pins are assumed to already be validated,
 // ready-to-insert Pin objects (generation is handled by the pin route).
+// Auth is handled by requireAuth.
 async function createItinerary(req, res) {
-  const profile = await authenticateProfile(req, res)
-  if (!profile) return
-
   const { title, location, description, coverImageUrl, isPublic, pins } = req.body
 
   if (!title || typeof title !== 'string' || title.trim() === '') {
@@ -77,17 +25,14 @@ async function createItinerary(req, res) {
   const resolvedCover =
     coverImageUrl ?? (pinData.length > 0 ? pinData[0].locationImageUrl : null)
 
-  const itinerary = await prisma.itinerary.create({
-    data: {
-      userId: profile.id,
-      title: title.trim(),
-      location: location.trim(),
-      description: description ?? null,
-      coverImageUrl: resolvedCover,
-      isPublic: isPublic === true,
-      ...(pinData.length > 0 ? { pins: { create: pinData } } : {}),
-    },
-    include: itineraryInclude,
+  const itinerary = await itineraries.create({
+    userId: req.user.id,
+    title: title.trim(),
+    location: location.trim(),
+    description: description ?? null,
+    coverImageUrl: resolvedCover,
+    isPublic: isPublic === true,
+    ...(pinData.length > 0 ? { pins: { create: pinData } } : {}),
   })
 
   return res.status(201).json(itinerary)
@@ -97,9 +42,6 @@ async function createItinerary(req, res) {
 // Lists itineraries the caller can see. Supports the Discover feed (public) and
 // the user's own itineraries (mine), plus search/filter/sort/pagination.
 async function listItineraries(req, res) {
-  const profile = await authenticateProfile(req, res)
-  if (!profile) return
-
   const { q, location, interests, scope, sort, limit, offset } = req.query
 
   const resolvedScope = scope ?? 'public'
@@ -123,7 +65,7 @@ async function listItineraries(req, res) {
 
   const where =
     resolvedScope === 'mine'
-      ? { userId: profile.id }
+      ? { userId: req.user.id }
       : { isPublic: true }
 
   // Free-text search (?q=): match itineraries whose title OR location contains
@@ -161,38 +103,26 @@ async function listItineraries(req, res) {
       ? [{ likeCount: 'desc' }, { createdAt: 'desc' }]
       : { createdAt: 'desc' }
 
-  const itineraries = await prisma.itinerary.findMany({
-    where,
-    orderBy,
-    take,
-    skip,
-    include: itineraryInclude,
-  })
+  const result = await itineraries.findMany({ where, orderBy, take, skip })
 
-  return res.status(200).json(itineraries)
+  return res.status(200).json(result)
 }
 
 // GET /itineraries/:id
 // Returns a single itinerary. Private itineraries are only visible to their owner.
 async function getItinerary(req, res) {
-  const profile = await authenticateProfile(req, res)
-  if (!profile) return
-
   const id = Number(req.params.id)
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: 'Invalid itinerary id' })
   }
 
-  const itinerary = await prisma.itinerary.findUnique({
-    where: { id },
-    include: itineraryInclude,
-  })
+  const itinerary = await itineraries.findById(id)
 
   if (!itinerary) {
     return res.status(404).json({ error: 'Itinerary not found' })
   }
 
-  if (!itinerary.isPublic && itinerary.userId !== profile.id) {
+  if (!itinerary.isPublic && itinerary.userId !== req.user.id) {
     return res.status(403).json({ error: 'You do not have access to this itinerary' })
   }
 
@@ -203,19 +133,16 @@ async function getItinerary(req, res) {
 // Updates the caller's own itinerary. Only scalar fields are editable here; pins
 // are managed through the /pins endpoints, and likeCount only via like/unlike.
 async function updateItinerary(req, res) {
-  const profile = await authenticateProfile(req, res)
-  if (!profile) return
-
   const id = Number(req.params.id)
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: 'Invalid itinerary id' })
   }
 
-  const itinerary = await prisma.itinerary.findUnique({ where: { id } })
+  const itinerary = await itineraries.findByIdBasic(id)
   if (!itinerary) {
     return res.status(404).json({ error: 'Itinerary not found' })
   }
-  if (itinerary.userId !== profile.id) {
+  if (itinerary.userId !== req.user.id) {
     return res.status(403).json({ error: 'You can only edit your own itineraries' })
   }
 
@@ -253,11 +180,7 @@ async function updateItinerary(req, res) {
     data.isPublic = isPublic
   }
 
-  const updated = await prisma.itinerary.update({
-    where: { id },
-    data,
-    select: { id: true, ...Object.fromEntries(Object.keys(data).map((k) => [k, true])) },
-  })
+  const updated = await itineraries.update(id, data)
 
   return res.status(200).json(updated)
 }
@@ -265,56 +188,46 @@ async function updateItinerary(req, res) {
 // DELETE /itineraries/:id
 // Deletes the caller's own itinerary. Pins, likes, and bookmarks cascade.
 async function deleteItinerary(req, res) {
-  const profile = await authenticateProfile(req, res)
-  if (!profile) return
-
   const id = Number(req.params.id)
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: 'Invalid itinerary id' })
   }
 
-  const itinerary = await prisma.itinerary.findUnique({ where: { id } })
+  const itinerary = await itineraries.findByIdBasic(id)
   if (!itinerary) {
     return res.status(404).json({ error: 'Itinerary not found' })
   }
-  if (itinerary.userId !== profile.id) {
+  if (itinerary.userId !== req.user.id) {
     return res.status(403).json({ error: 'You can only delete your own itineraries' })
   }
 
-  await prisma.itinerary.delete({ where: { id } })
+  await itineraries.remove(id)
 
   return res.status(204).send()
 }
 
 // Recomputes the denormalized likeCount from the Like rows and persists it.
+// Spans two tables, so it's controller-level orchestration over the models.
 async function syncLikeCount(itineraryId) {
-  const likeCount = await prisma.like.count({ where: { itineraryId } })
-  await prisma.itinerary.update({ where: { id: itineraryId }, data: { likeCount } })
+  const likeCount = await likes.countForItinerary(itineraryId)
+  await itineraries.updateLikeCount(itineraryId, likeCount)
   return likeCount
 }
 
 // POST /itineraries/:id/like
 // Likes an itinerary (safe to call repeatedly) and returns the refreshed like count.
 async function likeItinerary(req, res) {
-  const profile = await authenticateProfile(req, res)
-  if (!profile) return
-
   const id = Number(req.params.id)
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: 'Invalid itinerary id' })
   }
 
-  const itinerary = await prisma.itinerary.findUnique({ where: { id } })
+  const itinerary = await itineraries.findByIdBasic(id)
   if (!itinerary) {
     return res.status(404).json({ error: 'Itinerary not found' })
   }
 
-  // Adds this user's like if there isn't one yet, and does nothing if there already is.
-  await prisma.like.upsert({
-    where: { userId_itineraryId: { userId: profile.id, itineraryId: id } },
-    create: { userId: profile.id, itineraryId: id },
-    update: {},
-  })
+  await likes.upsert(req.user.id, id)
 
   const likeCount = await syncLikeCount(id)
   return res.status(200).json({ likeCount })
@@ -323,21 +236,17 @@ async function likeItinerary(req, res) {
 // DELETE /itineraries/:id/like
 // Unlikes an itinerary (safe to call repeatedly) and returns the refreshed like count.
 async function unlikeItinerary(req, res) {
-  const profile = await authenticateProfile(req, res)
-  if (!profile) return
-
   const id = Number(req.params.id)
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: 'Invalid itinerary id' })
   }
 
-  const itinerary = await prisma.itinerary.findUnique({ where: { id } })
+  const itinerary = await itineraries.findByIdBasic(id)
   if (!itinerary) {
     return res.status(404).json({ error: 'Itinerary not found' })
   }
 
-  // Removes this user's like if there is one, and does nothing if there isn't.
-  await prisma.like.deleteMany({ where: { userId: profile.id, itineraryId: id } })
+  await likes.remove(req.user.id, id)
 
   const likeCount = await syncLikeCount(id)
   return res.status(200).json({ likeCount })
@@ -346,15 +255,12 @@ async function unlikeItinerary(req, res) {
 // POST /itineraries/:id/bookmark
 // Bookmarks a public itinerary (safe to call repeatedly) as a read-only reference.
 async function bookmarkItinerary(req, res) {
-  const profile = await authenticateProfile(req, res)
-  if (!profile) return
-
   const id = Number(req.params.id)
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: 'Invalid itinerary id' })
   }
 
-  const itinerary = await prisma.itinerary.findUnique({ where: { id } })
+  const itinerary = await itineraries.findByIdBasic(id)
   if (!itinerary) {
     return res.status(404).json({ error: 'Itinerary not found' })
   }
@@ -362,12 +268,7 @@ async function bookmarkItinerary(req, res) {
     return res.status(403).json({ error: 'Only public itineraries can be bookmarked' })
   }
 
-  // Adds this user's bookmark if there isn't one yet, and does nothing if there already is.
-  await prisma.bookmark.upsert({
-    where: { userId_itineraryId: { userId: profile.id, itineraryId: id } },
-    create: { userId: profile.id, itineraryId: id },
-    update: {},
-  })
+  await bookmarks.upsert(req.user.id, id)
 
   return res.status(204).send()
 }
@@ -375,21 +276,17 @@ async function bookmarkItinerary(req, res) {
 // DELETE /itineraries/:id/bookmark
 // Removes a bookmark (safe to call repeatedly).
 async function removeBookmark(req, res) {
-  const profile = await authenticateProfile(req, res)
-  if (!profile) return
-
   const id = Number(req.params.id)
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: 'Invalid itinerary id' })
   }
 
-  const itinerary = await prisma.itinerary.findUnique({ where: { id } })
+  const itinerary = await itineraries.findByIdBasic(id)
   if (!itinerary) {
     return res.status(404).json({ error: 'Itinerary not found' })
   }
 
-  // Removes this user's bookmark if there is one, and does nothing if there isn't.
-  await prisma.bookmark.deleteMany({ where: { userId: profile.id, itineraryId: id } })
+  await bookmarks.remove(req.user.id, id)
 
   return res.status(204).send()
 }
@@ -398,55 +295,46 @@ async function removeBookmark(req, res) {
 // Deep-duplicates a public (or owned) itinerary and its pins into a new editable
 // itinerary owned by the caller, linked back via sourceItineraryId.
 async function copyItinerary(req, res) {
-  const profile = await authenticateProfile(req, res)
-  if (!profile) return
-
   const id = Number(req.params.id)
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: 'Invalid itinerary id' })
   }
 
-  const source = await prisma.itinerary.findUnique({
-    where: { id },
-    include: { pins: { orderBy: { orderInItinerary: 'asc' } } },
-  })
+  const source = await itineraries.findByIdWithPins(id)
 
   if (!source) {
     return res.status(404).json({ error: 'Itinerary not found' })
   }
-  if (!source.isPublic && source.userId !== profile.id) {
+  if (!source.isPublic && source.userId !== req.user.id) {
     return res.status(403).json({ error: 'You do not have access to this itinerary' })
   }
 
-  const copy = await prisma.itinerary.create({
-    data: {
-      userId: profile.id,
-      sourceItineraryId: source.id,
-      title: source.title,
-      location: source.location,
-      description: source.description,
-      coverImageUrl: source.coverImageUrl,
-      isPublic: false,
-      likeCount: 0,
-      pins: {
-        create: source.pins.map((pin) => ({
-          orderInItinerary: pin.orderInItinerary,
-          name: pin.name,
-          description: pin.description,
-          tags: pin.tags,
-          pricePerPerson: pin.pricePerPerson,
-          latitude: pin.latitude,
-          longitude: pin.longitude,
-          address: pin.address,
-          startTime: pin.startTime,
-          endTime: pin.endTime,
-          travelTimeToNextMinutes: pin.travelTimeToNextMinutes,
-          distanceToNextMeters: pin.distanceToNextMeters,
-          locationImageUrl: pin.locationImageUrl,
-        })),
-      },
+  const copy = await itineraries.create({
+    userId: req.user.id,
+    sourceItineraryId: source.id,
+    title: source.title,
+    location: source.location,
+    description: source.description,
+    coverImageUrl: source.coverImageUrl,
+    isPublic: false,
+    likeCount: 0,
+    pins: {
+      create: source.pins.map((pin) => ({
+        orderInItinerary: pin.orderInItinerary,
+        name: pin.name,
+        description: pin.description,
+        tags: pin.tags,
+        pricePerPerson: pin.pricePerPerson,
+        latitude: pin.latitude,
+        longitude: pin.longitude,
+        address: pin.address,
+        startTime: pin.startTime,
+        endTime: pin.endTime,
+        travelTimeToNextMinutes: pin.travelTimeToNextMinutes,
+        distanceToNextMeters: pin.distanceToNextMeters,
+        locationImageUrl: pin.locationImageUrl,
+      })),
     },
-    include: itineraryInclude,
   })
 
   return res.status(201).json(copy)

@@ -1,50 +1,5 @@
-import { PrismaClient } from '@prisma/client'
-import { createClient } from '@supabase/supabase-js'
-
-const prisma = new PrismaClient()
-
-// Supabase client used only to verify the caller's access token.
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-)
-
-// Reads the "Authorization: Bearer <token>" header and asks Supabase who the
-// token belongs to. Returns the verified user, or null if not signed in.
-async function getAuthUser(req) {
-  const authHeader = req.headers.authorization || ''
-  const token = authHeader.startsWith('Bearer ')
-    ? authHeader.slice('Bearer '.length).trim()
-    : null
-
-  if (!token) return null
-
-  const { data, error } = await supabase.auth.getUser(token)
-  if (error || !data || !data.user) return null
-
-  return { id: data.user.id, email: data.user.email }
-}
-
-// Resolves the app-side profile for the verified caller. Sends the appropriate
-// error response and returns null when the caller is not usable, so handlers can
-// simply `return` after a falsy result.
-async function authenticateProfile(req, res) {
-  const authUser = await getAuthUser(req)
-  if (!authUser) {
-    res.status(401).json({ error: 'You must be signed in' })
-    return null
-  }
-
-  const profile = await prisma.user.findUnique({
-    where: { authUserId: authUser.id },
-  })
-  if (!profile) {
-    res.status(401).json({ error: 'You must be signed in' })
-    return null
-  }
-
-  return profile
-}
+import * as pins from '../models/pins.js'
+import * as itineraries from '../models/itineraries.js'
 
 // Parses a value into a valid Date, or returns null if it isn't a usable date.
 function parseDate(value) {
@@ -54,26 +9,20 @@ function parseDate(value) {
 
 // GET /pins/:id
 // Returns a single pin. Readable when the parent itinerary is public or owned
-// by the caller.
+// by the caller. Auth is handled by requireAuth.
 async function getPin(req, res) {
-  const profile = await authenticateProfile(req, res)
-  if (!profile) return
-
   const id = Number(req.params.id)
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: 'Invalid pin id' })
   }
 
-  const pin = await prisma.pin.findUnique({
-    where: { id },
-    include: { itinerary: true },
-  })
+  const pin = await pins.findByIdWithItinerary(id)
 
   if (!pin) {
     return res.status(404).json({ error: 'Pin not found' })
   }
 
-  if (!pin.itinerary.isPublic && pin.itinerary.userId !== profile.id) {
+  if (!pin.itinerary.isPublic && pin.itinerary.userId !== req.user.id) {
     return res.status(403).json({ error: 'You do not have access to this pin' })
   }
 
@@ -84,9 +33,6 @@ async function getPin(req, res) {
 // POST /pins
 // Creates a pin on an itinerary the caller owns.
 async function createPin(req, res) {
-  const profile = await authenticateProfile(req, res)
-  if (!profile) return
-
   const {
     itineraryId,
     orderInItinerary,
@@ -160,31 +106,29 @@ async function createPin(req, res) {
     return res.status(400).json({ error: 'distanceToNextMeters must be a number or null' })
   }
 
-  const itinerary = await prisma.itinerary.findUnique({ where: { id: itineraryId } })
+  const itinerary = await itineraries.findByIdBasic(itineraryId)
   if (!itinerary) {
     return res.status(404).json({ error: 'Itinerary not found' })
   }
-  if (itinerary.userId !== profile.id) {
+  if (itinerary.userId !== req.user.id) {
     return res.status(403).json({ error: 'You can only add pins to your own itineraries' })
   }
 
-  const pin = await prisma.pin.create({
-    data: {
-      itineraryId,
-      orderInItinerary,
-      name: name.trim(),
-      description: description ?? null,
-      tags: tags ?? [],
-      pricePerPerson,
-      latitude,
-      longitude,
-      address: address ?? null,
-      startTime: parsedStart,
-      endTime: parsedEnd,
-      travelTimeToNextMinutes: travelTimeToNextMinutes ?? null,
-      distanceToNextMeters: distanceToNextMeters ?? null,
-      locationImageUrl: locationImageUrl.trim(),
-    },
+  const pin = await pins.create({
+    itineraryId,
+    orderInItinerary,
+    name: name.trim(),
+    description: description ?? null,
+    tags: tags ?? [],
+    pricePerPerson,
+    latitude,
+    longitude,
+    address: address ?? null,
+    startTime: parsedStart,
+    endTime: parsedEnd,
+    travelTimeToNextMinutes: travelTimeToNextMinutes ?? null,
+    distanceToNextMeters: distanceToNextMeters ?? null,
+    locationImageUrl: locationImageUrl.trim(),
   })
 
   return res.status(201).json(pin)
@@ -193,23 +137,17 @@ async function createPin(req, res) {
 // PUT /pins/:id
 // Updates a pin on an itinerary the caller owns. All fields are optional.
 async function updatePin(req, res) {
-  const profile = await authenticateProfile(req, res)
-  if (!profile) return
-
   const id = Number(req.params.id)
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: 'Invalid pin id' })
   }
 
-  const pin = await prisma.pin.findUnique({
-    where: { id },
-    include: { itinerary: true },
-  })
+  const pin = await pins.findByIdWithItinerary(id)
 
   if (!pin) {
     return res.status(404).json({ error: 'Pin not found' })
   }
-  if (pin.itinerary.userId !== profile.id) {
+  if (pin.itinerary.userId !== req.user.id) {
     return res.status(403).json({ error: 'You can only edit pins on your own itineraries' })
   }
 
@@ -315,11 +253,7 @@ async function updatePin(req, res) {
     data.locationImageUrl = locationImageUrl.trim()
   }
 
-  const updated = await prisma.pin.update({
-    where: { id },
-    data,
-    select: { id: true, ...Object.fromEntries(Object.keys(data).map((k) => [k, true])) },
-  })
+  const updated = await pins.update(id, data)
 
   return res.status(200).json(updated)
 }
@@ -327,27 +261,21 @@ async function updatePin(req, res) {
 // DELETE /pins/:id
 // Deletes a pin from an itinerary the caller owns.
 async function deletePin(req, res) {
-  const profile = await authenticateProfile(req, res)
-  if (!profile) return
-
   const id = Number(req.params.id)
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: 'Invalid pin id' })
   }
 
-  const pin = await prisma.pin.findUnique({
-    where: { id },
-    include: { itinerary: true },
-  })
+  const pin = await pins.findByIdWithItinerary(id)
 
   if (!pin) {
     return res.status(404).json({ error: 'Pin not found' })
   }
-  if (pin.itinerary.userId !== profile.id) {
+  if (pin.itinerary.userId !== req.user.id) {
     return res.status(403).json({ error: 'You can only delete pins on your own itineraries' })
   }
 
-  await prisma.pin.delete({ where: { id } })
+  await pins.remove(id)
 
   return res.status(204).send()
 }
