@@ -1,8 +1,14 @@
 import './SubmitButton.css'
 
-function SubmitButton({ label = "Submit", onClick }) {
+function SubmitButton({ label = "Submit", onClick, loading = false }) {
   return (
-    <button className="submit-button" type="submit" onClick={onClick}>{label}</button>
+    <button 
+      className={loading ? "submit-button loading" : "submit-button"}
+      type="submit" 
+      onClick={onClick}
+      disabled={loading}>
+        {label}
+      </button>
   );
 }
 

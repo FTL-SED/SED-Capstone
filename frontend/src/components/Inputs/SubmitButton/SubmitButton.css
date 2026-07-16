@@ -10,6 +10,11 @@
   transition: background 0.15s ease;
 }
 
-.submit-button:hover {
+.submit-button:hover:not(:disabled) {
   background: var(--slate-800);
+}
+
+.submit-button.loading {
+  background: var(--slate-600);
+  cursor: not-allowed;
 }

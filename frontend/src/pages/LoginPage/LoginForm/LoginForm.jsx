@@ -13,6 +13,7 @@ function LoginForm({setCurrentUser}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -27,6 +28,7 @@ function LoginForm({setCurrentUser}) {
       return;
     }
 
+    setLoading(true); 
     try {
       const response = await axios.post(`${BASE_URL}/users/login`, userData);
       const { user, session } = response.data;
@@ -38,6 +40,8 @@ function LoginForm({setCurrentUser}) {
       navigate("/home");
     } catch (err) {
       setError(err.response?.data?.error || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -60,6 +64,7 @@ function LoginForm({setCurrentUser}) {
       <SubmitButton 
         label="Log In" 
         onClick={handleSubmit}
+        loading={loading}
       />
 
     </form>

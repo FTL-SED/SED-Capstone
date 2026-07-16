@@ -15,6 +15,7 @@ function RegisterForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("") // confirmation message
+  const [loading, setLoading] = useState(false);
    
   const handleSubmit = async (e) => {
     const userData = { email, username, password };
@@ -29,6 +30,7 @@ function RegisterForm() {
       return;
     }
 
+    setLoading(true);
     try {
       const response = await axios.post(`${BASE_URL}/users/register`, userData);
       setError("");
@@ -36,6 +38,8 @@ function RegisterForm() {
     } catch (err) {
       setSuccess("")
       setError(err.response?.data?.error || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,9 +66,10 @@ function RegisterForm() {
       <ErrorMessage message={error}/>
       <ConfirmationMessage message={success}/>
       
-      <SubmitButton 
-        label="Sign Up" 
+      <SubmitButton
+        label="Sign Up"
         onClick={handleSubmit}
+        loading={loading}
       />
 
     </form>
