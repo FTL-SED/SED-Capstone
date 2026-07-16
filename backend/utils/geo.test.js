@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { haversineMiles, centroid, geometricMedian, maxDistanceFrom } from './geo.js'
+import { haversineMiles, centroid, geometricMedian, maxDistanceFrom, milesToMeters } from './geo.js'
 
 // Real SF landmarks, for distances with a known ballpark.
 const FERRY_BUILDING = { latitude: 37.7955, longitude: -122.3937 }
@@ -91,4 +91,9 @@ test('maxDistanceFrom: returns the farthest point distance', () => {
 
 test('maxDistanceFrom: zero when every point is the center', () => {
   assert.equal(maxDistanceFrom(FERRY_BUILDING, [FERRY_BUILDING, FERRY_BUILDING]), 0)
+})
+
+test('milesToMeters: converts miles to meters', () => {
+  assert.equal(milesToMeters(1), 1609.344)
+  assert.equal(milesToMeters(0), 0)
 })

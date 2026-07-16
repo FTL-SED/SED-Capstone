@@ -74,4 +74,11 @@ function maxDistanceFrom(center, points) {
   return points.reduce((max, p) => Math.max(max, haversineMiles(center, p)), 0)
 }
 
-export { haversineMiles, centroid, geometricMedian, maxDistanceFrom }
+// Convert miles to meters — used by the AI sequencing step to report per-stop
+// travel distances in metric units.
+const MILES_TO_METERS = 1609.344
+function milesToMeters(miles) {
+  return miles * MILES_TO_METERS
+}
+
+export { haversineMiles, centroid, geometricMedian, maxDistanceFrom, milesToMeters }
