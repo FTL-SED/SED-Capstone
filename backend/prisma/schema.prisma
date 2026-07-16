@@ -46,7 +46,7 @@ model Itinerary {
 
 model Pin {
   id                      Int       @id @default(autoincrement())
-  itineraryId             Int
+  itineraryId             Int?
   orderInItinerary        Int
   name                    String
   description             String?
@@ -61,7 +61,7 @@ model Pin {
   travelTimeToNextMinutes Int?
   distanceToNextMeters    Float?
   locationImageUrl        String
-  itinerary               Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+  itinerary               Itinerary? @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
 
   @@unique([itineraryId, orderInItinerary])
 }
