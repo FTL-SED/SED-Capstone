@@ -79,14 +79,17 @@ function dedupePins(pins) {
   return deduped
 }
 
-// Every Pin on a PUBLIC itinerary doubles as the seeded pin catalog for
-// now (see the Step 9 decision log in the roadmap) — there is no separate
-// pin-catalog table. Scoped to `itinerary.isPublic: true` so a private
-// draft's pins never leak into someone else's recommendations (that
-// leaked previously — see the Known Limitations fix log in the roadmap).
+// The seeded pin catalog for the engine is two sources unioned (there is no
+// separate pin-catalog table — see the Step 9 decision log in the roadmap):
+//   1. Standalone catalog pins with no parent itinerary (itineraryId: null),
+//      loaded by scripts/seedSfPlaces.js.
+//   2. Pins on a PUBLIC itinerary.
+// Private-draft pins are still excluded so they never leak into someone
+// else's recommendations (that leaked previously — see the Known Limitations
+// fix log in the roadmap, and the "Hawk Hill" regression test).
 async function getAllPins() {
   const pins = await prisma.pin.findMany({
-    where: { itinerary: { isPublic: true } },
+    where: { OR: [{ itineraryId: null }, { itinerary: { isPublic: true } }] },
   })
   return dedupePins(pins).map(mapPin)
 }

@@ -4,7 +4,8 @@
     "start": "node index.js",
     "dev": "node --watch index.js",
     "test": "node --test",
-    "quality-report": "node scripts/recommendationQualityReport.js"
+    "quality-report": "node scripts/recommendationQualityReport.js",
+    "seed:places": "node scripts/seedSfPlaces.js"
   },
   "dependencies": {
     "@prisma/client": "6.7.0",
