@@ -33,28 +33,26 @@ function recommend(trip, members, pins) {
 
   // Stage 1: hard filters (relevance, diet, budget sanity, hours) + Stage 0's
   // meeting point / travel-radius drop. meetingPoint is null when members carry
-  // no coordinates.
-  const { candidates, meetingPoint } = hardFilter(pins, members, trip)
+  // no coordinates; memberCoords is reused for the fairness metric below.
+  const { candidates, meetingPoint, memberCoords } = hardFilter(pins, members, trip)
 
   // Stage 2: soft score + rank the full survivor pool.
   const scoredCandidates = scoreAndSort(candidates, members, groupTags, groupFood)
 
-  // Enrich only the top slice (lazy Google + cache, no-op today), then
-  // re-score + re-sort since enrichment can change ratings/price/hours.
-  const enrichedTop = enrichMissing(scoredCandidates.slice(0, ENRICHMENT_POOL_SIZE))
-  const rankedTop = scoreAndSort(enrichedTop, members, groupTags, groupFood)
+  // Enrichment seam: enrichMissing() gets a shot at the top slice (lazy Google +
+  // cache). It's a no-op today, so no re-score is needed — when it's implemented
+  // and actually changes ratings/price/hours, re-score + re-sort the enriched
+  // slice here before assembly.
+  const rankedTop = enrichMissing(scoredCandidates.slice(0, ENRICHMENT_POOL_SIZE))
 
-  // Assemble the food-quota'd shortlist, then guarantee every member is
-  // represented — both draw on the full scored pool, not just the top slice.
+  // Assemble the food-quota'd shortlist from the top slice, floor-filling meals
+  // from the full scored pool, then guarantee every member is represented.
   const shortlistSize = computeShortlistSize(trip)
   const assembled = assembleWithFoodQuota(rankedTop, scoredCandidates, shortlistSize)
   const shortlist = ensureEveryMemberCovered(assembled, members, scoredCandidates)
 
   // Fairness metric: how far the worst-off member travels to the meeting point.
   // Only meaningful when members carry coordinates (meetingPoint !== null).
-  const memberCoords = members
-    .map((m) => m.startLocation)
-    .filter((loc) => loc && typeof loc.latitude === 'number' && typeof loc.longitude === 'number')
   const maxMemberDistance =
     meetingPoint && memberCoords.length > 0 ? maxDistanceFrom(meetingPoint, memberCoords) : null
 
