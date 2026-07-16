@@ -13,14 +13,12 @@ import {
   estPricePerPerson,
   budgetSanityOk,
   isOpenInWindow,
+  hasUsableHours,
   withinRadius,
 } from '../helpers/helpers.js'
 import { geometricMedian } from '../../../utils/geo.js'
 
 const isRestaurant = (pin) => pin.category === 'restaurant'
-
-const hasNoHours = (pin) =>
-  !pin.openingHours || pin.openingHours.length === 0
 
 // A member's start location is usable for the meeting point only once it's been
 // geocoded to numeric coordinates (see Stage 0 design — geocoding is upstream).
@@ -43,6 +41,12 @@ function hardFilter(pins, members, trip) {
   const candidates = []
   const flags = { priceUnknown: [], hoursUnknown: [] }
 
+  // If the group expressed no interests at all, there's nothing to judge
+  // activity relevance against — so keep all activities and let quality (rating)
+  // rank them, rather than filtering every activity out and leaving a
+  // meals-only shortlist.
+  const hasGroupInterests = groupTags.size > 0
+
   // Stage 0: fair meeting point from members with real coordinates, then the
   // travel-radius drop is measured from it. Both are no-ops (radius skipped)
   // when we lack coordinates or the trip sets no radius — so pre-geocoding
@@ -53,10 +57,12 @@ function hardFilter(pins, members, trip) {
 
   for (const pin of pins) {
     // Relevance: restaurants are the meal pool (always eligible, diet-gated);
-    // activities must overlap the group's combined interests or they're noise.
+    // activities must overlap the group's combined interests or they're noise —
+    // unless the group set no interests at all, in which case all activities
+    // stay (ranked later by quality).
     const relevant = isRestaurant(pin)
       ? passesDiet(pin, members)
-      : shareTag(pin.tags, groupTags)
+      : !hasGroupInterests || shareTag(pin.tags, groupTags)
     if (!relevant) continue
 
     // Travel radius: hard drop pins too far from the meeting point. No flag —
@@ -67,9 +73,10 @@ function hardFilter(pins, members, trip) {
     // per-person budget. Real enforcement is summing the chosen itinerary.
     if (!budgetSanityOk(pin, trip)) continue
 
-    // Hours: drop only when data exists AND the pin can't open in the window.
-    // Unknown hours are kept and flagged, never dropped.
-    const hoursUnknown = hasNoHours(pin)
+    // Hours: drop only when usable hours exist AND the pin can't open in the
+    // window. Missing OR malformed hours count as unknown — kept and flagged,
+    // never dropped.
+    const hoursUnknown = !hasUsableHours(pin)
     if (!hoursUnknown && !isOpenInWindow(pin, trip.startTime, trip.endTime)) {
       continue
     }
