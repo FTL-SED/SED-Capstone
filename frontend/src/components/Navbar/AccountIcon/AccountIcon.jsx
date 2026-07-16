@@ -2,10 +2,10 @@ import './AccountIcon.css'
 import accountIcon from '../../../assets/account_icon.png'
 import { Link } from 'react-router-dom'
 
-function AccountIcon() {
+function AccountIcon({ currentUser }) {
   return (
     <Link to="/account" className="account-icon">
-        <img src={accountIcon} alt="Account" />
+        <img src={currentUser?.avatarUrl || accountIcon} alt="Account" />
     </Link>
 
   );

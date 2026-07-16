@@ -61,7 +61,7 @@ function App() {
 
   return (
     <div className="app">
-      <Navbar isAuthenticated={isAuthenticated}/>
+      <Navbar isAuthenticated={isAuthenticated} currentUser={currentUser}/>
       <main className={`app__main${isAuthPage ? ' app__main--bare' : ''}`}>
         <Routes>
           <Route path="/" element={<LandingPage />} />

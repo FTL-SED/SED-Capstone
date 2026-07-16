@@ -31,5 +31,15 @@ async function uploadAvatar({ path, buffer, contentType }) {
   return data.publicUrl
 }
 
+// Changes a user's password via the admin API. Used by the account page's
+// password change, after the caller's current password has been re-verified.
+// Kept in lib/ so service-role access stays confined here.
+async function updateUserPassword(authUserId, password) {
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(authUserId, {
+    password,
+  })
+  if (error) throw error
+}
+
 export default supabase
-export { uploadAvatar }
+export { uploadAvatar, updateUserPassword }

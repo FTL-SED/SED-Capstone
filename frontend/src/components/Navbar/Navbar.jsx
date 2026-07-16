@@ -5,7 +5,7 @@ import NavLinks from './NavLinks/NavLinks.jsx';
 import AuthButtons from './AuthButtons/AuthButtons.jsx'
 import AccountIcon from './AccountIcon/AccountIcon.jsx'
 
-function Navbar({isAuthenticated}) {
+function Navbar({isAuthenticated, currentUser}) {
   const { pathname } = useLocation();
   const showAuthButtons = !isAuthenticated || pathname === '/';
 
@@ -19,7 +19,7 @@ function Navbar({isAuthenticated}) {
               ) : (
                 <>
                   <NavLinks />
-                  <AccountIcon />
+                  <AccountIcon currentUser={currentUser} />
                 </>
               )}
       </div>

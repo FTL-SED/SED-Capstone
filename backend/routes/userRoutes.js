@@ -6,6 +6,7 @@ import {
   updateUser,
   getUser,
   uploadUserAvatar,
+  changeUserPassword,
 } from '../controllers/userController.js'
 import { requireAuth } from '../middleware/auth.js'
 
@@ -23,5 +24,6 @@ router.post('/login', loginUser)
 router.get('/:id', requireAuth, getUser)
 router.put('/:id', requireAuth, updateUser)
 router.post('/:id/avatar', requireAuth, upload.single('avatar'), uploadUserAvatar)
+router.post('/:id/password', requireAuth, changeUserPassword)
 
 export default router

@@ -13,7 +13,7 @@ function AccountPage({ currentUser, setCurrentUser }) {
       </div>
       <div className="account-page__main">
         <ProfileSection />
-        <ChangePasswordSection />
+        <ChangePasswordSection currentUser={currentUser} />
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import supabase, { uploadAvatar } from '../lib/supabase.js'
+import supabase, { uploadAvatar, updateUserPassword } from '../lib/supabase.js'
 import * as users from '../models/users.js'
 
 // POST /users/register
@@ -249,4 +249,65 @@ async function getUser(req, res) {
   })
 }
 
-export { registerUser, loginUser, updateUser, getUser, uploadUserAvatar }
+// POST /users/:id/password
+// Changes the caller's own password. Requires the current password and
+// re-verifies it (via Supabase sign-in) before updating, so a hijacked session
+// can't silently reset the password. Auth is handled by requireAuth.
+async function changeUserPassword(req, res) {
+  const id = Number(req.params.id)
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ error: 'Invalid user id' })
+  }
+
+  if (req.user.id !== id) {
+    return res.status(403).json({ error: 'You can only change your own password' })
+  }
+
+  const { currentPassword, newPassword } = req.body
+  if (!currentPassword || !newPassword) {
+    return res
+      .status(400)
+      .json({ error: 'Current and new password are required.' })
+  }
+
+  if (typeof newPassword !== 'string' || newPassword.length < 8) {
+    return res
+      .status(400)
+      .json({ error: 'New password must be at least 8 characters.' })
+  }
+
+  // Re-verify the current password: sign in with it before allowing a change.
+  const { error: verifyError } = await supabase.auth.signInWithPassword({
+    email: req.user.email,
+    password: currentPassword,
+  })
+  if (verifyError) {
+    return res.status(401).json({ error: 'Current password is incorrect.' })
+  }
+
+  try {
+    await updateUserPassword(req.user.authUserId, newPassword)
+    return res.status(200).json({ message: 'Password updated.' })
+  } catch (err) {
+    // Surface the raw error for us; send the user a friendly message.
+    console.error('changeUserPassword error:', err.code, err.message)
+
+    if (err.code === 'weak_password') {
+      return res.status(400).json({
+        error: 'Password must be 8+ characters and include a-z, A-Z, 0-9, and a special character.',
+      })
+    }
+    return res
+      .status(500)
+      .json({ error: 'Could not update your password. Please try again.' })
+  }
+}
+
+export {
+  registerUser,
+  loginUser,
+  updateUser,
+  getUser,
+  uploadUserAvatar,
+  changeUserPassword,
+}
