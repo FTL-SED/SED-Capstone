@@ -93,6 +93,12 @@ async function registerUser(req, res) {
       .status(500)
       .json({ error: 'Something went wrong on our end. Please try again.' })
   }
+  } catch (err) {
+    console.error('registerUser error:', err)
+    return res
+      .status(500)
+      .json({ error: 'Something went wrong on our end. Please try again.' })
+  }
 }
 
 // POST /users/login
