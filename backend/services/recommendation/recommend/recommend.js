@@ -8,8 +8,9 @@ import { hardFilter } from '../filters/filters.js'
 import { softScore } from '../score/score.js'
 import { enrichMissing } from '../enrich/enrich.js'
 import { computeShortlistSize, assembleWithFoodQuota } from '../assemble/assemble.js'
-import { ensureEveryMemberCovered } from '../fairness/fairness.js'
-import { ENRICHMENT_POOL_SIZE } from '../../../config/recommendation.js'
+import { ensureEveryMemberCovered, ensureEveryDietCovered } from '../fairness/fairness.js'
+import { ENRICHMENT_POOL_SIZE, FOOD_MIN } from '../../../config/recommendation.js'
+import { maxDistanceFrom } from '../../../utils/geo.js'
 
 // Attach a fresh .score to each pin and sort best-first. Re-run whenever the
 // underlying data changes (e.g. after enrichment) since scores can shift.
@@ -30,22 +31,39 @@ function recommend(trip, members, pins) {
   const groupTags = new Set(members.flatMap((m) => m.interestTags ?? []))
   const groupFood = new Set(members.flatMap((m) => m.foodPrefs ?? []))
 
-  // Stage 1: hard filters (relevance, diet, budget sanity, hours).
-  const { candidates } = hardFilter(pins, members, trip)
+  // Stage 1: hard filters (relevance, diet, budget sanity, hours) + Stage 0's
+  // meeting point / travel-radius drop. meetingPoint is null when members carry
+  // no coordinates; memberCoords is reused for the fairness metric below.
+  const { candidates, meetingPoint, memberCoords } = hardFilter(pins, members, trip)
 
   // Stage 2: soft score + rank the full survivor pool.
   const scoredCandidates = scoreAndSort(candidates, members, groupTags, groupFood)
 
-  // Enrich only the top slice (lazy Google + cache, no-op today), then
-  // re-score + re-sort since enrichment can change ratings/price/hours.
-  const enrichedTop = enrichMissing(scoredCandidates.slice(0, ENRICHMENT_POOL_SIZE))
-  const rankedTop = scoreAndSort(enrichedTop, members, groupTags, groupFood)
+  // Enrichment seam: enrichMissing() gets a shot at the top slice (lazy Google +
+  // cache). It's a no-op today, so no re-score is needed — when it's implemented
+  // and actually changes ratings/price/hours, re-score + re-sort the enriched
+  // slice here before assembly.
+  const rankedTop = enrichMissing(scoredCandidates.slice(0, ENRICHMENT_POOL_SIZE))
 
-  // Assemble the food-quota'd shortlist, then guarantee every member is
-  // represented — both draw on the full scored pool, not just the top slice.
+  // Assemble the food-quota'd shortlist from the top slice, floor-filling meals
+  // from the full scored pool, then guarantee every member is represented.
   const shortlistSize = computeShortlistSize(trip)
   const assembled = assembleWithFoodQuota(rankedTop, scoredCandidates, shortlistSize)
-  const shortlist = ensureEveryMemberCovered(assembled, members, scoredCandidates)
+  const covered = ensureEveryMemberCovered(assembled, members, scoredCandidates)
+  // Then guarantee each dieted member has ≥1 restaurant they can actually eat at.
+  const shortlist = ensureEveryDietCovered(covered, members, scoredCandidates)
+
+  // Fairness metric: how far the worst-off member travels to the meeting point.
+  // Only meaningful when members carry coordinates (meetingPoint !== null).
+  const maxMemberDistance =
+    meetingPoint && memberCoords.length > 0 ? maxDistanceFrom(meetingPoint, memberCoords) : null
+
+  // Signal when the shortlist has fewer than FOOD_MIN meal options — e.g. a
+  // tight travel radius or thin catalog leaves a "food desert" in range. The
+  // AI / frontend can then tell the group meal choices are limited, rather than
+  // the shortfall passing silently.
+  const restaurantCount = shortlist.filter((p) => p.category === 'restaurant').length
+  const foodBelowMin = restaurantCount < FOOD_MIN
 
   return {
     shortlist,
@@ -53,6 +71,12 @@ function recommend(trip, members, pins) {
       maxBudgetPerPerson: trip.maxBudgetPerPerson,
       groupSize: members.length,
       startingLocations: members.map((m) => m.startLocation),
+      timeWindow: { startTime: trip.startTime, endTime: trip.endTime },
+      transport: trip.transport ?? null,
+      meetingPoint,
+      travelRadius: trip.travelRadius ?? null,
+      maxMemberDistance,
+      foodBelowMin,
     },
   }
 }

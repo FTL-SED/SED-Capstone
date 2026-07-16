@@ -51,13 +51,23 @@ for (const [label, group] of Object.entries(groups)) {
   })
 }
 
-test('Group A: diet and hours hard filters still drop disqualified restaurants', () => {
+test('Group A: hours and relevance hard filters still drop disqualified pins', () => {
   const { shortlist } = recommend(groupA.trip, groupA.members, groupA.pins)
   const names = shortlist.map((p) => p.name)
-  assert.ok(!names.includes('Meat & Grill BBQ')) // no vegetarian option for Wei
-  assert.ok(!names.includes('Steakhouse Prime')) // no vegetarian option for Wei
+  // Diet is no longer a whole-group drop: Meat & Grill BBQ / Steakhouse Prime
+  // can serve Priya & Marcus (no diet) even though vegetarian Wei can't eat
+  // there, so they're eligible now — see the diet-coverage test below.
   assert.ok(!names.includes('Late Night Diner')) // open only outside the trip window
   assert.ok(!names.includes('Golden Gate Park')) // no interest overlap with the group
+})
+
+test('Group A: vegetarian Wei still gets a restaurant she can eat at', () => {
+  const { shortlist } = recommend(groupA.trip, groupA.members, groupA.pins)
+  const wei = groupA.members.find((m) => m.name === 'Wei')
+  const eatable = shortlist.filter(
+    (p) => p.category === 'restaurant' && (!p.diet || p.diet.includes('vegetarian'))
+  )
+  assert.ok(eatable.length > 0, 'Wei (vegetarian) has no restaurant she can eat at')
 })
 
 test("Group B: Nadia's niche birdwatching interest is covered via the fairness guarantee", () => {
@@ -65,12 +75,22 @@ test("Group B: Nadia's niche birdwatching interest is covered via the fairness g
   assert.ok(shortlist.some((p) => p.name === 'Golden Gate Park Bird Sanctuary'))
 })
 
-test('Group B: absolute-budget and vegan-diet drops hold under a tight budget', () => {
+test('Group B: absolute-budget drops still hold under a tight budget', () => {
   const { shortlist } = recommend(groupB.trip, groupB.members, groupB.pins)
   const names = shortlist.map((p) => p.name)
   assert.ok(!names.includes('Helicopter Tour')) // $80 > $25 budget, dropped outright
-  assert.ok(!names.includes('Fancy Steakhouse')) // over budget AND no vegan option
-  assert.ok(!names.includes('Richmond Ramen')) // no vegan option for Jess
+  assert.ok(!names.includes('Fancy Steakhouse')) // still over budget (diet aside)
+  // Richmond Ramen (diet: []) is no longer dropped for diet — Jess's companions
+  // have no diet, so it's a valid meal for them; Jess's vegan coverage is
+  // guaranteed separately (asserted below).
+})
+
+test('Group B: vegan Jess still gets a restaurant she can eat at', () => {
+  const { shortlist } = recommend(groupB.trip, groupB.members, groupB.pins)
+  const eatable = shortlist.filter(
+    (p) => p.category === 'restaurant' && (!p.diet || p.diet.includes('vegan'))
+  )
+  assert.ok(eatable.length > 0, 'Jess (vegan) has no restaurant she can eat at')
 })
 
 test('Group C: ratings break ties between identically-tagged cafes', () => {

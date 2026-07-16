@@ -11,6 +11,7 @@
 //   member = { name, interestTags[], foodPrefs[], diet[]? }
 
 import { PRICE_LEVEL_USD } from '../../../config/recommendation.js'
+import { haversineMiles } from '../../../utils/geo.js'
 
 // True if the pin carries at least one of the group's interest tags. Used to
 // keep activities relevant to what the group actually likes.
@@ -28,15 +29,24 @@ function overlap(pinCuisine, memberFoodPrefs) {
   return pinCuisine.some((c) => prefs.has(c))
 }
 
-// Hard dietary filter for food pins. A restaurant is a shared group meal, so
-// it must be able to serve EVERY dietary restriction present in the group.
-// Unknown diet data ⇒ keep (don't silently drop on missing data).
-function passesDiet(pin, members) {
-  const required = new Set(members.flatMap((m) => m.diet ?? []))
-  if (required.size === 0) return true
-  if (!pin.diet) return true // unknown ⇒ keep
+// True if this restaurant can serve one member's dietary needs. A member with
+// no diet can eat anywhere; a restaurant with unknown diet data is assumed
+// edible (missing data ⇒ keep, never silently exclude).
+function memberCanEat(pin, member) {
+  const needs = member.diet ?? []
+  if (needs.length === 0) return true
+  if (!pin.diet) return true // unknown ⇒ assume it can serve them
   const offered = new Set(pin.diet)
-  return [...required].every((d) => offered.has(d))
+  return needs.every((d) => offered.has(d))
+}
+
+// Diet filter for food pins. Keep a restaurant if it can serve AT LEAST ONE
+// member's diet — drop only when it can serve nobody in the group. (Whole-group
+// coverage is preferred via scoring + a coverage fallback, not by dropping every
+// restaurant that can't feed everyone — that emptied the meal pool for mixed
+// diets.) Unknown diet data ⇒ keep.
+function passesDiet(pin, members) {
+  return members.some((m) => memberCanEat(pin, m))
 }
 
 // Estimated per-person cost. Prefers an already-known exact price (e.g. from
@@ -57,30 +67,72 @@ function budgetSanityOk(pin, trip) {
   return price <= trip.maxBudgetPerPerson
 }
 
-// Convert 'HH:MM' to minutes since midnight for interval comparison.
+// Convert 'HH:MM' to minutes since midnight for interval comparison, or null
+// when the input isn't a valid HH:MM string (so callers can treat malformed
+// data as "unknown" instead of silently comparing against NaN).
 function toMinutes(hhmm) {
-  const [h, m] = hhmm.split(':').map(Number)
+  if (typeof hhmm !== 'string') return null
+  const match = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim())
+  if (!match) return null
+  const h = Number(match[1])
+  const m = Number(match[2])
+  if (h > 23 || m > 59) return null
   return h * 60 + m
 }
 
 // True if the pin is open at some point within [startTime, endTime].
 // Unknown hours ⇒ true (Step 3 keeps it and attaches an `hoursUnknown` flag
-// rather than dropping — missing data must never silently kill a pin).
+// rather than dropping — missing data must never silently kill a pin). A pin
+// whose hours can't be parsed is treated the same as unknown: we don't let a
+// malformed interval silently drop it.
 function isOpenInWindow(pin, startTime, endTime) {
   if (!pin.openingHours || pin.openingHours.length === 0) return true
   const start = toMinutes(startTime)
   const end = toMinutes(endTime)
-  return pin.openingHours.some(({ open, close }) => {
-    return toMinutes(open) < end && toMinutes(close) > start
-  })
+  if (start == null || end == null) return true // can't compare ⇒ treat as unknown
+
+  // Keep only the intervals we can actually parse. If none parse, hours are
+  // effectively unknown ⇒ keep (true); otherwise check overlap among the valid ones.
+  const intervals = pin.openingHours
+    .map(({ open, close }) => ({ openM: toMinutes(open), closeM: toMinutes(close) }))
+    .filter(({ openM, closeM }) => openM != null && closeM != null)
+  if (intervals.length === 0) return true
+  return intervals.some(({ openM, closeM }) => openM < end && closeM > start)
+}
+
+// True if the pin has at least one well-formed opening-hours interval. A pin
+// with no hours at all, or only malformed ones (e.g. "25:99"), has no usable
+// hours — Stage 1 treats both as `hoursUnknown` (keep + flag, never drop).
+function hasUsableHours(pin) {
+  if (!pin.openingHours || pin.openingHours.length === 0) return false
+  return pin.openingHours.some(
+    ({ open, close }) => toMinutes(open) != null && toMinutes(close) != null
+  )
+}
+
+// True if the pin is within `travelRadius` miles of the meeting point. Unlike
+// price/hours, coordinates are always known, so this is a plain hard check with
+// no "unknown ⇒ keep" escape hatch (Stage 0 radius filter).
+function withinRadius(pin, center, travelRadius) {
+  return haversineMiles(pin, center) <= travelRadius
+}
+
+// Stable identity for dedup/membership checks: prefer the DB id, fall back to
+// name. Shared by assemble.js and fairness.js so they agree on "same pin".
+function pinIdentity(pin) {
+  return pin.id ?? pin.name
 }
 
 export {
   shareTag,
   overlap,
   passesDiet,
+  memberCanEat,
   estPricePerPerson,
   budgetSanityOk,
   isOpenInWindow,
   toMinutes,
+  hasUsableHours,
+  withinRadius,
+  pinIdentity,
 }

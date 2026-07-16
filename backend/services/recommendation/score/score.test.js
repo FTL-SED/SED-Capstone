@@ -85,3 +85,14 @@ test('score stays within [0, 1] for a maximally-liked, top-rated pin', () => {
   const score = softScore(best, members, groupTags, groupFood)
   assert.ok(score > 0 && score <= 1)
 })
+
+test('softScore: empty members group scores without NaN (coverage guarded)', () => {
+  const score = softScore(
+    { category: 'museum', tags: ['art'] },
+    [],
+    new Set(['art']),
+    new Set()
+  )
+  assert.ok(!Number.isNaN(score), 'score must not be NaN for an empty group')
+  assert.ok(score >= 0 && score <= 1)
+})

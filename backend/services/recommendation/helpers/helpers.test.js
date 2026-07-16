@@ -5,9 +5,13 @@ import {
   shareTag,
   overlap,
   passesDiet,
+  memberCanEat,
   estPricePerPerson,
   budgetSanityOk,
   isOpenInWindow,
+  hasUsableHours,
+  toMinutes,
+  withinRadius,
 } from './helpers.js'
 
 test('shareTag: true when a pin tag is in the group set', () => {
@@ -41,15 +45,33 @@ test('passesDiet: true when no dietary needs in the group', () => {
   assert.equal(passesDiet({ diet: ['vegan'] }, members), true)
 })
 
-test('passesDiet: true only when pin serves every required diet', () => {
-  const members = [{ name: 'A', diet: ['vegetarian'] }]
-  assert.equal(passesDiet({ diet: ['vegetarian', 'vegan'] }, members), true)
-  assert.equal(passesDiet({ diet: ['vegan'] }, members), false)
+test('passesDiet: keeps a pin that serves at least one member', () => {
+  // A is vegan, B has no diet — a vegetarian-only spot still works for B.
+  const members = [{ name: 'A', diet: ['vegan'] }, { name: 'B' }]
+  assert.equal(passesDiet({ diet: ['vegetarian'] }, members), true)
+})
+
+test('passesDiet: drops a pin that can serve nobody in the group', () => {
+  const members = [{ name: 'A', diet: ['vegan'] }, { name: 'B', diet: ['halal'] }]
+  assert.equal(passesDiet({ diet: ['none'] }, members), false)
 })
 
 test('passesDiet: keeps pin when its diet data is unknown (missing data)', () => {
   const members = [{ name: 'A', diet: ['vegan'] }]
   assert.equal(passesDiet({ name: 'Mystery Cafe' }, members), true)
+})
+
+test('memberCanEat: member with no diet can eat anywhere', () => {
+  assert.equal(memberCanEat({ diet: ['vegetarian'] }, { name: 'A' }), true)
+})
+
+test('memberCanEat: requires the pin to serve every diet the member needs', () => {
+  assert.equal(memberCanEat({ diet: ['vegan', 'vegetarian'] }, { diet: ['vegan'] }), true)
+  assert.equal(memberCanEat({ diet: ['vegetarian'] }, { diet: ['vegan'] }), false)
+})
+
+test('memberCanEat: unknown pin diet ⇒ assumed edible (missing data)', () => {
+  assert.equal(memberCanEat({ name: 'Mystery' }, { diet: ['vegan'] }), true)
 })
 
 test('estPricePerPerson: maps priceLevel via the table', () => {
@@ -88,4 +110,37 @@ test('isOpenInWindow: false when hours fall entirely outside the window', () => 
 test('isOpenInWindow: keeps pin when hours unknown (missing data)', () => {
   assert.equal(isOpenInWindow({}, '09:00', '17:00'), true)
   assert.equal(isOpenInWindow({ openingHours: [] }, '09:00', '17:00'), true)
+})
+
+test('isOpenInWindow: malformed hours are treated as unknown (kept, not dropped)', () => {
+  const pin = { openingHours: [{ open: '25:99', close: 'zz:zz' }] }
+  assert.equal(isOpenInWindow(pin, '09:00', '17:00'), true)
+})
+
+test('toMinutes: parses valid HH:MM and returns null for garbage', () => {
+  assert.equal(toMinutes('09:30'), 570)
+  assert.equal(toMinutes('00:00'), 0)
+  assert.equal(toMinutes('25:99'), null)
+  assert.equal(toMinutes('nonsense'), null)
+  assert.equal(toMinutes(undefined), null)
+})
+
+test('hasUsableHours: false for missing OR malformed, true for a valid interval', () => {
+  assert.equal(hasUsableHours({}), false)
+  assert.equal(hasUsableHours({ openingHours: [] }), false)
+  assert.equal(hasUsableHours({ openingHours: [{ open: '25:99', close: 'zz:zz' }] }), false)
+  assert.equal(hasUsableHours({ openingHours: [{ open: '09:00', close: '17:00' }] }), true)
+})
+
+test('withinRadius: keeps a pin inside the radius, drops one outside', () => {
+  const center = { latitude: 37.7955, longitude: -122.3937 } // Ferry Building
+  const near = { latitude: 37.7845, longitude: -122.4079 } // ~1 mile away
+  const far = { latitude: 37.7694, longitude: -122.4862 } // ~5 miles away
+  assert.equal(withinRadius(near, center, 2), true)
+  assert.equal(withinRadius(far, center, 2), false)
+})
+
+test('withinRadius: a pin exactly at the center is always within radius', () => {
+  const center = { latitude: 37.7955, longitude: -122.3937 }
+  assert.equal(withinRadius({ ...center }, center, 0), true)
 })
