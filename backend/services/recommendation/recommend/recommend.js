@@ -32,7 +32,8 @@ function recommend(trip, members, pins) {
   const groupFood = new Set(members.flatMap((m) => m.foodPrefs ?? []))
 
   // Stage 1: hard filters (relevance, diet, budget sanity, hours) + Stage 0's
-  // meeting point / travel-radius drop. meetingPoint is null pre-geocoding.
+  // meeting point / travel-radius drop. meetingPoint is null when members carry
+  // no coordinates.
   const { candidates, meetingPoint } = hardFilter(pins, members, trip)
 
   // Stage 2: soft score + rank the full survivor pool.
@@ -50,7 +51,7 @@ function recommend(trip, members, pins) {
   const shortlist = ensureEveryMemberCovered(assembled, members, scoredCandidates)
 
   // Fairness metric: how far the worst-off member travels to the meeting point.
-  // Only meaningful once locations are geocoded (meetingPoint !== null).
+  // Only meaningful when members carry coordinates (meetingPoint !== null).
   const memberCoords = members
     .map((m) => m.startLocation)
     .filter((loc) => loc && typeof loc.latitude === 'number' && typeof loc.longitude === 'number')
