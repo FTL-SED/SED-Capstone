@@ -2,8 +2,8 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "node --watch index.js",
-    "test": "node --test",
+    "dev": "nodemon index.js",
+    "test": "node --test"
     "quality-report": "node scripts/recommendationQualityReport.js"
   },
   "dependencies": {
@@ -12,7 +12,8 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "morgan": "^1.11.0"
+    "morgan": "^1.11.0",
+    "nodemon": "^3.1.14"
   },
   "devDependencies": {
     "prisma": "6.7.0"

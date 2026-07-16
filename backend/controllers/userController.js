@@ -7,16 +7,70 @@ async function registerUser(req, res) {
   const { email, password, username } = req.body
 
   if (!email || !password || !username || typeof username !== 'string') {
+    
     return res
       .status(400)
-      .json({ error: 'email, password, and username are required' })
+      .json({ error: 'Email, Password, and Username are required.' })
   }
 
-  const { data, error } = await supabase.auth.signUp({ email, password })
+  try {
+    // Username lives in our User table (not in Supabase Auth), so check it here.
+    const { data: existingUsername } = await supabase
+      .from('User')
+      .select('id')
+      .eq('username', username.trim())
+      .maybeSingle()
 
-  if (error) {
-    return res.status(400).json({ error: error.message })
-  }
+    if (existingUsername) {
+      return res
+        .status(409)
+        .json({ error: 'That username is already taken. Please pick another.' })
+    }
+
+    const { data: existingEmail } = await supabase
+      .from('User')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle()
+
+    if (existingEmail) {
+        return res
+        .status(409)
+        .json({ error: 'That email is already registered. Try logging in.' })
+    }
+
+    // Email is owned by Supabase Auth, so let signUp be the authority on it.
+    const { data, error } = await supabase.auth.signUp({ email, password })
+
+    if (error) {
+      // Log the raw error for us, but send the user a friendly message.
+      console.error('Supabase signUp error:', error.code, error.message)
+
+      if (error.code === 'user_already_exists' || error.code === 'email_exists') {
+        return res
+          .status(409)
+          .json({ error: 'That email is already registered. Try logging in.' })
+      }
+      if (error.code === 'weak_password') {
+        return res
+          .status(400)
+          .json({ error: 'Password must be 8+ characters and include a-z, A-Z, 0-9, and a special character.' })
+      }
+      if (error.code === 'email_address_invalid' || error.code === 'validation_failed') {
+        return res
+          .status(400)
+          .json({ error: 'Please enter a valid email address.' })
+      }
+      if (error.status === 429) {
+        return res
+          .status(429)
+          .json({ error: 'Too many attempts. Please wait a minute and try again.' })
+      }
+
+      return res
+        .status(400)
+        .json({ error: 'Could not create your account. Please try again.' })
+    }
 
   try {
     const user = await users.create({
@@ -28,12 +82,17 @@ async function registerUser(req, res) {
     // session is null when the project requires email confirmation first.
     return res.status(201).json({ user, session: data.session })
   } catch (err) {
+    // Safety net for the rare race where two identical signups slip past the
+    // pre-checks and collide on the DB's unique constraint.
     if (err.code === 'P2002') {
       return res
         .status(409)
-        .json({ error: 'That username or email is already taken' })
+        .json({ error: 'That username or email was just taken. Please try again.' })
     }
-    throw err
+    console.error('registerUser error:', err)
+    return res
+      .status(500)
+      .json({ error: 'Something went wrong on our end. Please try again.' })
   }
 }
 
@@ -53,6 +112,15 @@ async function loginUser(req, res) {
   })
 
   if (error) {
+    console.error('Supabase signIn error:', error.code, error.message)
+
+    if (error.status === 429) {
+      return res
+        .status(429)
+        .json({ error: 'Too many attempts. Please wait a minute and try again.' })
+    }
+
+    // Wrong email or wrong password — Supabase won't say which, by design.
     return res.status(401).json({ error: 'Invalid email or password' })
   }
 

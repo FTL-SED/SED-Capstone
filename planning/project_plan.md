@@ -461,6 +461,8 @@ const [currentViewedItinerary, setCurrentViewedItinerary] = useState(null);
 │   │       │   ├── <TextInput> username
 │   │       │   ├── <TextInput> email
 │   │       │   ├── <PasswordInput> password
+│   │       │   ├── <ErrorMessage>            (only if a submit error occurs)
+│   │       │   ├── <ConfirmationMessage>     (only on successful register, e.g. "check your email")
 │   │       │   └── <SubmitButton> "Register"
 |   |       └── <LoginSection>
 |   |           ├── <loginText>
