@@ -4,13 +4,13 @@ import assert from 'node:assert/strict'
 import { stopsToPins, toDateTime, pacificOffset } from './persist.js'
 
 const shortlist = [
-  { id: 1, name: 'Ferry Building', category: 'activity', tags: ['food'], latitude: 37.7955, longitude: -122.3937, address: 'SF', locationImageUrl: 'ferry.jpg', rating: 4.5, description: 'A market.' },
-  { id: 2, name: 'Tartine', category: 'restaurant', tags: ['bakery'], latitude: 37.7614, longitude: -122.4241, address: 'SF', locationImageUrl: 'tartine.jpg' },
+  { id: 1, name: 'Ferry Building', category: 'activity', tags: ['food'], latitude: 37.7955, longitude: -122.3937, address: 'SF', locationImageUrl: 'ferry.jpg', rating: 4.5, description: 'A market.', pricePerPerson: 0 },
+  { id: 2, name: 'Tartine', category: 'restaurant', tags: ['bakery'], latitude: 37.7614, longitude: -122.4241, address: 'SF', locationImageUrl: 'tartine.jpg', pricePerPerson: 25 },
 ]
 
 const stops = [
-  { pinId: 1, arriveTime: '09:00', departTime: '10:30', estimatedCostPerPerson: 0, travelTimeToNextMinutes: 12, distanceToNextMeters: 3000 },
-  { pinId: 2, arriveTime: '12:00', departTime: '13:00', estimatedCostPerPerson: 25, mealType: 'lunch', note: 'Grab pastries' },
+  { pinId: 1, arriveTime: '09:00', departTime: '10:30', travelTimeToNextMinutes: 12, distanceToNextMeters: 3000 },
+  { pinId: 2, arriveTime: '12:00', departTime: '13:00', mealType: 'lunch', note: 'Grab pastries' },
 ]
 
 test('pacificOffset returns PDT in summer and PST in winter (DST-aware)', () => {
@@ -39,9 +39,9 @@ test('re-hydrates display fields from the shortlist by pinId', () => {
   assert.equal(ferry.rating, 4.5)
 })
 
-test('uses the stop cost (not the pin price) for pricePerPerson', () => {
+test('uses the shortlist pin price for pricePerPerson (cost is a fact of the place)', () => {
   const pins = stopsToPins(stops, shortlist, '2026-07-15')
-  assert.equal(pins[1].pricePerPerson, 25)
+  assert.equal(pins[1].pricePerPerson, 25) // from the shortlist pin, not the stop
 })
 
 test('folds mealType into tags so it survives without a schema column', () => {
@@ -70,6 +70,6 @@ test('carries travel legs through to the Pin row', () => {
 })
 
 test('throws if a stop references a pinId not in the shortlist', () => {
-  const bad = [{ pinId: 999, arriveTime: '09:00', departTime: '10:00', estimatedCostPerPerson: 0 }]
+  const bad = [{ pinId: 999, arriveTime: '09:00', departTime: '10:00' }]
   assert.throws(() => stopsToPins(bad, shortlist, '2026-07-15'), /not in the shortlist/)
 })

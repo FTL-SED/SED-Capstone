@@ -7,8 +7,8 @@
 //   1. "HH:MM" -> DateTime  — Pin.startTime/endTime are DateTime columns in
 //      Pacific wall-clock (see pinsRepository.js / seed.js). We combine the
 //      trip date + the stop's time + the correct Pacific offset for that date.
-//   2. re-hydrate the pin   — a stop only carries pinId; the display fields
-//      (name, coords, address, image, tags) come from the shortlist by id.
+//   2. re-hydrate the pin   — a stop only carries pinId; the place fields
+//      (name, coords, address, image, tags, price) come from the shortlist by id.
 import * as itineraries from '../../models/itineraries.js'
 
 // Correct America/Los_Angeles UTC offset ("-07:00" PDT / "-08:00" PST) for a
@@ -53,7 +53,9 @@ function stopsToPins(stops, shortlist, dayISO) {
       description: stop.note ?? pin.description ?? null,
       tags,
       rating: pin.rating ?? null,
-      pricePerPerson: stop.estimatedCostPerPerson,
+      // Cost is a fact about the place, taken from the shortlist pin — the stop
+      // only sequences, it never carries a price (see config/ai.js STOP_SCHEMA).
+      pricePerPerson: pin.pricePerPerson ?? 0,
       latitude: pin.latitude,
       longitude: pin.longitude,
       address: pin.address ?? null,

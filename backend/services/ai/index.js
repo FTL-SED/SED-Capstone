@@ -30,31 +30,9 @@ const optimizeItinerary = (itinerary, shortlist, constraints) => {
   return { ...itinerary, stops }
 }
 
-// The AI only SEQUENCES — a stop's cost is a fact about the place, not the
-// model's to invent. It sometimes returns 0 for a paid spot, which would make
-// the day's total (and the budget check) wrong. So re-hydrate each stop's cost
-// from its shortlist pin's pricePerPerson by pinId, exactly as the fallback
-// does (fallback/fallback.js) and as we already re-hydrate name/coords/image.
-const rehydrateCosts = (itinerary, shortlist) => {
-  const priceById = new Map(shortlist.map((p) => [p.id, p.pricePerPerson]))
-  const stops = itinerary.stops.map((stop) => {
-    const price = priceById.get(stop.pinId)
-    return typeof price === 'number' ? { ...stop, estimatedCostPerPerson: price } : stop
-  })
-  return { ...itinerary, stops }
-}
-
 const tryAi = async (shortlist, constraints) => {
   const messages = buildMessages(shortlist, constraints)
-  const raw = await callAI(messages)
-
-  // Only sequence-related output is trusted from the AI; cost comes from the
-  // shortlist. Re-hydrate BEFORE validation so the budget cap is checked
-  // against real prices, not the AI's guesses.
-  const result =
-    raw && raw.feasible !== false && Array.isArray(raw.stops)
-      ? rehydrateCosts(raw, shortlist)
-      : raw
+  const result = await callAI(messages)
 
   const { valid, errors } = validateItinerary(result, shortlist, constraints)
   if (!valid) {

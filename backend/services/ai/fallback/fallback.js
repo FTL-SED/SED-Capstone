@@ -98,6 +98,9 @@ const fallbackSequence = (shortlist, constraints) => {
     // Out of daylight — stop packing the day.
     if (depart > endMins) break
 
+    // Cost is a fact about the place (pin.pricePerPerson), used here only to
+    // stay within budget — it's NOT written onto the stop. Downstream reads the
+    // price from the shortlist by pinId (see validate.js / persist.js).
     const cost = typeof pin.pricePerPerson === 'number' ? pin.pricePerPerson : 0
     if (spent + cost > budgetCap) continue // skip this one, try the next
 
@@ -112,7 +115,6 @@ const fallbackSequence = (shortlist, constraints) => {
       pinId: pin.id,
       arriveTime: toHHMM(arrive),
       departTime: toHHMM(depart),
-      estimatedCostPerPerson: cost,
       ...(mealType ? { mealType } : {}),
     })
 

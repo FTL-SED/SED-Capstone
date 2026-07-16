@@ -61,22 +61,22 @@ export function travelMinutesFor(miles, transport) {
 
 // Output schema, shared by the AI call, response validation, and the fallback
 // so downstream code never cares which produced the result. A stop is
-// deliberately minimal — the AI only sequences (which
-// shortlist pin by pinId, when, cost, travel to next); name/coords/image are
-// re-hydrated from the shortlist so it can't hallucinate a place. Array order
-// is the stop order. Times are "HH:MM" (matching validateRecommendationInput's
-// TIME_RE), converted to DateTime at persistence.
+// deliberately minimal — the AI only SEQUENCES: which shortlist pin (by
+// pinId), when, and travel to the next stop. Everything else (name, coords,
+// image, and cost) is a fact about the place, re-hydrated from the shortlist
+// by pinId downstream — so the AI can neither hallucinate a place nor misprice
+// one. Array order is the stop order. Times are "HH:MM" (matching
+// validateRecommendationInput's TIME_RE), converted to DateTime at persistence.
 const HHMM_PATTERN = '^([01][0-9]|2[0-3]):[0-5][0-9]$'
 
 const STOP_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['pinId', 'arriveTime', 'departTime', 'estimatedCostPerPerson'],
+  required: ['pinId', 'arriveTime', 'departTime'],
   properties: {
     pinId: { type: 'integer' },
     arriveTime: { type: 'string', pattern: HHMM_PATTERN },
     departTime: { type: 'string', pattern: HHMM_PATTERN },
-    estimatedCostPerPerson: { type: 'number', minimum: 0 },
     note: { type: 'string' },
     mealType: { type: 'string', enum: ['breakfast', 'lunch', 'dinner'] },
     travelTimeToNextMinutes: { type: ['integer', 'null'], minimum: 0 },

@@ -11,7 +11,7 @@ const coords = {
 const coordOf = (stop) => coords[stop.pinId]
 
 const stop = (pinId, arriveTime, departTime, extra = {}) => ({
-  pinId, arriveTime, departTime, estimatedCostPerPerson: 0, ...extra,
+  pinId, arriveTime, departTime, ...extra,
 })
 
 test('first stop arrives at the provided start time', () => {
@@ -66,11 +66,10 @@ test('backfills travel legs on all but the last stop; last has none', () => {
   assert.equal(out[out.length - 1].distanceToNextMeters, null)
 })
 
-test('preserves non-timing fields (mealType, cost, note)', () => {
-  const stops = [stop(1, '12:00', '13:00', { mealType: 'lunch', estimatedCostPerPerson: 30, note: 'hi' })]
+test('preserves non-timing fields (mealType, note)', () => {
+  const stops = [stop(1, '12:00', '13:00', { mealType: 'lunch', note: 'hi' })]
   const out = rescheduleStops(stops, coordOf, '12:00')
   assert.equal(out[0].mealType, 'lunch')
-  assert.equal(out[0].estimatedCostPerPerson, 30)
   assert.equal(out[0].note, 'hi')
 })
 

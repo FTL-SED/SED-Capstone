@@ -26,9 +26,6 @@ const checkStopShape = (stop, i, errors) => {
   if (!Number.isInteger(stop.pinId)) errors.push(`${at}.pinId must be an integer`)
   if (!isHHMM(stop.arriveTime)) errors.push(`${at}.arriveTime must be "HH:MM"`)
   if (!isHHMM(stop.departTime)) errors.push(`${at}.departTime must be "HH:MM"`)
-  if (typeof stop.estimatedCostPerPerson !== 'number' || stop.estimatedCostPerPerson < 0) {
-    errors.push(`${at}.estimatedCostPerPerson must be a number ≥ 0`)
-  }
   if (stop.mealType !== undefined && !(stop.mealType in MEAL_TIME_WINDOWS)) {
     errors.push(`${at}.mealType "${stop.mealType}" is not a known meal`)
   }
@@ -38,7 +35,7 @@ const checkStopShape = (stop, i, errors) => {
 // Business rules across the whole itinerary. Assumes stops already passed the
 // shape check (times are valid HH:MM, pinId is an integer, etc.).
 const checkBusinessRules = (stops, shortlist, constraints, errors) => {
-  const { timeWindow, maxBudgetPerPerson, groupSize } = constraints ?? {}
+  const { timeWindow, maxBudgetPerPerson } = constraints ?? {}
   const byId = new Map(shortlist.map((p) => [p.id, p]))
 
   // No hallucinated places — every pinId must come from the shortlist.
@@ -73,11 +70,12 @@ const checkBusinessRules = (stops, shortlist, constraints, errors) => {
   }
 
   // Budget: the day's total PER-PERSON cost must fit the per-person budget.
-  // Stop costs are already per person (see the recommendation engine's
-  // estPricePerPerson), so this is a like-for-like sum vs cap — no groupSize
-  // multiplier (that would mix per-person costs with a whole-group cap).
+  // Cost is a fact about each place, so sum the shortlist pins' pricePerPerson
+  // by pinId — the stop never carries a cost. Per-person total vs per-person
+  // cap, no groupSize multiplier (that would mix per-person costs with a
+  // whole-group cap). An unknown/absent price counts as 0 here.
   if (typeof maxBudgetPerPerson === 'number') {
-    const total = stops.reduce((sum, s) => sum + s.estimatedCostPerPerson, 0)
+    const total = stops.reduce((sum, s) => sum + (byId.get(s.pinId)?.pricePerPerson ?? 0), 0)
     if (total > maxBudgetPerPerson) {
       errors.push(`total per-person cost ${total} exceeds budget ${maxBudgetPerPerson}`)
     }
@@ -109,8 +107,8 @@ const checkBusinessRules = (stops, shortlist, constraints, errors) => {
 
 // Validate an AI (or fallback) itinerary result.
 //   result      = parsed JSON, either { feasible:true, ... } or { feasible:false, reason }
-//   shortlist   = the pins the itinerary was built from (each with .id)
-//   constraints = { timeWindow?, maxBudgetPerPerson, groupSize, ... }
+//   shortlist   = the pins the itinerary was built from (each with .id + pricePerPerson)
+//   constraints = { timeWindow?, maxBudgetPerPerson, ... }
 const validateItinerary = (result, shortlist, constraints) => {
   const errors = []
 
