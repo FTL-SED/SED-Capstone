@@ -87,7 +87,7 @@ function App() {
             element={!isAuthenticated ? <Navigate to="/" replace/> : <ItineraryPage />} />
           <Route 
             path="/account" 
-            element={!isAuthenticated ? <Navigate to="/" replace/> : <AccountPage setCurrentUser={setCurrentUser} />} />
+            element={!isAuthenticated ? <Navigate to="/" replace/> : <AccountPage currentUser={currentUser} setCurrentUser={setCurrentUser} />} />
         </Routes>
       </main>
       <Footer />

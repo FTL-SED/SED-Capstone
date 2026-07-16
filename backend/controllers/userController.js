@@ -1,4 +1,4 @@
-import supabase from '../lib/supabase.js'
+import supabase, { uploadAvatar } from '../lib/supabase.js'
 import * as users from '../models/users.js'
 
 // POST /users/register
@@ -93,12 +93,6 @@ async function registerUser(req, res) {
       .status(500)
       .json({ error: 'Something went wrong on our end. Please try again.' })
   }
-  } catch (err) {
-    console.error('registerUser error:', err)
-    return res
-      .status(500)
-      .json({ error: 'Something went wrong on our end. Please try again.' })
-  }
 }
 
 // POST /users/login
@@ -177,6 +171,51 @@ async function updateUser(req, res) {
   }
 }
 
+// POST /users/:id/avatar
+// Uploads the caller's avatar image to Supabase Storage and saves its public
+// URL on the profile. Multipart body; the file is on `req.file` (multer). A
+// user may only change their own avatar. Auth is handled by requireAuth.
+async function uploadUserAvatar(req, res) {
+  const id = Number(req.params.id)
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ error: 'Invalid user id' })
+  }
+
+  if (req.user.id !== id) {
+    return res.status(403).json({ error: 'You can only edit your own profile' })
+  }
+
+  const file = req.file
+  if (!file) {
+    return res.status(400).json({ error: 'No image file provided' })
+  }
+
+  if (!file.mimetype?.startsWith('image/')) {
+    return res.status(400).json({ error: 'Avatar must be an image file' })
+  }
+
+  try {
+    // One object per user, keyed by id — upsert overwrites the old avatar. The
+    // extension keeps the content type honest; the query string busts the CDN
+    // cache so the new image shows immediately.
+    const ext = file.mimetype.split('/')[1] || 'png'
+    const publicUrl = await uploadAvatar({
+      path: `${id}/avatar.${ext}`,
+      buffer: file.buffer,
+      contentType: file.mimetype,
+    })
+    const avatarUrl = `${publicUrl}?v=${id}-${file.size}`
+
+    const updated = await users.update(id, { avatarUrl })
+    return res.status(200).json(updated)
+  } catch (err) {
+    console.error('uploadUserAvatar error:', err)
+    return res
+      .status(500)
+      .json({ error: 'Could not upload your avatar. Please try again.' })
+  }
+}
+
 // GET /users/:id
 // Returns the owner's private dashboard data. A user may only fetch their own
 // record, so email and the saved/liked lists are never exposed for another id.
@@ -210,4 +249,4 @@ async function getUser(req, res) {
   })
 }
 
-export { registerUser, loginUser, updateUser, getUser }
+export { registerUser, loginUser, updateUser, getUser, uploadUserAvatar }
