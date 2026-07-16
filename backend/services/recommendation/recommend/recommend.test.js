@@ -85,6 +85,27 @@ test('fairness guarantee still holds end-to-end: a niche member gets covered eve
   assert.ok(shortlist.some((p) => p.name === 'Stamp Museum'))
 })
 
+test('mixed-diet group: meal pool is not emptied, and each dieted member can eat somewhere', () => {
+  // A vegan + a halal-only member: no single restaurant serves both, so the old
+  // "serve everyone" rule would have dropped nearly all restaurants. Now each
+  // gets ≥1 eatable option via diet coverage.
+  const dietMembers = [
+    { name: 'Vera', startLocation: 'Downtown', interestTags: ['art'], foodPrefs: [], diet: ['vegan'] },
+    { name: 'Hal', startLocation: 'Mission', interestTags: ['art'], foodPrefs: [], diet: ['halal'] },
+  ]
+  const dietPins = [
+    activity('Museum', ['art']),
+    { name: 'Vegan Vibes', category: 'restaurant', tags: [], cuisine: ['vegan'], diet: ['vegan'], priceLevel: 2 },
+    { name: 'Halal Grill', category: 'restaurant', tags: [], cuisine: ['mediterranean'], diet: ['halal'], priceLevel: 2 },
+    { name: 'Steakhouse', category: 'restaurant', tags: [], cuisine: ['steak'], diet: ['none'], priceLevel: 2 },
+  ]
+  const { shortlist } = recommend(trip, dietMembers, dietPins)
+  const restaurants = shortlist.filter((p) => p.category === 'restaurant')
+  assert.ok(restaurants.length > 0, 'meal pool should not be empty for a mixed-diet group')
+  assert.ok(shortlist.some((p) => p.name === 'Vegan Vibes'), 'Vera (vegan) needs an option')
+  assert.ok(shortlist.some((p) => p.name === 'Halal Grill'), 'Hal (halal) needs an option')
+})
+
 test('does not mutate the input pins array', () => {
   const originalLength = pins.length
   const snapshotFirstName = pins[0].name

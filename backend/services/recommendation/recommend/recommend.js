@@ -8,7 +8,7 @@ import { hardFilter } from '../filters/filters.js'
 import { softScore } from '../score/score.js'
 import { enrichMissing } from '../enrich/enrich.js'
 import { computeShortlistSize, assembleWithFoodQuota } from '../assemble/assemble.js'
-import { ensureEveryMemberCovered } from '../fairness/fairness.js'
+import { ensureEveryMemberCovered, ensureEveryDietCovered } from '../fairness/fairness.js'
 import { ENRICHMENT_POOL_SIZE } from '../../../config/recommendation.js'
 import { maxDistanceFrom } from '../../../utils/geo.js'
 
@@ -47,7 +47,9 @@ function recommend(trip, members, pins) {
   // represented — both draw on the full scored pool, not just the top slice.
   const shortlistSize = computeShortlistSize(trip)
   const assembled = assembleWithFoodQuota(rankedTop, scoredCandidates, shortlistSize)
-  const shortlist = ensureEveryMemberCovered(assembled, members, scoredCandidates)
+  const covered = ensureEveryMemberCovered(assembled, members, scoredCandidates)
+  // Then guarantee each dieted member has ≥1 restaurant they can actually eat at.
+  const shortlist = ensureEveryDietCovered(covered, members, scoredCandidates)
 
   // Fairness metric: how far the worst-off member travels to the meeting point.
   // Only meaningful once locations are geocoded (meetingPoint !== null).

@@ -29,15 +29,24 @@ function overlap(pinCuisine, memberFoodPrefs) {
   return pinCuisine.some((c) => prefs.has(c))
 }
 
-// Hard dietary filter for food pins. A restaurant is a shared group meal, so
-// it must be able to serve EVERY dietary restriction present in the group.
-// Unknown diet data ⇒ keep (don't silently drop on missing data).
-function passesDiet(pin, members) {
-  const required = new Set(members.flatMap((m) => m.diet ?? []))
-  if (required.size === 0) return true
-  if (!pin.diet) return true // unknown ⇒ keep
+// True if this restaurant can serve one member's dietary needs. A member with
+// no diet can eat anywhere; a restaurant with unknown diet data is assumed
+// edible (missing data ⇒ keep, never silently exclude).
+function memberCanEat(pin, member) {
+  const needs = member.diet ?? []
+  if (needs.length === 0) return true
+  if (!pin.diet) return true // unknown ⇒ assume it can serve them
   const offered = new Set(pin.diet)
-  return [...required].every((d) => offered.has(d))
+  return needs.every((d) => offered.has(d))
+}
+
+// Diet filter for food pins. Keep a restaurant if it can serve AT LEAST ONE
+// member's diet — drop only when it can serve nobody in the group. (Whole-group
+// coverage is preferred via scoring + a coverage fallback, not by dropping every
+// restaurant that can't feed everyone — that emptied the meal pool for mixed
+// diets.) Unknown diet data ⇒ keep.
+function passesDiet(pin, members) {
+  return members.some((m) => memberCanEat(pin, m))
 }
 
 // Estimated per-person cost. Prefers an already-known exact price (e.g. from
@@ -87,6 +96,7 @@ export {
   shareTag,
   overlap,
   passesDiet,
+  memberCanEat,
   estPricePerPerson,
   budgetSanityOk,
   isOpenInWindow,

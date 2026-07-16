@@ -5,6 +5,7 @@ import {
   shareTag,
   overlap,
   passesDiet,
+  memberCanEat,
   estPricePerPerson,
   budgetSanityOk,
   isOpenInWindow,
@@ -42,15 +43,33 @@ test('passesDiet: true when no dietary needs in the group', () => {
   assert.equal(passesDiet({ diet: ['vegan'] }, members), true)
 })
 
-test('passesDiet: true only when pin serves every required diet', () => {
-  const members = [{ name: 'A', diet: ['vegetarian'] }]
-  assert.equal(passesDiet({ diet: ['vegetarian', 'vegan'] }, members), true)
-  assert.equal(passesDiet({ diet: ['vegan'] }, members), false)
+test('passesDiet: keeps a pin that serves at least one member', () => {
+  // A is vegan, B has no diet — a vegetarian-only spot still works for B.
+  const members = [{ name: 'A', diet: ['vegan'] }, { name: 'B' }]
+  assert.equal(passesDiet({ diet: ['vegetarian'] }, members), true)
+})
+
+test('passesDiet: drops a pin that can serve nobody in the group', () => {
+  const members = [{ name: 'A', diet: ['vegan'] }, { name: 'B', diet: ['halal'] }]
+  assert.equal(passesDiet({ diet: ['none'] }, members), false)
 })
 
 test('passesDiet: keeps pin when its diet data is unknown (missing data)', () => {
   const members = [{ name: 'A', diet: ['vegan'] }]
   assert.equal(passesDiet({ name: 'Mystery Cafe' }, members), true)
+})
+
+test('memberCanEat: member with no diet can eat anywhere', () => {
+  assert.equal(memberCanEat({ diet: ['vegetarian'] }, { name: 'A' }), true)
+})
+
+test('memberCanEat: requires the pin to serve every diet the member needs', () => {
+  assert.equal(memberCanEat({ diet: ['vegan', 'vegetarian'] }, { diet: ['vegan'] }), true)
+  assert.equal(memberCanEat({ diet: ['vegetarian'] }, { diet: ['vegan'] }), false)
+})
+
+test('memberCanEat: unknown pin diet ⇒ assumed edible (missing data)', () => {
+  assert.equal(memberCanEat({ name: 'Mystery' }, { diet: ['vegan'] }), true)
 })
 
 test('estPricePerPerson: maps priceLevel via the table', () => {

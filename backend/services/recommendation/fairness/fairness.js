@@ -6,8 +6,11 @@
 // returns a new array, never mutates `shortlist` or `candidates`.
 
 import { memberLikes } from '../score/score.js'
+import { memberCanEat } from '../helpers/helpers.js'
 
 const identity = (pin) => pin.id ?? pin.name
+
+const isRestaurant = (pin) => pin.category === 'restaurant'
 
 const isInList = (list, pin) =>
   list.some((p) => identity(p) === identity(pin))
@@ -35,4 +38,34 @@ function ensureEveryMemberCovered(shortlist, members, candidates) {
   return covered
 }
 
-export { ensureEveryMemberCovered }
+// Diet coverage: every member with a dietary restriction needs ≥1 restaurant in
+// the shortlist they can actually eat at. Unlike ensureEveryMemberCovered (which
+// keys off interest/cuisine "likes"), a dieted member might have no cuisine match
+// yet still needs a viable meal — so this injects their best-scoring edible
+// restaurant when the shortlist has none. Prefers whole-group-eatable places
+// implicitly, since those already rank higher via memberLikes.
+function ensureEveryDietCovered(shortlist, members, candidates) {
+  const covered = [...shortlist]
+
+  for (const member of members) {
+    const needs = member.diet ?? []
+    if (needs.length === 0) continue // no restriction ⇒ any meal works
+
+    const hasMeal = covered.some((pin) => isRestaurant(pin) && memberCanEat(pin, member))
+    if (hasMeal) continue
+
+    const bestMeal = candidates
+      .filter((pin) => isRestaurant(pin) && memberCanEat(pin, member) && !isInList(covered, pin))
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0]
+
+    // No edible restaurant exists for this member anywhere — a real data gap
+    // (surfaced elsewhere as thin/absent diet data), not fixable here.
+    if (!bestMeal) continue
+
+    covered.push(bestMeal)
+  }
+
+  return covered
+}
+
+export { ensureEveryMemberCovered, ensureEveryDietCovered }

@@ -32,10 +32,26 @@ test('restaurants are always eligible even without an interest tag overlap', () 
   assert.equal(candidates[0].name, 'Ramen Bar')
 })
 
-test('drops a restaurant that cannot serve a required diet', () => {
+test('keeps a restaurant that can serve at least one member (B has no diet)', () => {
+  // New rule: drop only if the restaurant can serve NOBODY. B has no diet, so a
+  // vegetarian-only steakhouse still works for B even though vegan A can't eat there.
   const { candidates } = run([
     { name: 'Steakhouse', category: 'restaurant', tags: [], cuisine: ['steak'], diet: ['vegetarian'] },
   ])
+  assert.equal(candidates.length, 1)
+})
+
+test('drops a restaurant that can serve no member in the group', () => {
+  // A group where every member has a diet the restaurant cannot serve.
+  const strictMembers = [
+    { name: 'A', interestTags: [], foodPrefs: [], diet: ['vegan'] },
+    { name: 'B', interestTags: [], foodPrefs: [], diet: ['halal'] },
+  ]
+  const { candidates } = hardFilter(
+    [{ name: 'Pork Palace', category: 'restaurant', tags: [], cuisine: ['pork'], diet: ['none'] }],
+    strictMembers,
+    trip
+  )
   assert.equal(candidates.length, 0)
 })
 
