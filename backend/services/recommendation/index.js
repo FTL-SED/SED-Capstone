@@ -8,7 +8,7 @@ import { recommend } from './recommend/recommend.js'
 import { geocodeMembers } from '../../lib/geocode.js'
 
 async function getRecommendations(trip, members) {
-  // Resolve each member's typed start address to coordinates (Mapbox) so
+  // Resolve each member's typed start address to coordinates (Geoapify) so
   // Stage 0's meeting point + travel-radius filter can run. Throws a tagged
   // GEOCODE_FAILED error (surfaced as 422 by the controller) if an address
   // can't be located. Kept in the service — the engine stays network-free.

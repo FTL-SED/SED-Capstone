@@ -3,17 +3,17 @@ import assert from 'node:assert/strict'
 
 import { geocodeAddress, geocodeMembers } from './geocode.js'
 
-// geocode.js reads process.env.MAPBOX_TOKEN lazily; set a dummy for most tests.
-const ORIGINAL_TOKEN = process.env.MAPBOX_TOKEN
+// geocode.js reads process.env.GEOAPIFY_API_KEY lazily; set a dummy for most tests.
+const ORIGINAL_KEY = process.env.GEOAPIFY_API_KEY
 before(() => {
-  process.env.MAPBOX_TOKEN = 'test-token'
+  process.env.GEOAPIFY_API_KEY = 'test-key'
 })
 after(() => {
-  if (ORIGINAL_TOKEN === undefined) delete process.env.MAPBOX_TOKEN
-  else process.env.MAPBOX_TOKEN = ORIGINAL_TOKEN
+  if (ORIGINAL_KEY === undefined) delete process.env.GEOAPIFY_API_KEY
+  else process.env.GEOAPIFY_API_KEY = ORIGINAL_KEY
 })
 
-// A Mapbox forward-geocode hit: GeoJSON features with [lon, lat] coordinates.
+// A Geoapify forward-geocode hit: GeoJSON features with [lon, lat] coordinates.
 const HIT = {
   features: [{ geometry: { type: 'Point', coordinates: [-122.3937, 37.7955] } }],
 }
@@ -31,7 +31,7 @@ function recordingFetch(payload) {
   return { impl, calls }
 }
 
-test('geocodeAddress: maps a Mapbox hit ([lon, lat]) to { latitude, longitude }', async () => {
+test('geocodeAddress: maps a Geoapify hit ([lon, lat]) to { latitude, longitude }', async () => {
   const coords = await geocodeAddress('Ferry Building', stubFetch(HIT))
   assert.deepEqual(coords, { latitude: 37.7955, longitude: -122.3937 })
 })
@@ -48,21 +48,21 @@ test('geocodeAddress: throws on a non-ok HTTP response', async () => {
   )
 })
 
-test('geocodeAddress: throws a clear error when MAPBOX_TOKEN is unset', async () => {
-  const saved = process.env.MAPBOX_TOKEN
-  delete process.env.MAPBOX_TOKEN
+test('geocodeAddress: throws a clear error when GEOAPIFY_API_KEY is unset', async () => {
+  const saved = process.env.GEOAPIFY_API_KEY
+  delete process.env.GEOAPIFY_API_KEY
   try {
-    await assert.rejects(() => geocodeAddress('anywhere', stubFetch(HIT)), /MAPBOX_TOKEN is not set/)
+    await assert.rejects(() => geocodeAddress('anywhere', stubFetch(HIT)), /GEOAPIFY_API_KEY is not set/)
   } finally {
-    process.env.MAPBOX_TOKEN = saved
+    process.env.GEOAPIFY_API_KEY = saved
   }
 })
 
-test('geocodeAddress: sends the token and an SF proximity bias', async () => {
+test('geocodeAddress: sends the api key and an SF proximity bias', async () => {
   const { impl, calls } = recordingFetch(HIT)
   await geocodeAddress('Ferry Building', impl)
-  assert.match(calls[0], /access_token=test-token/)
-  assert.match(calls[0], /proximity=-122\.4194%2C37\.7749/) // lon,lat url-encoded
+  assert.match(calls[0], /apiKey=test-key/)
+  assert.match(calls[0], /bias=proximity%3A-122\.4194%2C37\.7749/) // proximity:lon,lat url-encoded
 })
 
 test('geocodeMembers: replaces text startLocation with coordinates', async () => {

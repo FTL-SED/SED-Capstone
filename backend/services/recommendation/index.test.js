@@ -38,7 +38,7 @@ const trip = { startTime: '09:00', endTime: '18:00', maxBudgetPerPerson: 60 }
 //
 // startLocation is given as coordinates (not a text address) so getRecommendations'
 // geocoding step is a no-op passthrough — this integration test exercises the
-// DB → engine path, not the Mapbox network call (geocoding is unit-tested in
+// DB → engine path, not the Geoapify network call (geocoding is unit-tested in
 // lib/geocode.test.js).
 const members = [
   { name: 'Alex', startLocation: { latitude: 37.7749, longitude: -122.4194 }, interestTags: ['art', 'scenic_views'], foodPrefs: ['mexican'] },

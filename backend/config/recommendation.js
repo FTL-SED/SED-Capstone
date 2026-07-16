@@ -41,9 +41,9 @@ export const ENRICHMENT_POOL_SIZE = 40
 export const MEETING_POINT_MAX_ITERATIONS = 100
 export const MEETING_POINT_EPSILON = 1e-6
 
-// Geocoding member start addresses → coordinates (Stage 0 Part 2), via Mapbox.
-// MAPBOX_PROXIMITY biases results toward San Francisco [lon, lat] so a bare
-// place name ("Ferry Building") resolves locally. The access token is a secret
-// read from process.env inside lib/geocode.js (kept out of the service layer).
-export const MAPBOX_GEOCODE_URL = 'https://api.mapbox.com/search/geocode/v6/forward'
-export const MAPBOX_PROXIMITY = { longitude: -122.4194, latitude: 37.7749 }
+// Geocoding member start addresses → coordinates (Stage 0 Part 2), via Geoapify.
+// GEOCODE_BIAS biases results toward San Francisco [lon, lat] so a bare place
+// name ("Ferry Building") resolves locally. The API key is a secret read from
+// process.env inside lib/geocode.js (kept out of the service layer).
+export const GEOAPIFY_GEOCODE_URL = 'https://api.geoapify.com/v1/geocode/search'
+export const GEOCODE_BIAS = { longitude: -122.4194, latitude: 37.7749 }
