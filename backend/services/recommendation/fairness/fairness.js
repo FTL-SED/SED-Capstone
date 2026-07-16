@@ -6,14 +6,12 @@
 // returns a new array, never mutates `shortlist` or `candidates`.
 
 import { memberLikes } from '../score/score.js'
-import { memberCanEat } from '../helpers/helpers.js'
-
-const identity = (pin) => pin.id ?? pin.name
+import { memberCanEat, pinIdentity } from '../helpers/helpers.js'
 
 const isRestaurant = (pin) => pin.category === 'restaurant'
 
 const isInList = (list, pin) =>
-  list.some((p) => identity(p) === identity(pin))
+  list.some((p) => pinIdentity(p) === pinIdentity(pin))
 
 // candidates must already carry a `.score` (set by softScore, Step 4) — this
 // function only decides *whom* to inject for, not how to score them.

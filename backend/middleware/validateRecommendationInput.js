@@ -1,12 +1,31 @@
 // Validates the constraints payload for POST /recommendations before it
 // reaches the controller, per .claude/rules/backend.md → Middleware.
 // Shape expected by recommend(trip, members, places):
-//   trip:    { startTime: 'HH:MM', endTime: 'HH:MM', maxBudgetPerPerson: number }
-//   members: [{ name, startLocation?, interestTags?[], foodPrefs?[], diet?[] }]
+//   trip:    { startTime: 'HH:MM', endTime: 'HH:MM', maxBudgetPerPerson: number,
+//              travelRadius?: number }
+//   members: [{ name, startLocation: { latitude, longitude }, interestTags?[],
+//               foodPrefs?[], diet?[] }]
+// startLocation arrives as coordinates: the frontend resolves the address via
+// Geoapify autocomplete and sends the lat/long of the picked suggestion, so the
+// backend never geocodes.
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
 
 function isStringArray(value) {
   return Array.isArray(value) && value.every((v) => typeof v === 'string')
+}
+
+// A { latitude, longitude } pair with real, in-range coordinates.
+function isCoordinate(value) {
+  return (
+    value &&
+    typeof value === 'object' &&
+    typeof value.latitude === 'number' &&
+    typeof value.longitude === 'number' &&
+    value.latitude >= -90 &&
+    value.latitude <= 90 &&
+    value.longitude >= -180 &&
+    value.longitude <= 180
+  )
 }
 
 function validateTrip(trip) {
@@ -20,6 +39,13 @@ function validateTrip(trip) {
   if (typeof trip.maxBudgetPerPerson !== 'number' || trip.maxBudgetPerPerson < 0) {
     return 'trip.maxBudgetPerPerson is required and must be a non-negative number'
   }
+  // travelRadius is optional (the engine no-ops without it), but reject an invalid one.
+  if (
+    trip.travelRadius !== undefined &&
+    (typeof trip.travelRadius !== 'number' || trip.travelRadius <= 0)
+  ) {
+    return 'trip.travelRadius must be a positive number when provided'
+  }
   return null
 }
 
@@ -31,6 +57,11 @@ function validateMembers(members) {
     const member = members[i]
     if (!member || typeof member !== 'object' || typeof member.name !== 'string' || member.name.trim() === '') {
       return `members[${i}].name is required`
+    }
+    // startLocation must be coordinates (from the frontend's address picker) —
+    // the meeting point + radius filter need real lat/long to work.
+    if (!isCoordinate(member.startLocation)) {
+      return `members[${i}].startLocation is required and must be { latitude, longitude } coordinates`
     }
     if (member.interestTags !== undefined && !isStringArray(member.interestTags)) {
       return `members[${i}].interestTags must be an array of strings`

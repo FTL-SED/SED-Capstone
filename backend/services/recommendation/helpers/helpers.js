@@ -92,6 +92,12 @@ function withinRadius(pin, center, travelRadius) {
   return haversineMiles(pin, center) <= travelRadius
 }
 
+// Stable identity for dedup/membership checks: prefer the DB id, fall back to
+// name. Shared by assemble.js and fairness.js so they agree on "same pin".
+function pinIdentity(pin) {
+  return pin.id ?? pin.name
+}
+
 export {
   shareTag,
   overlap,
@@ -102,4 +108,5 @@ export {
   isOpenInWindow,
   toMinutes,
   withinRadius,
+  pinIdentity,
 }
