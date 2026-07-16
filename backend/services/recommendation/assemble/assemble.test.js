@@ -17,6 +17,12 @@ test('computeShortlistSize never goes negative for an inverted window', () => {
   assert.equal(computeShortlistSize({ startTime: '18:00', endTime: '09:00' }), 6)
 })
 
+test('computeShortlistSize floors at FOOD_MIN when times are missing or malformed', () => {
+  assert.equal(computeShortlistSize({}), 6) // no times at all
+  assert.equal(computeShortlistSize({ startTime: '09:00' }), 6) // endTime missing
+  assert.equal(computeShortlistSize({ startTime: '25:99', endTime: 'zz:zz' }), 6) // garbage
+})
+
 const activity = (name, score) => ({ name, category: 'museum', tags: ['art'], score })
 const restaurant = (name, score, rating) => ({ name, category: 'restaurant', tags: [], score, rating })
 

@@ -26,10 +26,14 @@ const isRestaurant = (pin) => pin.category === 'restaurant'
 // the candidate pool is thin — e.g. Stage 0's travel-radius drop, a sparse
 // catalog, or narrow group interests leave fewer eligible pins than this target.
 function computeShortlistSize(trip) {
-  const windowMinutes = Math.max(
-    0,
-    toMinutes(trip.endTime) - toMinutes(trip.startTime)
-  )
+  const start = toMinutes(trip.startTime)
+  const end = toMinutes(trip.endTime)
+  // Missing/unparseable times (toMinutes ⇒ null) or a non-positive window
+  // (end ≤ start, e.g. an overnight/inverted range the engine doesn't model)
+  // collapse to 0 usable minutes — we still return the FOOD_MIN floor so the
+  // shortlist is never empty for a bad window.
+  const windowMinutes =
+    start == null || end == null ? 0 : Math.max(0, end - start)
   const stops = windowMinutes / AVG_STOP_DURATION_MIN
   return Math.max(FOOD_MIN, Math.round(stops * SHORTLIST_MULTIPLIER))
 }

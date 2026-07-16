@@ -103,3 +103,14 @@ test('rejects a bad trip time', () => {
   assert.equal(sent.code, 400)
   assert.match(sent.body.error, /startTime/)
 })
+
+test('rejects endTime equal to or before startTime (same-day only)', () => {
+  const equal = run({ trip: { ...validTrip, startTime: '12:00', endTime: '12:00' }, members: [validMember] })
+  assert.equal(equal.nextCalled, false)
+  assert.equal(equal.sent.code, 400)
+  assert.match(equal.sent.body.error, /later than/)
+
+  const inverted = run({ trip: { ...validTrip, startTime: '18:00', endTime: '09:00' }, members: [validMember] })
+  assert.equal(inverted.nextCalled, false)
+  assert.match(inverted.sent.body.error, /later than/)
+})
