@@ -63,3 +63,26 @@ test('preserves non-timing fields (mealType, cost, note)', () => {
   assert.equal(out[0].estimatedCostPerPerson, 30)
   assert.equal(out[0].note, 'hi')
 })
+
+test('holds a meal that would arrive early until its window opens', () => {
+  // Only stop, day starts 09:00 — without a hold, a dinner would arrive 09:00,
+  // outside the 17:30 dinner window. It should be delayed to 17:30 instead.
+  const stops = [stop(1, '18:00', '19:30', { mealType: 'dinner' })]
+  const out = rescheduleStops(stops, coordOf, '09:00')
+  assert.equal(out[0].arriveTime, '17:30', 'dinner should wait for its window to open')
+  assert.equal(out[0].departTime, '19:00', 'dwell (90m) is preserved from the delayed arrival')
+})
+
+test('does not delay a meal that already arrives within its window', () => {
+  // A short earlier stop means we reach the lunch stop at ~10:04 naturally, but
+  // the natural clock still puts it well inside lunch (11:30-13:30) here.
+  const stops = [
+    stop(1, '11:45', '12:00'),
+    stop(2, '12:15', '13:00', { mealType: 'lunch' }),
+  ]
+  const out = rescheduleStops(stops, coordOf, '11:45')
+  // Natural arrival (12:00 depart + travel) is already inside lunch — not
+  // pushed to the block start (11:30).
+  assert.ok(out[1].arriveTime >= '11:30' && out[1].arriveTime <= '13:30')
+  assert.notEqual(out[1].arriveTime, '11:30')
+})

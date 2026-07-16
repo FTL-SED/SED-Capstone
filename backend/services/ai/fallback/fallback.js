@@ -1,33 +1,24 @@
-// Step 5 — deterministic fallback sequencer. When the AI call fails or returns
-// invalid output, this produces a valid itinerary from the same shortlist +
-// constraints, in the SAME schema (config/ai.js ITINERARY_SCHEMA), so nothing
-// downstream cares which path ran. No AI, no DB, no Express — pure.
+// Our own itinerary builder, used when the AI call fails or returns something
+// we can't trust. It produces an itinerary in the SAME shape the AI would, so
+// the rest of the app doesn't care which one ran. No AI involved — just code,
+// which means it always gives the same output for the same input.
 //
-// Strategy: anchor at the meetingPoint (or the first pin if none), order the
-// rest by nearest-neighbor distance, drop meal restaurants into their windows,
-// then walk the clock assigning arrive/depart times until the trip window (or
-// the shortlist) runs out.
+// The plan: start at the meeting point (or the first place if there's none),
+// visit the closest remaining place each time (nearest-neighbor ordering), slot
+// restaurants into meal times, and walk the clock forward until we run out of
+// day or places.
 import {
   AVG_STOP_DURATION_MIN,
   MEAL_TIME_WINDOWS,
   FALLBACK_TRAVEL_MPH,
-} from '../../config/ai.js'
-import { haversineMiles, milesToMeters } from '../../utils/geo.js'
+} from '../../../config/ai.js'
+import { haversineMiles, milesToMeters } from '../../../utils/geo.js'
+import { toMinutes, toHHMM } from '../../../utils/time.js'
 
 const isRestaurant = (pin) => pin.category === 'restaurant'
 
-const toMinutes = (hhmm) => {
-  const [h, m] = hhmm.split(':').map(Number)
-  return h * 60 + m
-}
-const toHHMM = (mins) => {
-  const h = Math.floor(mins / 60)
-  const m = Math.round(mins % 60)
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-}
-
 // Estimated travel minutes between two pins from straight-line distance.
-function travelMinutes(a, b) {
+const travelMinutes = (a, b) => {
   const miles = haversineMiles(a, b)
   return Math.round((miles / FALLBACK_TRAVEL_MPH) * 60)
 }
@@ -35,7 +26,7 @@ function travelMinutes(a, b) {
 // Order pins by nearest-neighbor starting from `anchor`: repeatedly take the
 // closest not-yet-visited pin. Greedy, not optimal, but avoids the worst
 // cross-city zig-zag and is fully deterministic.
-function nearestNeighborOrder(pins, anchor) {
+const nearestNeighborOrder = (pins, anchor) => {
   const remaining = [...pins]
   const ordered = []
   let current = anchor
@@ -59,7 +50,7 @@ function nearestNeighborOrder(pins, anchor) {
 }
 
 // Which meal block (if any) a given minute-of-day falls in.
-function mealBlockAt(mins) {
+const mealBlockAt = (mins) => {
   for (const [name, block] of Object.entries(MEAL_TIME_WINDOWS)) {
     if (mins >= toMinutes(block.start) && mins <= toMinutes(block.end)) return name
   }
@@ -69,7 +60,7 @@ function mealBlockAt(mins) {
 // Build the deterministic itinerary. Returns the same shape the AI would:
 // { feasible: true, title, location, description, stops[] } or
 // { feasible: false, reason } when nothing can fit.
-function fallbackSequence(shortlist, constraints) {
+const fallbackSequence = (shortlist, constraints) => {
   const { timeWindow, maxBudgetPerPerson, groupSize, meetingPoint } = constraints ?? {}
 
   if (!Array.isArray(shortlist) || shortlist.length === 0) {

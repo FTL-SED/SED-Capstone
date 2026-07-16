@@ -1,7 +1,7 @@
 // Step 9 — end-to-end test: generate an itinerary, persist it, read it back.
 // Exercises the real chain generateItinerary -> persistItinerary -> the
 // Itinerary/Pin tables -> findById, against a real DB. Forces the DETERMINISTIC
-// fallback path (no OPENROUTER_API_KEY needed, no network) by unsetting the key,
+// fallback path (no AI_KEY needed, no network) by unsetting the key,
 // so this proves persistence + retrieval without depending on a live model.
 //
 // Skips (doesn't fail) when no DB is reachable, matching
@@ -26,8 +26,8 @@ try {
 }
 
 // Force the fallback path — deterministic, no network/API key required.
-const savedKey = process.env.OPENROUTER_API_KEY
-delete process.env.OPENROUTER_API_KEY
+const savedKey = process.env.AI_KEY
+delete process.env.AI_KEY
 
 const createdItineraryIds = []
 let testUserId
@@ -39,7 +39,7 @@ after(async () => {
   if (testUserId) {
     await prisma.user.delete({ where: { id: testUserId } }).catch(() => {})
   }
-  if (savedKey !== undefined) process.env.OPENROUTER_API_KEY = savedKey
+  if (savedKey !== undefined) process.env.AI_KEY = savedKey
   await prisma.$disconnect()
 })
 

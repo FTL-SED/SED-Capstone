@@ -5,7 +5,7 @@
 // the AI path or the deterministic fallback actually ran.
 //
 // This calls the service directly (no server, no auth, no DB) so it exercises
-// the REAL OpenRouter call. Needs OPENROUTER_API_KEY in .env.
+// the REAL model-gateway call. Needs AI_KEY and NODE_EXTRA_CA_CERTS in .env.
 //
 // Run from backend/:  node scripts/aiSmokeTest.js
 import 'dotenv/config'

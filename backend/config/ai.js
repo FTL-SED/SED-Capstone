@@ -6,12 +6,12 @@
 // redefined, so the fallback's dwell-time can't drift from it.
 export { AVG_STOP_DURATION_MIN } from './recommendation.js'
 
-// OpenRouter client tunables. AI_MODEL defaults to a free-tier model
-// (":free" suffix) and is env-overridable; timeout/retries bound how long we
-// try before giving up to the deterministic fallback. Retries are for
-// transient errors only (5xx, network timeout).
+// AI gateway client tunables. AI_MODEL is the Salesforce model-gateway model
+// id; timeout/retries bound how long we try before giving up to the
+// deterministic fallback. Retries are for transient errors only (5xx, network
+// timeout).
 export const AI_MODEL =
-  'openrouter/free'
+  'claude-sonnet-4-5-20250929'
 export const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS) || 20_000
 export const AI_MAX_RETRIES = Number(process.env.AI_MAX_RETRIES) || 2
 
@@ -23,13 +23,22 @@ export const MEAL_TIME_WINDOWS = {
   dinner: { start: '17:30', end: '19:30' },
 }
 
-// Assumed average city travel speed, used by the fallback sequencer to turn a
-// straight-line distance between two stops into a rough travel-time estimate.
-export const FALLBACK_TRAVEL_MPH = Number(process.env.FALLBACK_TRAVEL_MPH) || 25
+// Travel-time model, used by the scheduler to turn the straight-line distance
+// between two stops into a realistic travel-time estimate.
+//
+// FALLBACK_TRAVEL_MPH is an effective urban point-to-point speed (~18 mph):
+// well below a road's posted limit once lights, turns, and parking are folded
+// in. ROAD_CIRCUITY scales the straight-line (crow-flies) distance up to an
+// estimated ROAD distance — real streets aren't straight, so a route is
+// typically ~1.35× the great-circle distance. We inflate distance only for the
+// TIME estimate; the distance we display to users stays the honest straight
+// line (see schedule.js).
+export const FALLBACK_TRAVEL_MPH = Number(process.env.FALLBACK_TRAVEL_MPH) || 18
+export const ROAD_CIRCUITY = Number(process.env.ROAD_CIRCUITY) || 1.35
 
-// Output schema, shared by the OpenRouter call, response validation (Step 4),
-// and the fallback (Step 5) so downstream code never cares which produced the
-// result. A stop is deliberately minimal — the AI only sequences (which
+// Output schema, shared by the AI call, response validation, and the fallback
+// so downstream code never cares which produced the result. A stop is
+// deliberately minimal — the AI only sequences (which
 // shortlist pin by pinId, when, cost, travel to next); name/coords/image are
 // re-hydrated from the shortlist so it can't hallucinate a place. Array order
 // is the stop order. Times are "HH:MM" (matching validateRecommendationInput's

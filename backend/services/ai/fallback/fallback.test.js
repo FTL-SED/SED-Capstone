@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
 import { fallbackSequence, nearestNeighborOrder } from './fallback.js'
-import { validateItinerary } from './validate.js'
+import { validateItinerary } from '../validation/validate.js'
 
 // A shortlist spread across SF with a mix of activities and restaurants.
 const shortlist = [

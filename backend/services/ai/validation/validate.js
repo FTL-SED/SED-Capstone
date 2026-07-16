@@ -1,20 +1,15 @@
-// Step 4 — response validation. The gate between "the model returned JSON" and
-// "we trust this itinerary". Checks structure + business rules; on any failure
-// the caller (generateItinerary, Step 6) falls back to the deterministic
-// sequencer. Pure: parsed result + shortlist + constraints in, verdict out.
+// Checks whether an itinerary (from the AI or the fallback) is one we can
+// trust: right structure, and it obeys the trip's rules (times in order, inside
+// the day, within budget, one meal per meal time, no made-up places). If
+// anything is wrong, generateItinerary uses the fallback instead.
 //
-// Returns { valid, errors } where errors is a list of human-readable strings
-// for logging/debugging. A structurally-valid { feasible: false, reason } is a
-// legitimate answer and passes (valid: true) — it's the model correctly
-// declining, not a failure.
-import { MEAL_TIME_WINDOWS } from '../../config/ai.js'
+// Returns { valid, errors } — errors is a list of plain-English problems, handy
+// for debugging. Note: a well-formed { feasible: false, reason } is a valid
+// answer (the AI correctly saying "no itinerary fits"), not a failure.
+import { MEAL_TIME_WINDOWS } from '../../../config/ai.js'
+import { toMinutes } from '../../../utils/time.js'
 
 const HHMM_RE = /^([01][0-9]|2[0-3]):[0-5][0-9]$/
-
-const toMinutes = (hhmm) => {
-  const [h, m] = hhmm.split(':').map(Number)
-  return h * 60 + m
-}
 
 const isHHMM = (v) => typeof v === 'string' && HHMM_RE.test(v)
 const inWindow = (t, start, end) => toMinutes(t) >= toMinutes(start) && toMinutes(t) <= toMinutes(end)
@@ -22,7 +17,7 @@ const inMealBlock = (t, block) => inWindow(t, block.start, block.end)
 
 // Per-stop shape check (mirrors STOP_SCHEMA in config/ai.js). Pushes a labelled
 // error for each malformed field so the log points at the exact stop.
-function checkStopShape(stop, i, errors) {
+const checkStopShape = (stop, i, errors) => {
   const at = `stops[${i}]`
   if (!stop || typeof stop !== 'object') {
     errors.push(`${at} is not an object`)
@@ -42,7 +37,7 @@ function checkStopShape(stop, i, errors) {
 
 // Business rules across the whole itinerary. Assumes stops already passed the
 // shape check (times are valid HH:MM, pinId is an integer, etc.).
-function checkBusinessRules(stops, shortlist, constraints, errors) {
+const checkBusinessRules = (stops, shortlist, constraints, errors) => {
   const { timeWindow, maxBudgetPerPerson, groupSize } = constraints ?? {}
   const byId = new Map(shortlist.map((p) => [p.id, p]))
 
@@ -114,7 +109,7 @@ function checkBusinessRules(stops, shortlist, constraints, errors) {
 //   result      = parsed JSON, either { feasible:true, ... } or { feasible:false, reason }
 //   shortlist   = the pins the itinerary was built from (each with .id)
 //   constraints = { timeWindow?, maxBudgetPerPerson, groupSize, ... }
-function validateItinerary(result, shortlist, constraints) {
+const validateItinerary = (result, shortlist, constraints) => {
   const errors = []
 
   if (!result || typeof result !== 'object') {

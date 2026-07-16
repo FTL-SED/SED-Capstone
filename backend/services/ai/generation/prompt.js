@@ -1,23 +1,22 @@
-// Step 3 — prompt engineering. Builds the system + user messages that instruct
-// the model to ORDER the recommendation shortlist into a one-day schedule.
-// Pure: shortlist + constraints in, OpenRouter `messages` array out.
-import { MEAL_TIME_WINDOWS } from '../../config/ai.js'
+// Builds the two chat messages we send to the AI: a "system" message with the
+// fixed rules, and a "user" message with this trip's places and constraints.
+// Takes the shortlist + constraints, returns the `messages` array the client
+// sends to the model.
+import { MEAL_TIME_WINDOWS } from '../../../config/ai.js'
 
 // Only the fields the model needs to sequence — trims the pin so the prompt
 // stays small and the model can't be distracted by internals (scores, flags).
 // openingHours is passed but flagged as a soft hint (see the system prompt).
-function toPromptPin(pin) {
-  return {
-    id: pin.id,
-    name: pin.name,
-    category: pin.category,
-    tags: pin.tags,
-    latitude: pin.latitude,
-    longitude: pin.longitude,
-    pricePerPerson: pin.pricePerPerson,
-    openingHours: pin.openingHours,
-  }
-}
+const toPromptPin = (pin) => ({
+  id: pin.id,
+  name: pin.name,
+  category: pin.category,
+  tags: pin.tags,
+  latitude: pin.latitude,
+  longitude: pin.longitude,
+  pricePerPerson: pin.pricePerPerson,
+  openingHours: pin.openingHours,
+})
 
 // The fixed rulebook. Independent of any specific trip, so it's a constant.
 const SYSTEM_PROMPT = [
@@ -53,7 +52,7 @@ const SYSTEM_PROMPT = [
 // Renders the per-trip data. Optional constraints (timeWindow, meetingPoint,
 // travelRadius) are included only when present — so the prompt works today and
 // improves once the recommendation engine supplies them.
-function buildUserMessage(shortlist, constraints) {
+const buildUserMessage = (shortlist, constraints) => {
   const { timeWindow, maxBudgetPerPerson, groupSize, startingLocations, meetingPoint, travelRadius } =
     constraints ?? {}
 
@@ -71,12 +70,10 @@ function buildUserMessage(shortlist, constraints) {
   ].join('\n')
 }
 
-// Assemble the OpenRouter messages array for one sequencing call.
-function buildMessages(shortlist, constraints) {
-  return [
-    { role: 'system', content: SYSTEM_PROMPT },
-    { role: 'user', content: buildUserMessage(shortlist, constraints) },
-  ]
-}
+// Assemble the chat messages array for one sequencing call.
+const buildMessages = (shortlist, constraints) => [
+  { role: 'system', content: SYSTEM_PROMPT },
+  { role: 'user', content: buildUserMessage(shortlist, constraints) },
+]
 
 export { buildMessages, SYSTEM_PROMPT }

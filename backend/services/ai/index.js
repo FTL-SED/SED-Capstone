@@ -1,16 +1,15 @@
-// Step 6 — the top-level AI sequencing service. Orchestrates the pieces built
-// in Steps 2–5 into one call: shortlist + constraints in, a validated itinerary
-// out. Pure orchestration — no DB, no Express. The caller (Step 7 controller)
-// passes data in and persists (Step 8) whatever comes back.
+// The main entry point that ties everything together: given a shortlist of
+// places + the trip's constraints, produce one finished itinerary.
 //
-// Flow: build prompt → call OpenRouter → validate. On ANY failure (AI error,
-// timeout, invalid output), log it and fall back to the deterministic
-// sequencer, which produces the same schema so the caller can't tell which ran.
-import { buildMessages } from './prompt.js'
-import { callOpenRouter } from './client.js'
-import { validateItinerary } from './validate.js'
-import { fallbackSequence } from './fallback.js'
-import { rescheduleStops } from './schedule.js'
+// Plan: ask the AI to sequence the day; if that fails for any reason (network
+// error, timeout, or output we can't trust), fall back to our own code that
+// builds an itinerary in the exact same shape. Either way we then optimize the
+// route and return the result. No database or Express here — just the logic.
+import { buildMessages } from './generation/prompt.js'
+import { callAI } from './generation/client.js'
+import { validateItinerary } from './validation/validate.js'
+import { fallbackSequence } from './fallback/fallback.js'
+import { rescheduleStops } from './fallback/schedule.js'
 import { optimizeRoute } from '../../utils/route.js'
 
 // Reorder a feasible itinerary's stops for the shortest travel route (meals
@@ -18,7 +17,7 @@ import { optimizeRoute } from '../../utils/route.js'
 // order. Runs on BOTH the AI and fallback output so every itinerary, whatever
 // its source, gets the optimized route. Coords are re-hydrated from the
 // shortlist by pinId (stops themselves only carry pinId).
-function optimizeItinerary(itinerary, shortlist, constraints) {
+const optimizeItinerary = (itinerary, shortlist, constraints) => {
   const coordById = new Map(
     shortlist.map((p) => [p.id, { latitude: p.latitude, longitude: p.longitude }])
   )
@@ -31,9 +30,9 @@ function optimizeItinerary(itinerary, shortlist, constraints) {
   return { ...itinerary, stops }
 }
 
-async function tryAi(shortlist, constraints) {
+const tryAi = async (shortlist, constraints) => {
   const messages = buildMessages(shortlist, constraints)
-  const result = await callOpenRouter({ messages })
+  const result = await callAI(messages)
 
   const { valid, errors } = validateItinerary(result, shortlist, constraints)
   if (!valid) {
@@ -53,7 +52,7 @@ async function tryAi(shortlist, constraints) {
 //   { itinerary, source: 'ai' | 'fallback' } on success
 //   { feasible: false, reason } when constraints are too tight for any day
 // `source` lets the caller log/measure how often the AI path is actually used.
-async function generateItinerary(shortlist, constraints) {
+const generateItinerary = async (shortlist, constraints) => {
   let result
   let source = 'ai'
 
