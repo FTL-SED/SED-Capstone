@@ -7,6 +7,17 @@ import { persistItinerary } from '../services/itinerary/persist.js'
 // Thin per .claude/rules/backend.md — all sequencing/validation/fallback logic
 // lives in services/ai, all translation/persistence in services/itinerary.
 // Auth is handled by requireAuth (req.user is the caller's User row).
+// A calendar date the persistence layer can safely combine with a stop's
+// "HH:MM" into a DateTime. Must be YYYY-MM-DD AND a real date — a malformed
+// string would otherwise reach `new Date(...)` in persist.js and silently
+// become an Invalid Date, corrupting the stored timestamps.
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+function isValidTripDate(value) {
+  if (typeof value !== 'string' || !DATE_RE.test(value)) return false
+  const date = new Date(`${value}T00:00:00Z`)
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value)
+}
+
 async function postAiAgent(req, res) {
   const { shortlist, constraints, tripDate, isPublic } = req.body ?? {}
 
@@ -15,6 +26,10 @@ async function postAiAgent(req, res) {
   }
   if (!constraints || typeof constraints !== 'object') {
     return res.status(400).json({ error: 'constraints is required' })
+  }
+  // Optional, but if present it must be a real YYYY-MM-DD (see isValidTripDate).
+  if (tripDate !== undefined && !isValidTripDate(tripDate)) {
+    return res.status(400).json({ error: 'tripDate must be a valid "YYYY-MM-DD" date' })
   }
 
   try {
@@ -27,7 +42,7 @@ async function postAiAgent(req, res) {
 
     const saved = await persistItinerary(result.itinerary, shortlist, {
       userId: req.user.id,
-      tripDate: typeof tripDate === 'string' ? tripDate : undefined,
+      tripDate,
       isPublic: isPublic === true,
     })
 
