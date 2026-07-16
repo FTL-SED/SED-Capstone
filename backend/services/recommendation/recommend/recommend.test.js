@@ -54,6 +54,13 @@ test('constraints carry timeWindow, and meetingPoint/travelRadius are null pre-g
   assert.equal(constraints.maxMemberDistance, null)
 })
 
+test('constraints pass transport through for the AI (null when unset)', () => {
+  const walked = recommend({ ...trip, transport: 'walking' }, members, pins)
+  assert.equal(walked.constraints.transport, 'walking')
+  const noTransport = recommend(trip, members, pins)
+  assert.equal(noTransport.constraints.transport, null)
+})
+
 test('foodBelowMin is false when the catalog has enough restaurants', () => {
   const { constraints } = recommend(trip, members, pins) // 10 restaurants ≥ FOOD_MIN
   assert.equal(constraints.foodBelowMin, false)

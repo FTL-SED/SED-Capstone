@@ -36,6 +36,14 @@ function validateTrip(trip) {
   if (typeof trip.endTime !== 'string' || !TIME_RE.test(trip.endTime)) {
     return 'trip.endTime is required and must be an "HH:MM" string'
   }
+  // Same-day trips only: endTime must be after startTime. The engine doesn't
+  // model windows that cross midnight, so reject them here rather than let the
+  // day silently collapse to an empty window.
+  const [sh, sm] = trip.startTime.split(':').map(Number)
+  const [eh, em] = trip.endTime.split(':').map(Number)
+  if (eh * 60 + em <= sh * 60 + sm) {
+    return 'trip.endTime must be later than trip.startTime (same-day trips only)'
+  }
   if (typeof trip.maxBudgetPerPerson !== 'number' || trip.maxBudgetPerPerson < 0) {
     return 'trip.maxBudgetPerPerson is required and must be a non-negative number'
   }

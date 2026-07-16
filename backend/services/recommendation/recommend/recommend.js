@@ -72,6 +72,7 @@ function recommend(trip, members, pins) {
       groupSize: members.length,
       startingLocations: members.map((m) => m.startLocation),
       timeWindow: { startTime: trip.startTime, endTime: trip.endTime },
+      transport: trip.transport ?? null,
       meetingPoint,
       travelRadius: trip.travelRadius ?? null,
       maxMemberDistance,

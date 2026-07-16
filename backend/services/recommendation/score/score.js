@@ -45,7 +45,8 @@ function matchCount(pin, groupTags, groupFood) {
 //   quality   = rating/5, or QUALITY_DEFAULT when unrated (missing data ⇒ neutral).
 function softScore(pin, members, groupTags, groupFood) {
   const liked = membersWhoLike(pin, members)
-  const coverage = liked.length / members.length
+  // Guard against an empty group: 0/0 would be NaN and poison the whole ranking.
+  const coverage = members.length > 0 ? liked.length / members.length : 0
 
   const matched = matchCount(pin, groupTags, groupFood)
   const intensity = Math.min(1, matched / INTENSITY_SATURATION)
