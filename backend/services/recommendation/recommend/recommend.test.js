@@ -54,6 +54,21 @@ test('constraints carry timeWindow, and meetingPoint/travelRadius are null pre-g
   assert.equal(constraints.maxMemberDistance, null)
 })
 
+test('foodBelowMin is false when the catalog has enough restaurants', () => {
+  const { constraints } = recommend(trip, members, pins) // 10 restaurants ≥ FOOD_MIN
+  assert.equal(constraints.foodBelowMin, false)
+})
+
+test('foodBelowMin is true when few restaurants exist (food desert)', () => {
+  const sparse = [
+    activity('Museum', ['art', 'museum']),
+    activity('Cafe', ['coffee']),
+    restaurant('Only Sushi', ['sushi']), // just 1 restaurant, < FOOD_MIN (6)
+  ]
+  const { constraints } = recommend(trip, members, sparse)
+  assert.equal(constraints.foodBelowMin, true)
+})
+
 test('Stage 0: with geocoded members + a radius, constraints carry the meeting point and drop far pins', () => {
   const geoMembers = [
     { name: 'A', interestTags: ['art'], foodPrefs: [], startLocation: { latitude: 37.7955, longitude: -122.3937 } },

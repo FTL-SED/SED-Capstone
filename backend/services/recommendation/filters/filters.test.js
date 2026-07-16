@@ -96,6 +96,28 @@ test('keeps a pin with unknown hours and flags it (missing data)', () => {
   assert.deepEqual(flags.hoursUnknown, ['Old Museum'])
 })
 
+test('keeps a pin with malformed hours and flags it as unknown (not silently dropped)', () => {
+  const { candidates, flags } = run([
+    { name: 'Glitchy Gallery', category: 'museum', tags: ['art'], priceLevel: 2, openingHours: [{ open: '25:99', close: 'zz:zz' }] },
+  ])
+  assert.equal(candidates.length, 1)
+  assert.equal(candidates[0].hoursUnknown, true)
+  assert.deepEqual(flags.hoursUnknown, ['Glitchy Gallery'])
+})
+
+test('with no group interests, activities are kept (not filtered out as noise)', () => {
+  const noPrefMembers = [
+    { name: 'A', interestTags: [], foodPrefs: [] },
+    { name: 'B', interestTags: [], foodPrefs: [] },
+  ]
+  const pins = [
+    { name: 'Random Museum', category: 'museum', tags: ['art'], priceLevel: 1 },
+    { name: 'Random Park', category: 'park', tags: ['nature'], priceLevel: 0 },
+  ]
+  const { candidates } = hardFilter(pins, noPrefMembers, trip)
+  assert.equal(candidates.length, 2) // both kept — nothing to judge relevance against
+})
+
 test('returns { candidates, flags } and does not mutate the input pins', () => {
   const pins = [{ name: 'MoMA', category: 'museum', tags: ['art'] }]
   const result = run(pins)
