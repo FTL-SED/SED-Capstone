@@ -32,8 +32,16 @@ function LoginForm({setCurrentUser}) {
     try {
       const response = await axios.post(`${BASE_URL}/users/login`, userData);
       const { user, session } = response.data;
+
+      // Guard against a 200 that's missing the user or session — without these
+      // we can't authenticate, so surface an error instead of navigating to a
+      // protected route that would just bounce back to the landing page.
+      if (!user || !session?.access_token) {
+        setError("Something went wrong. Please try again.");
+        return;
+      }
+
       setError("");
- 
       localStorage.setItem("accessToken", session.access_token);
       localStorage.setItem("sessionExpiresAt", String(session.expires_at * 1000));
       setCurrentUser(user);

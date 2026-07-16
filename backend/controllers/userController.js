@@ -131,6 +131,13 @@ async function loginUser(req, res) {
 
   const profile = await users.findByAuthUserId(data.user.id)
 
+  // A valid Supabase account with no matching app-side profile isn't a usable
+  // login (e.g. the User row was removed). Treat it as unauthenticated rather
+  // than returning a null user the client can't act on.
+  if (!profile) {
+    return res.status(401).json({ error: 'Invalid email or password' })
+  }
+
   return res.status(200).json({ user: profile, session: data.session })
 }
 
