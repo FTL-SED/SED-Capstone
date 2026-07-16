@@ -22,9 +22,9 @@ const isRestaurant = (pin) => pin.category === 'restaurant'
 const hasNoHours = (pin) =>
   !pin.openingHours || pin.openingHours.length === 0
 
-// A member's start location is usable for the meeting point only once it's been
-// geocoded to numeric coordinates (see Stage 0 design — geocoding is upstream).
-// String addresses (pre-geocoding) and missing data are simply skipped.
+// A member's start location is usable for the meeting point only when it carries
+// numeric coordinates. The frontend resolves each address via its map/autocomplete
+// picker and sends { latitude, longitude }; anything without coords is skipped.
 const hasCoords = (m) =>
   m?.startLocation &&
   typeof m.startLocation.latitude === 'number' &&
@@ -47,8 +47,8 @@ function hardFilter(pins, members, trip) {
 
   // Stage 0: fair meeting point from members with real coordinates, then the
   // travel-radius drop is measured from it. Both are no-ops (radius skipped)
-  // when we lack coordinates or the trip sets no radius — so pre-geocoding
-  // callers behave exactly as before.
+  // when we lack coordinates or the trip sets no radius — so callers that omit
+  // coordinates behave exactly as before.
   const memberCoords = members.filter(hasCoords).map((m) => m.startLocation)
   const meetingPoint = memberCoords.length > 0 ? geometricMedian(memberCoords) : null
   const applyRadius = meetingPoint !== null && typeof trip.travelRadius === 'number'
