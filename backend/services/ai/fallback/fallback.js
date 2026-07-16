@@ -60,7 +60,7 @@ const mealBlockAt = (mins) => {
 // { feasible: true, title, location, description, stops[] } or
 // { feasible: false, reason } when nothing can fit.
 const fallbackSequence = (shortlist, constraints) => {
-  const { timeWindow, maxBudgetPerPerson, groupSize, meetingPoint, transport } = constraints ?? {}
+  const { timeWindow, maxBudgetPerPerson, meetingPoint, transport } = constraints ?? {}
 
   if (!Array.isArray(shortlist) || shortlist.length === 0) {
     return { feasible: false, reason: 'No places available to sequence.' }
@@ -78,10 +78,10 @@ const fallbackSequence = (shortlist, constraints) => {
     return { feasible: false, reason: 'Trip time window is empty or inverted.' }
   }
 
-  const budgetCap =
-    typeof maxBudgetPerPerson === 'number' && typeof groupSize === 'number'
-      ? maxBudgetPerPerson * groupSize
-      : Infinity
+  // Stop costs are per person, so the cap is the per-person budget directly
+  // (no groupSize multiplier — that would mix per-person costs with a
+  // whole-group cap). Matches validate.js's budget rule.
+  const budgetCap = typeof maxBudgetPerPerson === 'number' ? maxBudgetPerPerson : Infinity
 
   const stops = []
   const mealsUsed = new Set() // meal blocks already filled — one meal per block

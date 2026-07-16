@@ -16,11 +16,14 @@ export const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS) || 20_000
 export const AI_MAX_RETRIES = Number(process.env.AI_MAX_RETRIES) || 2
 
 // Meal anchors ("HH:MM", Pacific wall-clock) the prompt + fallback use to slot
-// restaurants and label meal stops.
+// restaurants and label meal stops. Kept generously wide (and non-overlapping)
+// so a sensible meal a little off the "ideal" hour still validates — a dinner
+// at 17:25 or a late breakfast at 10:45 shouldn't get the whole AI itinerary
+// rejected into the fallback over a few minutes.
 export const MEAL_TIME_WINDOWS = {
-  breakfast: { start: '08:00', end: '10:00' },
-  lunch: { start: '11:30', end: '13:30' },
-  dinner: { start: '17:30', end: '19:30' },
+  breakfast: { start: '07:00', end: '10:45' },
+  lunch: { start: '11:00', end: '13:45' },
+  dinner: { start: '17:00', end: '20:30' },
 }
 
 // Travel-time model, used by the scheduler to turn the straight-line distance

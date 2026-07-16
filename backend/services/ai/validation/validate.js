@@ -72,12 +72,14 @@ const checkBusinessRules = (stops, shortlist, constraints, errors) => {
     }
   }
 
-  // Budget: total per-person cost must fit budget × group size.
-  if (typeof maxBudgetPerPerson === 'number' && typeof groupSize === 'number') {
+  // Budget: the day's total PER-PERSON cost must fit the per-person budget.
+  // Stop costs are already per person (see the recommendation engine's
+  // estPricePerPerson), so this is a like-for-like sum vs cap — no groupSize
+  // multiplier (that would mix per-person costs with a whole-group cap).
+  if (typeof maxBudgetPerPerson === 'number') {
     const total = stops.reduce((sum, s) => sum + s.estimatedCostPerPerson, 0)
-    const cap = maxBudgetPerPerson * groupSize
-    if (total > cap) {
-      errors.push(`total cost ${total} exceeds budget ${cap} (${maxBudgetPerPerson} × ${groupSize})`)
+    if (total > maxBudgetPerPerson) {
+      errors.push(`total per-person cost ${total} exceeds budget ${maxBudgetPerPerson}`)
     }
   }
 

@@ -126,7 +126,7 @@ test('rejects a stop outside the trip time window', () => {
 test('rejects a mealType whose arriveTime is outside its block', () => {
   const bad = {
     ...goodItinerary,
-    stops: [{ pinId: 3, arriveTime: '15:00', departTime: '15:30', estimatedCostPerPerson: 20, mealType: 'lunch' }],
+    stops: [{ pinId: 3, arriveTime: '16:00', departTime: '16:30', estimatedCostPerPerson: 20, mealType: 'lunch' }],
   }
   const { valid, errors } = validateItinerary(bad, shortlist, constraints)
   assert.equal(valid, false)
