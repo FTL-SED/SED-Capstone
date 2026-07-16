@@ -25,7 +25,7 @@ const optimizeItinerary = (itinerary, shortlist, constraints) => {
 
   const ordered = optimizeRoute(itinerary.stops, coordOf)
   const startTime = constraints?.timeWindow?.startTime ?? itinerary.stops[0].arriveTime
-  const stops = rescheduleStops(ordered, coordOf, startTime)
+  const stops = rescheduleStops(ordered, coordOf, startTime, constraints?.transport)
 
   return { ...itinerary, stops }
 }

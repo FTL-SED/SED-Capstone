@@ -3,22 +3,17 @@
 // stop's dwell time (how long departTime - arriveTime was) and just walks the
 // clock forward, adding travel time between stops. Meal stops are held until
 // their meal window opens (we wait rather than show up early).
-import { FALLBACK_TRAVEL_MPH, ROAD_CIRCUITY, MEAL_TIME_WINDOWS } from '../../../config/ai.js'
+import { MEAL_TIME_WINDOWS, travelMinutesFor } from '../../../config/ai.js'
 import { haversineMiles, milesToMeters } from '../../../utils/geo.js'
 import { toMinutes, toHHMM } from '../../../utils/time.js'
-
-// Straight-line miles → estimated travel minutes. We scale the crow-flies
-// distance up by ROAD_CIRCUITY first (streets aren't straight) and drive it at
-// an effective urban speed, so a short hop reads as a believable few minutes
-// rather than seconds. The DISPLAYED distance stays the raw straight line —
-// only this time estimate uses the inflated road distance.
-const travelMinutes = (miles) =>
-  Math.round(((miles * ROAD_CIRCUITY) / FALLBACK_TRAVEL_MPH) * 60)
 
 // stops   = ordered stops, each with arriveTime/departTime (for dwell) + pinId
 // coordOf = (stop) => { latitude, longitude }
 // startTime = "HH:MM" the day begins (first stop arrives here)
-const rescheduleStops = (stops, coordOf, startTime) => {
+// transport = the group's travel mode (walking/biking/transit/driving); scales
+//             travel-time estimates. Undefined ⇒ the default urban speed.
+const rescheduleStops = (stops, coordOf, startTime, transport) => {
+  const travelMinutes = (miles) => travelMinutesFor(miles, transport)
   let clock = toMinutes(startTime)
   const out = []
 

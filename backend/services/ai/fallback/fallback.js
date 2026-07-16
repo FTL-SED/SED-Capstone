@@ -10,18 +10,17 @@
 import {
   AVG_STOP_DURATION_MIN,
   MEAL_TIME_WINDOWS,
-  FALLBACK_TRAVEL_MPH,
+  travelMinutesFor,
 } from '../../../config/ai.js'
 import { haversineMiles, milesToMeters } from '../../../utils/geo.js'
 import { toMinutes, toHHMM } from '../../../utils/time.js'
 
 const isRestaurant = (pin) => pin.category === 'restaurant'
 
-// Estimated travel minutes between two pins from straight-line distance.
-const travelMinutes = (a, b) => {
-  const miles = haversineMiles(a, b)
-  return Math.round((miles / FALLBACK_TRAVEL_MPH) * 60)
-}
+// Estimated travel minutes between two pins, scaled to the group's transport
+// mode (walking/biking/transit/driving). Undefined ⇒ the default urban speed.
+const travelMinutes = (a, b, transport) =>
+  travelMinutesFor(haversineMiles(a, b), transport)
 
 // Order pins by nearest-neighbor starting from `anchor`: repeatedly take the
 // closest not-yet-visited pin. Greedy, not optimal, but avoids the worst
@@ -61,7 +60,7 @@ const mealBlockAt = (mins) => {
 // { feasible: true, title, location, description, stops[] } or
 // { feasible: false, reason } when nothing can fit.
 const fallbackSequence = (shortlist, constraints) => {
-  const { timeWindow, maxBudgetPerPerson, groupSize, meetingPoint } = constraints ?? {}
+  const { timeWindow, maxBudgetPerPerson, groupSize, meetingPoint, transport } = constraints ?? {}
 
   if (!Array.isArray(shortlist) || shortlist.length === 0) {
     return { feasible: false, reason: 'No places available to sequence.' }
@@ -92,7 +91,7 @@ const fallbackSequence = (shortlist, constraints) => {
 
   for (const pin of ordered) {
     // Travel from the previous stop eats clock time before we can arrive.
-    if (prev) clock += travelMinutes(prev, pin)
+    if (prev) clock += travelMinutes(prev, pin, transport)
 
     const arrive = clock
     const depart = arrive + AVG_STOP_DURATION_MIN
@@ -130,7 +129,7 @@ const fallbackSequence = (shortlist, constraints) => {
   // travel to the NEXT stop (last stop has none).
   for (let i = 0; i < stops.length - 1; i++) {
     const miles = haversineMiles(stops[i].pin, stops[i + 1].pin)
-    stops[i].travelTimeToNextMinutes = travelMinutes(stops[i].pin, stops[i + 1].pin)
+    stops[i].travelTimeToNextMinutes = travelMinutes(stops[i].pin, stops[i + 1].pin, transport)
     stops[i].distanceToNextMeters = Math.round(milesToMeters(miles))
   }
 

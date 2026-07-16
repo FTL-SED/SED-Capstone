@@ -28,6 +28,8 @@ const SYSTEM_PROMPT = [
   '- Anchor the day near the provided meetingPoint when given: the first stop should be at or close to it so the group converges fairly.',
   '- openingHours is a WEAK hint (the window a place happened to be scheduled in, not verified business hours). Treat it as soft guidance, not a hard constraint.',
   '- Order stops geographically to minimize backtracking, and place meals at natural meal times.',
+  '- When a transport mode is given, account for its pace: walking/biking cover less ground than transit/driving, so keep stops closer together and allow more travel time on foot.',
+  '- When foodBelowMin is true, meal options in range are scarce — prioritise keeping the few restaurants you do have rather than dropping them.',
   `- Meal windows (Pacific, HH:MM): breakfast ${MEAL_TIME_WINDOWS.breakfast.start}-${MEAL_TIME_WINDOWS.breakfast.end}, lunch ${MEAL_TIME_WINDOWS.lunch.start}-${MEAL_TIME_WINDOWS.lunch.end}, dinner ${MEAL_TIME_WINDOWS.dinner.start}-${MEAL_TIME_WINDOWS.dinner.end}. Tag a meal stop with the matching mealType.`,
   '- Total per-person cost across all stops must not exceed maxBudgetPerPerson.',
   '- Keep every arriveTime/departTime inside the trip time window, in chronological order.',
@@ -53,13 +55,18 @@ const SYSTEM_PROMPT = [
 // travelRadius) are included only when present — so the prompt works today and
 // improves once the recommendation engine supplies them.
 const buildUserMessage = (shortlist, constraints) => {
-  const { timeWindow, maxBudgetPerPerson, groupSize, startingLocations, meetingPoint, travelRadius } =
-    constraints ?? {}
+  const {
+    timeWindow, maxBudgetPerPerson, groupSize, startingLocations,
+    meetingPoint, travelRadius, transport, maxMemberDistance, foodBelowMin,
+  } = constraints ?? {}
 
   const details = { maxBudgetPerPerson, groupSize, startingLocations }
   if (timeWindow) details.timeWindow = timeWindow
   if (meetingPoint) details.meetingPoint = meetingPoint
   if (travelRadius != null) details.travelRadius = travelRadius
+  if (transport) details.transport = transport
+  if (maxMemberDistance != null) details.maxMemberDistance = maxMemberDistance
+  if (foodBelowMin) details.foodBelowMin = foodBelowMin
 
   return [
     'Constraints:',

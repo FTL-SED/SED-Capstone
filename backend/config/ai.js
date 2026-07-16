@@ -36,6 +36,26 @@ export const MEAL_TIME_WINDOWS = {
 export const FALLBACK_TRAVEL_MPH = Number(process.env.FALLBACK_TRAVEL_MPH) || 18
 export const ROAD_CIRCUITY = Number(process.env.ROAD_CIRCUITY) || 1.35
 
+// Effective urban point-to-point speed (mph) by transport mode — folds in
+// lights/turns/parking/waits, so these sit well below posted limits. The
+// scheduler picks the mode from the trip's `transport` constraint and falls
+// back to FALLBACK_TRAVEL_MPH when it's unset or unrecognized.
+export const TRAVEL_MPH_BY_MODE = {
+  walking: 3,
+  biking: 9,
+  transit: 12,
+  driving: 18,
+}
+
+// Straight-line miles → effective travel minutes for a given transport mode.
+// Scales crow-flies distance up by ROAD_CIRCUITY (real streets aren't straight)
+// then divides by the mode's speed. Shared by the fallback + scheduler so the
+// two can't drift.
+export function travelMinutesFor(miles, transport) {
+  const mph = TRAVEL_MPH_BY_MODE[transport] ?? FALLBACK_TRAVEL_MPH
+  return Math.round(((miles * ROAD_CIRCUITY) / mph) * 60)
+}
+
 // Output schema, shared by the AI call, response validation, and the fallback
 // so downstream code never cares which produced the result. A stop is
 // deliberately minimal — the AI only sequences (which

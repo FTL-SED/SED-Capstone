@@ -39,6 +39,16 @@ test('leaves a travel gap between consecutive stops (arrive > previous depart)',
   assert.ok(out[1].arriveTime > departPrev, 'second stop should arrive after travel time')
 })
 
+test('transport mode scales travel time: walking takes longer than driving', () => {
+  const stops = [stop(1, '09:00', '10:00'), stop(3, '10:00', '11:00')] // pins 1 & 3 far apart
+  const walk = rescheduleStops(stops, coordOf, '09:00', 'walking')
+  const drive = rescheduleStops(stops, coordOf, '09:00', 'driving')
+  assert.ok(
+    walk[0].travelTimeToNextMinutes > drive[0].travelTimeToNextMinutes,
+    `walking (${walk[0].travelTimeToNextMinutes}m) should exceed driving (${drive[0].travelTimeToNextMinutes}m)`
+  )
+})
+
 test('produces chronological, non-overlapping times', () => {
   const stops = [stop(1, '09:00', '10:00'), stop(2, '10:00', '11:00'), stop(3, '11:00', '12:00')]
   const out = rescheduleStops(stops, coordOf, '09:00')
