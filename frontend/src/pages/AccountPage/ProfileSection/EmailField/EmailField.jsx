@@ -1,9 +1,9 @@
 import TextInput from '../../../../components/Inputs/TextInput/TextInput.jsx'
 import './EmailField.css'
 
-function EmailField() {
+function EmailField({ email }) {
   return (
-    <TextInput label="Email" type="email" value="example@codepath.org" readOnly />
+    <TextInput label="Email" type="email" value={email ?? ""} readOnly />
   );
 }
 

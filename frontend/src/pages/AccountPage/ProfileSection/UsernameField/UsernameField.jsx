@@ -1,9 +1,9 @@
 import TextInput from '../../../../components/Inputs/TextInput/TextInput.jsx'
 import './UsernameField.css'
 
-function UsernameField() {
+function UsernameField({ username }) {
   return (
-    <TextInput label="Username" value="User1234" readOnly />
+    <TextInput label="Username" value={username ?? ""} readOnly />
   );
 }
 

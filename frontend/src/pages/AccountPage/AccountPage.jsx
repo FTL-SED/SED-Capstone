@@ -12,7 +12,7 @@ function AccountPage({ currentUser, setCurrentUser }) {
         <AccountNav setCurrentUser={setCurrentUser} />
       </div>
       <div className="account-page__main">
-        <ProfileSection />
+        <ProfileSection currentUser={currentUser} />
         <ChangePasswordSection currentUser={currentUser} />
       </div>
     </div>

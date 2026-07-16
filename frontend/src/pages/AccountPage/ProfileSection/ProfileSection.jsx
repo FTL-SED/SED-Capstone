@@ -3,12 +3,12 @@ import UsernameField from './UsernameField/UsernameField.jsx'
 import EmailField from './EmailField/EmailField.jsx'
 import './ProfileSection.css'
 
-function ProfileSection() {
+function ProfileSection({ currentUser }) {
   return (
     <section className="profile-section">
       <SectionHeader title="Profile" />
-      <UsernameField />
-      <EmailField />
+      <UsernameField username={currentUser?.username} />
+      <EmailField email={currentUser?.email} />
     </section>
   );
 }
