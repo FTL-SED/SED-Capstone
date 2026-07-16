@@ -9,7 +9,7 @@ import { softScore } from '../score/score.js'
 import { enrichMissing } from '../enrich/enrich.js'
 import { computeShortlistSize, assembleWithFoodQuota } from '../assemble/assemble.js'
 import { ensureEveryMemberCovered } from '../fairness/fairness.js'
-import { ENRICHMENT_POOL_SIZE } from '../../../config/recommendation.js'
+import { ENRICHMENT_POOL_SIZE, FOOD_MIN } from '../../../config/recommendation.js'
 import { maxDistanceFrom } from '../../../utils/geo.js'
 
 // Attach a fresh .score to each pin and sort best-first. Re-run whenever the
@@ -56,6 +56,13 @@ function recommend(trip, members, pins) {
   const maxMemberDistance =
     meetingPoint && memberCoords.length > 0 ? maxDistanceFrom(meetingPoint, memberCoords) : null
 
+  // Signal when the shortlist has fewer than FOOD_MIN meal options — e.g. a
+  // tight travel radius or thin catalog leaves a "food desert" in range. The
+  // AI / frontend can then tell the group meal choices are limited, rather than
+  // the shortfall passing silently.
+  const restaurantCount = shortlist.filter((p) => p.category === 'restaurant').length
+  const foodBelowMin = restaurantCount < FOOD_MIN
+
   return {
     shortlist,
     constraints: {
@@ -66,6 +73,7 @@ function recommend(trip, members, pins) {
       meetingPoint,
       travelRadius: trip.travelRadius ?? null,
       maxMemberDistance,
+      foodBelowMin,
     },
   }
 }

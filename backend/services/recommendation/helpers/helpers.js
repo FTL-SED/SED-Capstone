@@ -58,22 +58,47 @@ function budgetSanityOk(pin, trip) {
   return price <= trip.maxBudgetPerPerson
 }
 
-// Convert 'HH:MM' to minutes since midnight for interval comparison.
+// Convert 'HH:MM' to minutes since midnight for interval comparison, or null
+// when the input isn't a valid HH:MM string (so callers can treat malformed
+// data as "unknown" instead of silently comparing against NaN).
 function toMinutes(hhmm) {
-  const [h, m] = hhmm.split(':').map(Number)
+  if (typeof hhmm !== 'string') return null
+  const match = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim())
+  if (!match) return null
+  const h = Number(match[1])
+  const m = Number(match[2])
+  if (h > 23 || m > 59) return null
   return h * 60 + m
 }
 
 // True if the pin is open at some point within [startTime, endTime].
 // Unknown hours ⇒ true (Step 3 keeps it and attaches an `hoursUnknown` flag
-// rather than dropping — missing data must never silently kill a pin).
+// rather than dropping — missing data must never silently kill a pin). A pin
+// whose hours can't be parsed is treated the same as unknown: we don't let a
+// malformed interval silently drop it.
 function isOpenInWindow(pin, startTime, endTime) {
   if (!pin.openingHours || pin.openingHours.length === 0) return true
   const start = toMinutes(startTime)
   const end = toMinutes(endTime)
-  return pin.openingHours.some(({ open, close }) => {
-    return toMinutes(open) < end && toMinutes(close) > start
-  })
+  if (start == null || end == null) return true // can't compare ⇒ treat as unknown
+
+  // Keep only the intervals we can actually parse. If none parse, hours are
+  // effectively unknown ⇒ keep (true); otherwise check overlap among the valid ones.
+  const intervals = pin.openingHours
+    .map(({ open, close }) => ({ openM: toMinutes(open), closeM: toMinutes(close) }))
+    .filter(({ openM, closeM }) => openM != null && closeM != null)
+  if (intervals.length === 0) return true
+  return intervals.some(({ openM, closeM }) => openM < end && closeM > start)
+}
+
+// True if the pin has at least one well-formed opening-hours interval. A pin
+// with no hours at all, or only malformed ones (e.g. "25:99"), has no usable
+// hours — Stage 1 treats both as `hoursUnknown` (keep + flag, never drop).
+function hasUsableHours(pin) {
+  if (!pin.openingHours || pin.openingHours.length === 0) return false
+  return pin.openingHours.some(
+    ({ open, close }) => toMinutes(open) != null && toMinutes(close) != null
+  )
 }
 
 // True if the pin is within `travelRadius` miles of the meeting point. Unlike
@@ -97,6 +122,7 @@ export {
   budgetSanityOk,
   isOpenInWindow,
   toMinutes,
+  hasUsableHours,
   withinRadius,
   pinIdentity,
 }

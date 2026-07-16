@@ -8,6 +8,8 @@ import {
   estPricePerPerson,
   budgetSanityOk,
   isOpenInWindow,
+  hasUsableHours,
+  toMinutes,
   withinRadius,
 } from './helpers.js'
 
@@ -89,6 +91,26 @@ test('isOpenInWindow: false when hours fall entirely outside the window', () => 
 test('isOpenInWindow: keeps pin when hours unknown (missing data)', () => {
   assert.equal(isOpenInWindow({}, '09:00', '17:00'), true)
   assert.equal(isOpenInWindow({ openingHours: [] }, '09:00', '17:00'), true)
+})
+
+test('isOpenInWindow: malformed hours are treated as unknown (kept, not dropped)', () => {
+  const pin = { openingHours: [{ open: '25:99', close: 'zz:zz' }] }
+  assert.equal(isOpenInWindow(pin, '09:00', '17:00'), true)
+})
+
+test('toMinutes: parses valid HH:MM and returns null for garbage', () => {
+  assert.equal(toMinutes('09:30'), 570)
+  assert.equal(toMinutes('00:00'), 0)
+  assert.equal(toMinutes('25:99'), null)
+  assert.equal(toMinutes('nonsense'), null)
+  assert.equal(toMinutes(undefined), null)
+})
+
+test('hasUsableHours: false for missing OR malformed, true for a valid interval', () => {
+  assert.equal(hasUsableHours({}), false)
+  assert.equal(hasUsableHours({ openingHours: [] }), false)
+  assert.equal(hasUsableHours({ openingHours: [{ open: '25:99', close: 'zz:zz' }] }), false)
+  assert.equal(hasUsableHours({ openingHours: [{ open: '09:00', close: '17:00' }] }), true)
 })
 
 test('withinRadius: keeps a pin inside the radius, drops one outside', () => {
