@@ -1,6 +1,5 @@
 import './ActionBar.css'
 import EditButton from '../EditButton/EditButton.jsx'
-import SaveButton from '../SaveButton/SaveButton.jsx'
 import DeleteButton from '../DeleteButton/DeleteButton.jsx'
 import BookmarkButton from '../BookmarkButton/BookmarkButton.jsx'
 import SaveCopyButton from '../SaveCopyButton/SaveCopyButton.jsx'
@@ -19,7 +18,6 @@ function ActionBar({
       {isOwner ? (
         <>
           <EditButton />
-          <SaveButton />
           <DeleteButton />
           <BookmarkButton bookmarked={bookmarked} onClick={onToggleBookmark} />
           <LikeButton liked={liked} likeCount={likeCount} onClick={onToggleLike} />
