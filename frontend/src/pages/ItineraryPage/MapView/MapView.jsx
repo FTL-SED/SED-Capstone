@@ -13,18 +13,27 @@ const numberedIcon = (n) =>
     iconAnchor: [14, 14],
   });
 
-// Pan/zoom the map to fit all markers, and re-measure the container once the
-// flex layout has settled (invalidateSize) so tiles fill the full height
-// instead of rendering short / cut off.
-function FitBounds({ points }) {
+// Keep Leaflet's internal size in sync with its container. Leaflet caches the
+// container size at init; if the flex layout resolves the real height AFTER
+// that (which left the map showing tiles for only a thin strip), it never
+// re-measures on its own. A ResizeObserver calls invalidateSize on every real
+// size change, and we refit the markers so they stay framed.
+function MapResizer({ points }) {
   const map = useMap();
   useEffect(() => {
-    map.invalidateSize();
-    if (points.length === 1) {
-      map.setView(points[0], 14);
-    } else if (points.length > 1) {
-      map.fitBounds(points, { padding: [40, 40] });
-    }
+    const container = map.getContainer();
+    const refit = () => {
+      map.invalidateSize();
+      if (points.length === 1) {
+        map.setView(points[0], 14);
+      } else if (points.length > 1) {
+        map.fitBounds(points, { padding: [40, 40] });
+      }
+    };
+    const observer = new ResizeObserver(refit);
+    observer.observe(container);
+    refit(); // run once immediately for the common case
+    return () => observer.disconnect();
     // points identity changes with the itinerary; JSON keys the effect on value.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, JSON.stringify(points)]);
@@ -67,7 +76,7 @@ function MapView({ pins = [] }) {
             </Popup>
           </Marker>
         ))}
-        <FitBounds points={points} />
+        <MapResizer points={points} />
       </MapContainer>
     </div>
   );
