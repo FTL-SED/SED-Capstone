@@ -1,9 +1,8 @@
 import './ItineraryWizard.css'
 import { useState } from 'react'
-import Step1_TimeRange from '../Step1_TimeRange/Step1_TimeRange.jsx'
-import Step2_TravelTransport from '../Step2_TravelTransport/Step2_TravelTransport.jsx'
-import Step3_Members from '../Step3_Members/Step3_Members.jsx'
-import Step4_Finish from '../Step4_Finish/Step4_Finish.jsx'
+import Step1_TripBasics from '../Step1_TripBasics/Step1_TripBasics.jsx'
+import Step2_Members from '../Step3_Members/Step3_Members.jsx'
+import Step3_Finish from '../Step4_Finish/Step4_Finish.jsx'
 import { newMember } from '../memberModel.js'
 
 // The single source of truth for everything the wizard collects. Trip-level
@@ -31,10 +30,9 @@ function ItineraryWizard() {
 
   return (
     <div className="itinerary-wizard">
-      {step === 1 && <Step1_TimeRange form={form} update={update} onNext={next} />}
-      {step === 2 && <Step2_TravelTransport form={form} update={update} onNext={next} />}
-      {step === 3 && <Step3_Members form={form} update={update} onNext={next} />}
-      {step === 4 && <Step4_Finish form={form} update={update} />}
+      {step === 1 && <Step1_TripBasics form={form} update={update} onNext={next} />}
+      {step === 2 && <Step2_Members form={form} update={update} onNext={next} />}
+      {step === 3 && <Step3_Finish form={form} update={update} />}
     </div>
   );
 }
