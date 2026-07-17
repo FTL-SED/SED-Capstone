@@ -1,14 +1,12 @@
+/* Save is the primary action: solid teal on top of .action-btn (App.css). */
 .save-button {
-  padding: 6px 14px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
-  border: 1px solid #16a34a;
-  background: rgba(22, 163, 74, 0.08);
-  color: #16a34a;
-  transition: background 0.15s ease;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
 }
 
 .save-button:hover {
-  background: rgba(22, 163, 74, 0.16);
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: #fff;
 }

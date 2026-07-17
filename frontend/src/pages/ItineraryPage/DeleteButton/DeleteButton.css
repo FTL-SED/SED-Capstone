@@ -1,14 +1,12 @@
+/* Destructive: danger-tinted outline on top of .action-btn (App.css),
+   filling solid on hover. */
 .delete-button {
-  padding: 6px 14px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--danger);
-  background: var(--danger-soft);
+  border-color: var(--danger);
   color: var(--danger);
-  transition: background 0.15s ease;
 }
 
 .delete-button:hover {
-  background: #fecdd3;
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
 }
