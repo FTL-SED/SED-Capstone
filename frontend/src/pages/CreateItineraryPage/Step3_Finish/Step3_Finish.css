@@ -1,24 +1,24 @@
-.step4-finish {
+.step3-finish {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.step4-finish .privacy-field {
+.step3-finish .privacy-field {
   align-self: flex-end;
 }
 
-.step4-finish .finish-button {
+.step3-finish .finish-button {
   align-self: flex-end;
 }
 
-.step4-finish__field {
+.step3-finish__field {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
 }
 
-.step4-finish__field label {
+.step3-finish__field label {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--slate-600, #475569);

@@ -1,4 +1,4 @@
-import './Step3_Members.css'
+import './Step2_Members.css'
 import MemberCard from '../MemberCard/MemberCard.jsx'
 import NextButton from '../../../components/Inputs/NextButton/NextButton.jsx'
 import { newMember } from '../memberModel.js'
@@ -6,7 +6,7 @@ import { newMember } from '../memberModel.js'
 // The group's members. Each member has a name, one starting location, and their
 // own interests + food prefs. Add/remove members inline.
 // See .claude/roadmap/frontend-backend-integration.md (per-member restructure).
-function Step3_Members({ form, update, onNext }) {
+function Step2_Members({ form, update, onNext }) {
   const members = form.members;
 
   const updateMember = (index, next) => {
@@ -20,9 +20,9 @@ function Step3_Members({ form, update, onNext }) {
   };
 
   return (
-    <div className="step3-members">
+    <div className="step2-members">
       <h2>Members</h2>
-      <div className="step3-members__list">
+      <div className="step2-members__list">
         {members.map((member, i) => (
           <MemberCard
             key={i}
@@ -33,7 +33,7 @@ function Step3_Members({ form, update, onNext }) {
           />
         ))}
       </div>
-      <button type="button" className="step3-members__add" onClick={addMember}>
+      <button type="button" className="step2-members__add" onClick={addMember}>
         + Add member
       </button>
       <NextButton onClick={onNext} />
@@ -41,4 +41,4 @@ function Step3_Members({ form, update, onNext }) {
   );
 }
 
-export default Step3_Members;
+export default Step2_Members;

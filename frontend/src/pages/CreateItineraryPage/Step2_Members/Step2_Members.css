@@ -1,16 +1,16 @@
-.step3-members {
+.step2-members {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.step3-members__list {
+.step2-members__list {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.step3-members__add {
+.step2-members__add {
   align-self: flex-start;
   padding: 0.5rem 0.9rem;
   border: 1px dashed #c7d2fe;
@@ -20,6 +20,6 @@
   font-size: 0.9rem;
 }
 
-.step3-members__add:hover {
+.step2-members__add:hover {
   background: #e0e7ff;
 }

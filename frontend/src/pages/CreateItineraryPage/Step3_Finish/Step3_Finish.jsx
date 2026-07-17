@@ -1,4 +1,4 @@
-import './Step4_Finish.css'
+import './Step3_Finish.css'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ItineraryDetailsPreview from '../ItineraryDetailsPreview/ItineraryDetailsPreview.jsx'
@@ -13,7 +13,7 @@ import { getRecommendations, generateItinerary } from '../../../api/itinerary.js
 // itinerary, then navigate to it. Empty-shortlist and infeasible are normal
 // outcomes shown as messages, not errors.
 // See .claude/roadmap/frontend-backend-integration.md (Steps 7-8).
-function Step4_Finish({ form, update }) {
+function Step3_Finish({ form, update }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -60,10 +60,10 @@ function Step4_Finish({ form, update }) {
   };
 
   return (
-    <div className="step4-finish">
+    <div className="step3-finish">
       <ItineraryDetailsPreview />
 
-      <div className="step4-finish__field">
+      <div className="step3-finish__field">
         <label>Itinerary title</label>
         <TextInput
           placeholder="Name your itinerary (optional)"
@@ -72,7 +72,7 @@ function Step4_Finish({ form, update }) {
         />
       </div>
 
-      <div className="step4-finish__field">
+      <div className="step3-finish__field">
         <label>Description</label>
         <TextInput
           placeholder="Add a short description (optional)"
@@ -88,4 +88,4 @@ function Step4_Finish({ form, update }) {
   );
 }
 
-export default Step4_Finish;
+export default Step3_Finish;

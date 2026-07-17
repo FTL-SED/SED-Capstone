@@ -1,8 +1,8 @@
 import './ItineraryWizard.css'
 import { useState } from 'react'
 import Step1_TripBasics from '../Step1_TripBasics/Step1_TripBasics.jsx'
-import Step2_Members from '../Step3_Members/Step3_Members.jsx'
-import Step3_Finish from '../Step4_Finish/Step4_Finish.jsx'
+import Step2_Members from '../Step2_Members/Step2_Members.jsx'
+import Step3_Finish from '../Step3_Finish/Step3_Finish.jsx'
 import { newMember } from '../memberModel.js'
 
 // The single source of truth for everything the wizard collects. Trip-level
