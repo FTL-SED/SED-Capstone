@@ -8,8 +8,10 @@
   align-self: flex-end;
 }
 
-.step3-finish .finish-button {
-  align-self: flex-end;
+.step3-finish__nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .step3-finish__field {

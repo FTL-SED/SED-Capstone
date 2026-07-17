@@ -26,13 +26,15 @@ function ItineraryWizard() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(INITIAL_FORM);
   const next = () => setStep((s) => s + 1);
+  const back = () => setStep((s) => Math.max(1, s - 1));
+  const goTo = (n) => setStep(n);
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }));
 
   return (
     <div className="itinerary-wizard">
       {step === 1 && <Step1_TripBasics form={form} update={update} onNext={next} />}
-      {step === 2 && <Step2_Members form={form} update={update} onNext={next} />}
-      {step === 3 && <Step3_Finish form={form} update={update} />}
+      {step === 2 && <Step2_Members form={form} update={update} onNext={next} onBack={back} />}
+      {step === 3 && <Step3_Finish form={form} update={update} onBack={back} goTo={goTo} />}
     </div>
   );
 }

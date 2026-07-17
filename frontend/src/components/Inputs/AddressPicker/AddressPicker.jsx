@@ -3,23 +3,26 @@ import { useState, useEffect } from 'react'
 import DropdownInput from '../DropdownInput/DropdownInput.jsx'
 import { suggestAddresses } from '../../../api/geocode.js'
 
-// Address autocomplete that yields COORDINATES, not free text — the backend
-// requires each starting location as { latitude, longitude }. Selected
-// locations are shown as removable chips.
-//   value:    [{ label, latitude, longitude }]
-//   onChange: (next) => void   (called with the updated array)
+// Single-location autocomplete that yields COORDINATES (the backend requires
+// each starting location as { latitude, longitude }). Picking a suggestion
+// fills the search bar with its label and stores the coords — no separate chip.
+//   value:    { label, latitude, longitude } | null
+//   onChange: (loc | null) => void
 // See .claude/roadmap/frontend-backend-integration.md (Step 4).
-function AddressPicker({ value = [], onChange, placeholder = 'Enter a starting location' }) {
-  const [text, setText] = useState('')
+function AddressPicker({ value = null, onChange, placeholder = 'Enter a starting location' }) {
+  // The input text mirrors the chosen label; editing it clears the selection
+  // until a new suggestion is picked.
+  const [text, setText] = useState(value?.label ?? '')
   const [suggestions, setSuggestions] = useState([])
 
-  // Debounce lookups so we don't call Geoapify on every keystroke. The `active`
-  // flag drops results from a stale query (typed further before it resolved).
-  // Only runs for non-empty text; clearing on empty is handled in onType so no
-  // setState happens synchronously in the effect body.
+  // Debounce lookups so we don't call Geoapify on every keystroke. `active`
+  // drops results from a stale query (typed further before it resolved).
   useEffect(() => {
     const query = text.trim()
     if (!query) return
+    // The text matches the picked address → it was just selected, not typed.
+    // Skip the lookup so the dropdown doesn't reappear after a pick.
+    if (value && text === value.label) return
 
     let active = true
     const timer = setTimeout(() => {
@@ -28,65 +31,44 @@ function AddressPicker({ value = [], onChange, placeholder = 'Enter a starting l
           if (active) setSuggestions(results)
         })
         .catch(() => {
-          if (active) setSuggestions([]) // a failed lookup just shows no suggestions
+          if (active) setSuggestions([])
         })
     }, 300)
     return () => {
       active = false
       clearTimeout(timer)
     }
-  }, [text])
+  }, [text, value])
 
   const onType = (e) => {
     const next = e.target.value
     setText(next)
-    if (!next.trim()) setSuggestions([]) // clear immediately when the box is emptied
+    if (!next.trim()) setSuggestions([]) // clear immediately when emptied
+    // Typing after a pick invalidates the stored coords until a new selection.
+    if (value) onChange(null)
   }
 
-  const addLocation = (loc) => {
-    // Skip exact duplicates (same coords already picked).
-    const exists = value.some(
-      (v) => v.latitude === loc.latitude && v.longitude === loc.longitude
-    )
-    if (!exists) onChange([...value, loc])
-    setText('')
+  const pick = (loc) => {
+    onChange(loc)
+    setText(loc.label) // fill the bar with the chosen address
     setSuggestions([])
-  }
-
-  const removeLocation = (index) => {
-    onChange(value.filter((_, i) => i !== index))
   }
 
   return (
     <div className="address-picker">
-      <DropdownInput
-        placeholder={placeholder}
-        value={text}
-        onChange={onType}
-      />
+      <DropdownInput placeholder={placeholder} value={text} onChange={onType} />
 
       {suggestions.length > 0 && (
         <ul className="address-picker__suggestions">
           {suggestions.map((s, i) => (
             <li key={`${s.latitude},${s.longitude},${i}`}>
-              <button type="button" onClick={() => addLocation(s)}>
+              <button type="button" onClick={() => pick(s)}>
                 {s.label}
               </button>
             </li>
           ))}
         </ul>
       )}
-
-      <div className="address-picker__chips">
-        {value.map((loc, i) => (
-          <span key={`${loc.latitude},${loc.longitude},${i}`} className="address-picker__chip">
-            {loc.label}
-            <button type="button" onClick={() => removeLocation(i)} aria-label={`Remove ${loc.label}`}>
-              ×
-            </button>
-          </span>
-        ))}
-      </div>
     </div>
   )
 }
