@@ -10,11 +10,6 @@ import { INTEREST_TAGS, FOOD_TAGS } from '../../../api/vocab.js'
 function MemberCard({ index, member, onChange, onRemove }) {
   const set = (field, value) => onChange({ ...member, [field]: value });
 
-  // AddressPicker manages a list; a member has one location, so we adapt: the
-  // picker's value is [location] (or []) and we keep only the latest pick.
-  const locationList = member.location ? [member.location] : [];
-  const onLocationChange = (list) => set('location', list.length ? list[list.length - 1] : null);
-
   return (
     <div className="member-card">
       <div className="member-card__header">
@@ -35,8 +30,8 @@ function MemberCard({ index, member, onChange, onRemove }) {
       <label className="member-card__label">Starting location</label>
       <AddressPicker
         placeholder="Enter this member's starting location"
-        value={locationList}
-        onChange={onLocationChange}
+        value={member.location}
+        onChange={(loc) => set('location', loc)}
       />
 
       <label className="member-card__label">Interests</label>

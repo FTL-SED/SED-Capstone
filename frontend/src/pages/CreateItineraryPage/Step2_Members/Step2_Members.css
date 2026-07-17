@@ -23,3 +23,9 @@
 .step2-members__add:hover {
   background: #e0e7ff;
 }
+
+.step2-members__nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

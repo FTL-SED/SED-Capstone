@@ -1,12 +1,13 @@
 import './Step2_Members.css'
 import MemberCard from '../MemberCard/MemberCard.jsx'
 import NextButton from '../../../components/Inputs/NextButton/NextButton.jsx'
+import BackButton from '../../../components/Inputs/BackButton/BackButton.jsx'
 import { newMember } from '../memberModel.js'
 
 // The group's members. Each member has a name, one starting location, and their
 // own interests + food prefs. Add/remove members inline.
 // See .claude/roadmap/frontend-backend-integration.md (per-member restructure).
-function Step2_Members({ form, update, onNext }) {
+function Step2_Members({ form, update, onNext, onBack }) {
   const members = form.members;
 
   const updateMember = (index, next) => {
@@ -36,7 +37,10 @@ function Step2_Members({ form, update, onNext }) {
       <button type="button" className="step2-members__add" onClick={addMember}>
         + Add member
       </button>
-      <NextButton onClick={onNext} />
+      <div className="step2-members__nav">
+        <BackButton onClick={onBack} />
+        <NextButton onClick={onNext} />
+      </div>
     </div>
   );
 }

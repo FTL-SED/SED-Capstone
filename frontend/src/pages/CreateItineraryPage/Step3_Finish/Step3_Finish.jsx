@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import ItineraryDetailsPreview from '../ItineraryDetailsPreview/ItineraryDetailsPreview.jsx'
 import PrivacyField from '../PrivacyField/PrivacyField.jsx'
 import FinishButton from '../FinishButton/FinishButton.jsx'
+import BackButton from '../../../components/Inputs/BackButton/BackButton.jsx'
 import ErrorMessage from '../../../components/ErrorMessage/ErrorMessage.jsx'
 import TextInput from '../../../components/Inputs/TextInput/TextInput.jsx'
 import { buildRecommendationBody } from '../buildRequest.js'
@@ -13,7 +14,7 @@ import { getRecommendations, generateItinerary } from '../../../api/itinerary.js
 // itinerary, then navigate to it. Empty-shortlist and infeasible are normal
 // outcomes shown as messages, not errors.
 // See .claude/roadmap/frontend-backend-integration.md (Steps 7-8).
-function Step3_Finish({ form, update }) {
+function Step3_Finish({ form, update, onBack }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -83,7 +84,10 @@ function Step3_Finish({ form, update }) {
 
       <PrivacyField form={form} update={update} />
       {error && <ErrorMessage message={error} />}
-      <FinishButton onClick={handleFinish} loading={loading} />
+      <div className="step3-finish__nav">
+        <BackButton onClick={onBack} />
+        <FinishButton onClick={handleFinish} loading={loading} />
+      </div>
     </div>
   );
 }
