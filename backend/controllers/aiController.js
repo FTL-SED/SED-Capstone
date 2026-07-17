@@ -19,7 +19,7 @@ function isValidTripDate(value) {
 }
 
 async function postAiAgent(req, res) {
-  const { shortlist, constraints, tripDate, isPublic } = req.body ?? {}
+  const { shortlist, constraints, tripDate, isPublic, title, description } = req.body ?? {}
 
   if (!Array.isArray(shortlist) || shortlist.length === 0) {
     return res.status(400).json({ error: 'shortlist is required and must be a non-empty array' })
@@ -44,6 +44,8 @@ async function postAiAgent(req, res) {
       userId: req.user.id,
       tripDate,
       isPublic: isPublic === true,
+      title: typeof title === 'string' ? title : undefined,
+      description: typeof description === 'string' ? description : undefined,
     })
 
     // Return the persisted itinerary (with id + ordered pins) so the frontend

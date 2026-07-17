@@ -1,12 +1,24 @@
 import './ItineraryPanel.css'
 import ActionBar from '../ActionBar/ActionBar.jsx'
+import Title from '../Title/Title.jsx'
+import Description from '../Description/Description.jsx'
+import Author from '../Author/Author.jsx'
 import WrittenItinerary from '../WrittenItinerary/WrittenItinerary.jsx'
 
-function ItineraryPanel({ isOwner }) {
+// The left half of the split: the itinerary's title/description/author, the
+// CRUD action bar, and the scrolling stop timeline — all in one panel.
+function ItineraryPanel({ isOwner, pins, title, description, author }) {
   return (
     <div className="itinerary-panel">
+      <header className="itinerary-panel__header">
+        <Title text={title} />
+        {description && <Description text={description} />}
+        {author && <Author name={author} />}
+      </header>
       <ActionBar isOwner={isOwner} />
-      <WrittenItinerary />
+      <div className="itinerary-panel__timeline">
+        <WrittenItinerary pins={pins} />
+      </div>
     </div>
   );
 }

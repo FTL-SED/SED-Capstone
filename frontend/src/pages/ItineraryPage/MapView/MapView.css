@@ -1,21 +1,35 @@
 .map-view {
   position: relative;
-  min-height: 560px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background-color: var(--surface-muted);
-  background-image:
-    repeating-linear-gradient(0deg, transparent, transparent 39px, var(--border) 40px),
-    repeating-linear-gradient(90deg, transparent, transparent 39px, var(--border) 40px);
-  box-shadow: var(--shadow-sm);
+  height: 100%;
+  min-height: 400px; /* floor so the map is never invisible if height resolves late */
   overflow: hidden;
 }
 
-.map-view__pins {
+/* Absolutely fill the (relative) parent so the map's height never depends on a
+   percentage-height chain — that chain is what let the map overflow past the
+   footer and clip at the bottom. */
+.map-view__map {
   position: absolute;
-  left: 20px;
-  bottom: 20px;
+  inset: 0;
+}
+
+/* Numbered teal pin (divIcon). Leaflet applies .map-view__marker to the wrapper. */
+.map-view__marker {
+  background: transparent;
+  border: none;
+}
+
+.map-view__marker-num {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--accent, #0d9488);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 2px solid #fff;
+  box-shadow: var(--shadow);
 }

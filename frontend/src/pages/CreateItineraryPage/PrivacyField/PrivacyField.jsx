@@ -1,12 +1,15 @@
 import './PrivacyField.css'
 
-function PrivacyField() {
+function PrivacyField({ form, update }) {
   return (
     <div className="privacy-field">
       <label>Private/Public</label>
-      <select>
-        <option>Private</option>
-        <option>Public</option>
+      <select
+        value={form.isPublic ? 'public' : 'private'}
+        onChange={(e) => update('isPublic', e.target.value === 'public')}
+      >
+        <option value="private">Private</option>
+        <option value="public">Public</option>
       </select>
     </div>
   );

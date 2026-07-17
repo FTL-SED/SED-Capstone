@@ -17,6 +17,9 @@ function App() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const isAuthPage = pathname === '/login' || pathname === '/register';
+  // The itinerary page is a full-bleed split (map + panel) that fills the space
+  // between the navbar and footer, so it opts out of the padded, max-width shell.
+  const isFullBleed = pathname.startsWith('/itinerary/');
 
   // by using local storage, if the page references, but current user still stays same,
   // the isAuthenticated details wont be forgotted
@@ -62,7 +65,7 @@ function App() {
   return (
     <div className="app">
       <Navbar isAuthenticated={isAuthenticated} currentUser={currentUser}/>
-      <main className={`app__main${isAuthPage ? ' app__main--bare' : ''}`}>
+      <main className={`app__main${isAuthPage ? ' app__main--bare' : ''}${isFullBleed ? ' app__main--full' : ''}`}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route

@@ -13,7 +13,12 @@ import aiRoutes from './routes/aiRoutes.js'
 const app = express()
 const PORT = process.env.PORT || 3000
 
-app.use(cors())
+// Lock CORS to the frontend origin when CORS_ORIGIN is set (comma-separated
+// list allowed); falls back to any origin for local dev when it's unset.
+const corsOrigin = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+  : '*'
+app.use(cors({ origin: corsOrigin }))
 app.use(express.json())
 app.use(morgan('dev'))
 

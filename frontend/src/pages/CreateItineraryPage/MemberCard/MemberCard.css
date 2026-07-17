@@ -1,0 +1,35 @@
+.member-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.member-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.member-card__header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.member-card__remove {
+  border: none;
+  background: transparent;
+  color: #b91c1c;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.member-card__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #555;
+  margin-top: 0.25rem;
+}

@@ -1,0 +1,25 @@
+.step3-finish {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.step3-finish .privacy-field {
+  align-self: flex-end;
+}
+
+.step3-finish .finish-button {
+  align-self: flex-end;
+}
+
+.step3-finish__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.step3-finish__field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--slate-600, #475569);
+}

@@ -23,7 +23,7 @@ function run(body) {
   validateRecommendationInput(req, res, () => {
     nextCalled = true
   })
-  return { sent, nextCalled }
+  return { sent, nextCalled, req }
 }
 
 const validTrip = { startTime: '09:00', endTime: '18:00', maxBudgetPerPerson: 60 }
@@ -113,4 +113,49 @@ test('rejects endTime equal to or before startTime (same-day only)', () => {
   const inverted = run({ trip: { ...validTrip, startTime: '18:00', endTime: '09:00' }, members: [validMember] })
   assert.equal(inverted.nextCalled, false)
   assert.match(inverted.sent.body.error, /later than/)
+})
+
+// --- group shape (wizard) ---
+
+const validGroup = {
+  startingCoordinates: [
+    { latitude: 37.7749, longitude: -122.4194 },
+    { latitude: 37.8044, longitude: -122.2712 },
+  ],
+  interestTags: ['art', 'nature'],
+  foodPrefs: ['italian'],
+}
+
+test('expands a group shape into one member per starting coordinate', () => {
+  const { sent, nextCalled, req } = run({ trip: validTrip, group: validGroup })
+  assert.equal(sent, null)
+  assert.equal(nextCalled, true)
+  assert.equal(req.body.members.length, 2)
+  // Each synthesized member carries the shared group prefs + its own coordinate.
+  assert.deepEqual(req.body.members[0].startLocation, validGroup.startingCoordinates[0])
+  assert.deepEqual(req.body.members[1].interestTags, ['art', 'nature'])
+  assert.deepEqual(req.body.members[0].foodPrefs, ['italian'])
+})
+
+test('group shape: missing/empty startingCoordinates is rejected', () => {
+  const { sent, nextCalled } = run({ trip: validTrip, group: { interestTags: ['art'] } })
+  assert.equal(nextCalled, false)
+  assert.equal(sent.code, 400)
+  assert.match(sent.body.error, /startingCoordinates/)
+})
+
+test('group shape: a non-coordinate starting location is rejected', () => {
+  const { sent, nextCalled } = run({
+    trip: validTrip,
+    group: { startingCoordinates: ['Downtown'] },
+  })
+  assert.equal(nextCalled, false)
+  assert.equal(sent.code, 400)
+  assert.match(sent.body.error, /startingCoordinates/)
+})
+
+test('members wins when both members and group are sent', () => {
+  const { nextCalled, req } = run({ trip: validTrip, members: [validMember], group: validGroup })
+  assert.equal(nextCalled, true)
+  assert.equal(req.body.members.length, 1) // the explicit members array, not the expanded group
 })

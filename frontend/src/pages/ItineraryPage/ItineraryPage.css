@@ -1,37 +1,56 @@
+/* True split: panel + map fill the full-bleed main region (between nav and
+   footer). The parent .app__main--full is a flex column, so flex:1 stretches
+   this to fill the leftover height. */
 .itinerary-page {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  align-items: stretch;
+  /* Explicit height (viewport minus nav + footer) so the map has a concrete
+     height to fill — a flex:1 / 100% chain here collapsed the map to 0. */
+  height: calc(100vh - var(--nav-h) - var(--foot-h));
 }
 
-.itinerary-page__body {
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
+/* Left half: fixed-width column, wide enough for readable stop cards while the
+   map still takes the larger share. Its title/actions stay put while the
+   timeline scrolls (see ItineraryPanel.css). */
+.itinerary-page > .itinerary-panel {
+  flex: 0 0 520px;
+  max-width: 520px;
+  min-height: 0;
 }
 
-.itinerary-page__body > .itinerary-panel {
-  flex: 0 0 440px;
-  max-width: 440px;
-}
-
-.itinerary-page__body > .map-view {
+/* Right half: the map fills the rest. */
+.itinerary-page > .map-view {
   flex: 1 1 auto;
   min-width: 0;
+  border-radius: 0; /* full-bleed edge-to-edge */
+  border: none;
+  border-left: 1px solid var(--border);
+}
+
+/* Loading / error states use the normal centered message layout. */
+.itinerary-page--message {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
 }
 
 @media (max-width: 880px) {
-  .itinerary-page__body {
+  .itinerary-page {
     flex-direction: column;
   }
 
-  .itinerary-page__body > .itinerary-panel {
+  .itinerary-page > .itinerary-panel {
     flex: 1 1 auto;
     max-width: none;
     width: 100%;
   }
 
-  .itinerary-page__body > .map-view {
+  .itinerary-page > .map-view {
     width: 100%;
+    min-height: 400px;
+    border-left: none;
+    border-top: 1px solid var(--border);
   }
 }

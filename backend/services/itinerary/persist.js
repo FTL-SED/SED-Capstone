@@ -73,17 +73,23 @@ function stopsToPins(stops, shortlist, dayISO) {
 //   shortlist = the pins it was built from (for pinId -> display re-hydration)
 //   opts      = { userId, tripDate?: 'YYYY-MM-DD', isPublic? }
 // Returns the created Itinerary with its creator + ordered pins (itineraryInclude).
-async function persistItinerary(itinerary, shortlist, { userId, tripDate, isPublic = false }) {
+async function persistItinerary(itinerary, shortlist, { userId, tripDate, isPublic = false, title, description }) {
   // Default to the trip date; fall back to a fixed date if none supplied (the
   // clock times are what matter — the calendar day is cosmetic for a one-day trip).
   const dayISO = tripDate ?? '2026-01-01'
   const pins = stopsToPins(itinerary.stops, shortlist, dayISO)
 
+  // Prefer a user-supplied title/description (from the wizard's finish step)
+  // over the AI-generated one; fall back to the AI's when the user leaves them blank.
+  const finalTitle = typeof title === 'string' && title.trim() ? title.trim() : itinerary.title
+  const finalDescription =
+    typeof description === 'string' && description.trim() ? description.trim() : itinerary.description ?? null
+
   return itineraries.create({
     userId,
-    title: itinerary.title,
+    title: finalTitle,
     location: itinerary.location,
-    description: itinerary.description ?? null,
+    description: finalDescription,
     coverImageUrl: pins.length > 0 ? pins[0].locationImageUrl : null,
     isPublic,
     pins: { create: pins },

@@ -1,9 +1,10 @@
 import './FinishButton.css'
-import { Link } from 'react-router-dom'
 
-function FinishButton({ onClick }) {
+function FinishButton({ onClick, loading = false }) {
   return (
-    <button className="finish-button" type="button" onClick={onClick}>finish</button>
+    <button className="finish-button" type="button" onClick={onClick} disabled={loading}>
+      {loading ? 'Generating…' : 'finish'}
+    </button>
   );
 }
 
