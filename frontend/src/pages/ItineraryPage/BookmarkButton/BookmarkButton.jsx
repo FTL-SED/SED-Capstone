@@ -1,12 +1,27 @@
 import './BookmarkButton.css'
+import { useState } from 'react'
+import notBookmarkedIcon from '../../../assets/not_bookmarked_button.png'
+import bookmarkedIcon from '../../../assets/bookmarked_button.png'
 
-function BookmarkButton({ onClick }) {
+function BookmarkButton({ onClick, className = "", bookmarked }) {
+  // If a parent passes `bookmarked`, we show that. If not, we track our own on/off.
+  const [selfBookmarked, setSelfBookmarked] = useState(false);
+  const isOn = bookmarked ?? selfBookmarked; // ?? = "use `bookmarked` unless it's missing"
+
+  const handleClick = (event) => {
+    // Ignored on the home page (the parent's `bookmarked` wins), matters on ItineraryPage.
+    setSelfBookmarked((prev) => !prev);
+    onClick?.(event);
+  };
+
   return (
-    <button className="action-btn bookmark-button" onClick={onClick}>
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z" />
-      </svg>
-      Bookmark
+    <button
+      className={`bookmark-button ${className}`.trim()}
+      onClick={handleClick}
+      aria-pressed={isOn}
+      aria-label={isOn ? "Remove bookmark" : "Bookmark"}
+    >
+      <img src={isOn ? bookmarkedIcon : notBookmarkedIcon} alt="" />
     </button>
   );
 }

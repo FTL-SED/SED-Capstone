@@ -2,6 +2,7 @@
    just the cover image plus its caption, with no surrounding white card chrome. */
 
 .itinerary-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   text-decoration: none;
@@ -84,7 +85,42 @@
   margin-right: 6px;
 }
 
-.itinerary-card__likes {
+/* In the card the like button reads as plain text (like the old likes span):
+   no pill chrome, right-aligned, muted color. Both classes are used together so
+   this beats the base .like-button pill styles regardless of CSS import order. */
+.like-button.itinerary-card__like {
   flex-shrink: 0;
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
   color: var(--slate-600);
+}
+
+.like-button.itinerary-card__like:hover {
+  background: transparent;
+}
+
+/* Toggle the heart color when liked: muted -> red, like the bookmark swap. */
+.like-button.itinerary-card__like[aria-pressed="true"] {
+  color: var(--danger);
+}
+
+/* Overlay the bookmark on the top-right corner of the cover image. Higher
+   specificity (both classes) beats the base .bookmark-button styles. */
+.bookmark-button.itinerary-card__bookmark {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px;
+  border: none;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.bookmark-button.itinerary-card__bookmark:hover {
+  background: rgba(255, 255, 255, 1);
 }

@@ -1,6 +1,21 @@
-/* Teal outline over .action-btn (App.css). */
-.bookmark-button:hover {
-  border-color: var(--accent);
-  color: var(--accent-strong);
+.bookmark-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent);
   background: var(--accent-soft);
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+
+.bookmark-button img {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.bookmark-button:hover {
+  background: #99f6e4;
 }
