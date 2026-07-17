@@ -4,9 +4,9 @@ import assert from 'node:assert/strict'
 import { recommend } from './recommend.js'
 
 const members = [
-  { name: 'Alice', startLocation: 'Downtown', interestTags: ['art', 'museum'], foodPrefs: ['sushi'] },
-  { name: 'Bob', startLocation: 'Mission', interestTags: ['coffee'], foodPrefs: ['ramen'] },
-  { name: 'Cara', startLocation: 'Sunset', interestTags: ['stamps'] }, // niche — only one pin matches
+  { name: 'Alice', startLocation: { latitude: 37.7880, longitude: -122.4074 }, interestTags: ['art', 'museum'], foodPrefs: ['sushi'] }, // Downtown
+  { name: 'Bob', startLocation: { latitude: 37.7599, longitude: -122.4148 }, interestTags: ['coffee'], foodPrefs: ['ramen'] }, // Mission
+  { name: 'Cara', startLocation: { latitude: 37.7599, longitude: -122.4869 }, interestTags: ['stamps'] }, // Sunset — niche, only one pin matches
 ]
 const trip = { startTime: '09:00', endTime: '18:00', maxBudgetPerPerson: 60 }
 
@@ -38,19 +38,27 @@ test('runs end-to-end and returns a { shortlist, constraints } shape', () => {
   assert.ok(result.constraints)
 })
 
-test('constraints carry maxBudgetPerPerson, groupSize, and startingLocations', () => {
+test('constraints carry maxBudgetPerPerson, groupSize, and startingCoordinates', () => {
   const { constraints } = recommend(trip, members, pins)
   assert.equal(constraints.maxBudgetPerPerson, 60)
   assert.equal(constraints.groupSize, 3)
-  assert.deepEqual(constraints.startingLocations, ['Downtown', 'Mission', 'Sunset'])
+  assert.deepEqual(constraints.startingCoordinates, members.map((m) => m.startLocation))
 })
 
-test('constraints carry timeWindow, and meetingPoint/travelRadius are null pre-geocoding', () => {
+test('constraints carry timeWindow; meetingPoint is computed from member coords, travelRadius null when unset', () => {
   const { constraints } = recommend(trip, members, pins)
   assert.deepEqual(constraints.timeWindow, { startTime: '09:00', endTime: '18:00' })
-  // string startLocations (no coords) + no travelRadius => nothing to anchor on
-  assert.equal(constraints.meetingPoint, null)
+  // members carry coords => a fair meeting point is computed; maxMemberDistance
+  // is the worst-off member's distance to it. travelRadius stays null (unset).
+  assert.ok(constraints.meetingPoint && typeof constraints.meetingPoint.latitude === 'number')
+  assert.equal(typeof constraints.maxMemberDistance, 'number')
   assert.equal(constraints.travelRadius, null)
+})
+
+test('meetingPoint is null when members carry no coordinates', () => {
+  const noCoords = members.map(({ startLocation, ...m }) => m)
+  const { constraints } = recommend(trip, noCoords, pins)
+  assert.equal(constraints.meetingPoint, null)
   assert.equal(constraints.maxMemberDistance, null)
 })
 
@@ -112,8 +120,8 @@ test('mixed-diet group: meal pool is not emptied, and each dieted member can eat
   // "serve everyone" rule would have dropped nearly all restaurants. Now each
   // gets ≥1 eatable option via diet coverage.
   const dietMembers = [
-    { name: 'Vera', startLocation: 'Downtown', interestTags: ['art'], foodPrefs: [], diet: ['vegan'] },
-    { name: 'Hal', startLocation: 'Mission', interestTags: ['art'], foodPrefs: [], diet: ['halal'] },
+    { name: 'Vera', startLocation: { latitude: 37.7880, longitude: -122.4074 }, interestTags: ['art'], foodPrefs: [], diet: ['vegan'] }, // Downtown
+    { name: 'Hal', startLocation: { latitude: 37.7599, longitude: -122.4148 }, interestTags: ['art'], foodPrefs: [], diet: ['halal'] }, // Mission
   ]
   const dietPins = [
     activity('Museum', ['art']),

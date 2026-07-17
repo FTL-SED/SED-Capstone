@@ -28,7 +28,6 @@ const constraints = {
   timeWindow: { startTime: '09:00', endTime: '21:00' },
   maxBudgetPerPerson: 120,
   groupSize: 4,
-  startingLocations: ['Mission District', 'SoMa'],
 }
 
 function printItinerary(itinerary) {

@@ -13,9 +13,9 @@
 const groupA = {
   trip: { startTime: '09:00', endTime: '19:00', maxBudgetPerPerson: 80 },
   members: [
-    { name: 'Priya', startLocation: 'FiDi', interestTags: ['museum', 'art', 'history'], foodPrefs: ['italian'] },
-    { name: 'Marcus', startLocation: 'FiDi', interestTags: ['museum', 'architecture'], foodPrefs: ['thai'] },
-    { name: 'Wei', startLocation: 'SoMa', interestTags: ['art', 'gallery'], foodPrefs: ['sushi'], diet: ['vegetarian'] },
+    { name: 'Priya', startLocation: { latitude: 37.7946, longitude: -122.3999 }, interestTags: ['museum', 'art', 'history'], foodPrefs: ['italian'] },
+    { name: 'Marcus', startLocation: { latitude: 37.7946, longitude: -122.3999 }, interestTags: ['museum', 'architecture'], foodPrefs: ['thai'] },
+    { name: 'Wei', startLocation: { latitude: 37.7785, longitude: -122.4056 }, interestTags: ['art', 'gallery'], foodPrefs: ['sushi'], diet: ['vegetarian'] },
   ],
   pins: [
     { name: 'SF MoMA', category: 'museum', tags: ['art', 'museum'], rating: 4.6, priceLevel: 2, openingHours: [{ open: '10:00', close: '17:00' }] },
@@ -50,10 +50,10 @@ const groupA = {
 const groupB = {
   trip: { startTime: '10:00', endTime: '16:00', maxBudgetPerPerson: 25 },
   members: [
-    { name: 'Sam', startLocation: 'Richmond', interestTags: ['park', 'hiking', 'viewpoint'], foodPrefs: ['mexican'] },
-    { name: 'Jess', startLocation: 'Richmond', interestTags: ['park', 'garden'], foodPrefs: ['vegan'], diet: ['vegan'] },
-    { name: 'Tom', startLocation: 'Sunset', interestTags: ['park'], foodPrefs: ['mexican'] },
-    { name: 'Nadia', startLocation: 'Sunset', interestTags: ['birdwatching'], foodPrefs: [] },
+    { name: 'Sam', startLocation: { latitude: 37.7801, longitude: -122.4644 }, interestTags: ['park', 'hiking', 'viewpoint'], foodPrefs: ['mexican'] },
+    { name: 'Jess', startLocation: { latitude: 37.7801, longitude: -122.4644 }, interestTags: ['park', 'garden'], foodPrefs: ['vegan'], diet: ['vegan'] },
+    { name: 'Tom', startLocation: { latitude: 37.7599, longitude: -122.4869 }, interestTags: ['park'], foodPrefs: ['mexican'] },
+    { name: 'Nadia', startLocation: { latitude: 37.7599, longitude: -122.4869 }, interestTags: ['birdwatching'], foodPrefs: [] },
   ],
   pins: [
     { name: 'Golden Gate Park', category: 'park', tags: ['park', 'garden'], rating: 4.8, priceLevel: 0, openingHours: [{ open: '05:00', close: '22:00' }] },
@@ -87,8 +87,8 @@ const groupB = {
 const groupC = {
   trip: { startTime: '10:00', endTime: '18:00', maxBudgetPerPerson: 50 },
   members: [
-    { name: 'Alex', startLocation: 'Marina', interestTags: ['coffee', 'dessert', 'boba'], foodPrefs: ['ramen'] },
-    { name: 'Jordan', startLocation: 'Marina', interestTags: ['coffee'], foodPrefs: ['ramen'] },
+    { name: 'Alex', startLocation: { latitude: 37.8030, longitude: -122.4360 }, interestTags: ['coffee', 'dessert', 'boba'], foodPrefs: ['ramen'] },
+    { name: 'Jordan', startLocation: { latitude: 37.8030, longitude: -122.4360 }, interestTags: ['coffee'], foodPrefs: ['ramen'] },
   ],
   pins: [
     { name: 'Cafe Presidio', category: 'cafe', tags: ['coffee'], rating: 4.8, priceLevel: 1, openingHours: [{ open: '07:00', close: '18:00' }] }, // tie-break winner

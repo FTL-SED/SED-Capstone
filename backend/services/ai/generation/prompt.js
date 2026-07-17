@@ -55,11 +55,13 @@ const SYSTEM_PROMPT = [
 // improves once the recommendation engine supplies them.
 const buildUserMessage = (shortlist, constraints) => {
   const {
-    timeWindow, maxBudgetPerPerson, groupSize, startingLocations,
+    timeWindow, maxBudgetPerPerson, groupSize,
     meetingPoint, travelRadius, transport, maxMemberDistance, foodBelowMin,
   } = constraints ?? {}
 
-  const details = { maxBudgetPerPerson, groupSize, startingLocations }
+  // startingCoordinates are intentionally omitted — the model anchors on
+  // meetingPoint (a single fair point), not raw per-member lat/long pairs.
+  const details = { maxBudgetPerPerson, groupSize }
   if (timeWindow) details.timeWindow = timeWindow
   if (meetingPoint) details.meetingPoint = meetingPoint
   if (travelRadius != null) details.travelRadius = travelRadius
