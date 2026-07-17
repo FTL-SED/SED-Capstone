@@ -1,0 +1,61 @@
+import './MemberCard.css'
+import TextInput from '../../../components/Inputs/TextInput/TextInput.jsx'
+import AddressPicker from '../../../components/Inputs/AddressPicker/AddressPicker.jsx'
+import TagInput from '../../../components/Inputs/TagInput/TagInput.jsx'
+import { INTEREST_TAGS, FOOD_TAGS } from '../../../api/vocab.js'
+
+// One member's inputs: name, a single starting location, and their interests +
+// food prefs. `member` is { name, location, interestTags, foodPrefs };
+// `onChange(next)` replaces the whole member object.
+function MemberCard({ index, member, onChange, onRemove }) {
+  const set = (field, value) => onChange({ ...member, [field]: value });
+
+  // AddressPicker manages a list; a member has one location, so we adapt: the
+  // picker's value is [location] (or []) and we keep only the latest pick.
+  const locationList = member.location ? [member.location] : [];
+  const onLocationChange = (list) => set('location', list.length ? list[list.length - 1] : null);
+
+  return (
+    <div className="member-card">
+      <div className="member-card__header">
+        <h3>Member {index + 1}</h3>
+        {onRemove && (
+          <button type="button" className="member-card__remove" onClick={onRemove}>
+            Remove
+          </button>
+        )}
+      </div>
+
+      <TextInput
+        placeholder="Name"
+        value={member.name}
+        onChange={(e) => set('name', e.target.value)}
+      />
+
+      <label className="member-card__label">Starting location</label>
+      <AddressPicker
+        placeholder="Enter this member's starting location"
+        value={locationList}
+        onChange={onLocationChange}
+      />
+
+      <label className="member-card__label">Interests</label>
+      <TagInput
+        placeholder="Enter interests"
+        tags={member.interestTags}
+        onChange={(next) => set('interestTags', next)}
+        suggestions={INTEREST_TAGS}
+      />
+
+      <label className="member-card__label">Food preferences</label>
+      <TagInput
+        placeholder="Enter food preferences"
+        tags={member.foodPrefs}
+        onChange={(next) => set('foodPrefs', next)}
+        suggestions={FOOD_TAGS}
+      />
+    </div>
+  );
+}
+
+export default MemberCard;

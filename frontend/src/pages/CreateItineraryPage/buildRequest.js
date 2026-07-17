@@ -1,11 +1,10 @@
 // Pure mapper: wizard `form` state → the POST /recommendations request body.
-// Uses the backend's group-level shape (validateRecommendationInput expands it
-// into one member per starting coordinate). No network, so it's unit-testable.
-// See .claude/roadmap/frontend-backend-integration.md (Step 6).
+// Emits the backend's native per-member shape ({ trip, members }). No network,
+// so it's unit-testable. See .claude/roadmap/frontend-backend-integration.md.
 
-// Build the { trip, group } body. Number fields are coerced; travelRadius is
+// Build the { trip, members } body. Number fields are coerced; travelRadius is
 // OMITTED when blank (the backend rejects 0 / "" — it must be a positive number
-// or absent). startingLocations carry { latitude, longitude } from the picker.
+// or absent). Each member contributes its own startLocation coordinate + prefs.
 export function buildRecommendationBody(form) {
   const trip = {
     startTime: form.startTime,
@@ -19,14 +18,15 @@ export function buildRecommendationBody(form) {
     trip.travelRadius = radius;
   }
 
-  const group = {
-    startingCoordinates: form.startingLocations.map(({ latitude, longitude }) => ({
-      latitude,
-      longitude,
-    })),
-    interestTags: form.interestTags,
-    foodPrefs: form.foodPrefs,
-  };
+  const members = form.members.map((m, i) => ({
+    name: m.name?.trim() || `Member ${i + 1}`,
+    startLocation: {
+      latitude: m.location.latitude,
+      longitude: m.location.longitude,
+    },
+    interestTags: m.interestTags,
+    foodPrefs: m.foodPrefs,
+  }));
 
-  return { trip, group };
+  return { trip, members };
 }

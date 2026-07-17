@@ -1,22 +1,17 @@
 import './Step2_TravelTransport.css'
-import AddressPicker from '../../../components/Inputs/AddressPicker/AddressPicker.jsx'
 import TravelRadiusField from '../TravelRadiusField/TravelRadiusField.jsx'
 import TransportField from '../TransportField/TransportField.jsx'
+import BudgetField from '../BudgetField/BudgetField.jsx'
 import NextButton from '../../../components/Inputs/NextButton/NextButton.jsx'
 
+// Trip-level travel + budget settings. Starting locations and preferences are
+// now per-member (Step 3). See the integration roadmap (per-member restructure).
 function Step2_TravelTransport({ form, update, onNext }) {
   return (
     <div className="step2-travel-transport">
-      <div className="step2-travel-transport__group">
-        <h2>Starting Locations</h2>
-        <AddressPicker
-          placeholder="Enter a starting location"
-          value={form.startingLocations}
-          onChange={(next) => update('startingLocations', next)}
-        />
-      </div>
-      <TravelRadiusField form={form} update={update} />
       <TransportField form={form} update={update} />
+      <TravelRadiusField form={form} update={update} />
+      <BudgetField form={form} update={update} />
       <NextButton onClick={onNext} />
     </div>
   );
