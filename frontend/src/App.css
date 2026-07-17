@@ -121,6 +121,17 @@ img {
   padding: 0;
 }
 
+/* The itinerary page fills the full width and the height between nav + footer,
+   so its map/panel split can occupy all the available space. The flex column
+   lets the page child stretch to fill this main region. */
+.app__main--full {
+  max-width: none;
+  padding: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ---- Shared building blocks ------------------------------------------- */
 
 /* Section heading row (title + optional trailing action) */

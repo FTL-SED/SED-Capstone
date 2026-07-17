@@ -1,7 +1,6 @@
 import './ItineraryPage.css'
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import ItineraryHeader from './ItineraryHeader/ItineraryHeader.jsx'
 import ItineraryPanel from './ItineraryPanel/ItineraryPanel.jsx'
 import MapView from './MapView/MapView.jsx'
 import ErrorMessage from '../../components/ErrorMessage/ErrorMessage.jsx'
@@ -37,22 +36,21 @@ function ItineraryPage() {
     };
   }, [id]);
 
-  if (loading) return <div className="itinerary-page"><p>Loading itinerary…</p></div>;
-  if (error) return <div className="itinerary-page"><ErrorMessage message={error} /></div>;
+  if (loading) return <div className="itinerary-page itinerary-page--message"><p>Loading itinerary…</p></div>;
+  if (error) return <div className="itinerary-page itinerary-page--message"><ErrorMessage message={error} /></div>;
   if (!itinerary) return null;
 
+  // A true split: the scrolling panel (title, actions, timeline) on the left and
+  // the map on the right, together filling the space between nav and footer.
   return (
     <div className="itinerary-page">
-      <ItineraryHeader
-        coverImageUrl={itinerary.coverImageUrl}
+      <ItineraryPanel
+        pins={itinerary.pins}
         title={itinerary.title}
         description={itinerary.description}
         author={itinerary.creator?.username}
       />
-      <div className="itinerary-page__body">
-        <ItineraryPanel pins={itinerary.pins} />
-        <MapView pins={itinerary.pins} />
-      </div>
+      <MapView pins={itinerary.pins} />
     </div>
   );
 }
