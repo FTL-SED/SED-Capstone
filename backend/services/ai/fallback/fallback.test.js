@@ -74,10 +74,12 @@ test('backfills travel legs on all but the last stop', () => {
   assert.equal(last.travelTimeToNextMinutes, undefined)
 })
 
-test('respects the budget cap — total cost never exceeds budget × groupSize', () => {
-  const tight = { ...constraints, maxBudgetPerPerson: 30, groupSize: 1 } // cap = 30
+test('respects the per-person budget cap', () => {
+  const tight = { ...constraints, maxBudgetPerPerson: 30 } // cap = 30/person
   const { stops } = fallbackSequence(shortlist, tight)
-  const total = stops.reduce((s, x) => s + x.estimatedCostPerPerson, 0)
+  // Stops carry no cost — sum the chosen pins' prices from the shortlist.
+  const priceById = new Map(shortlist.map((p) => [p.id, p.pricePerPerson]))
+  const total = stops.reduce((s, x) => s + (priceById.get(x.pinId) ?? 0), 0)
   assert.ok(total <= 30, `total ${total} exceeds cap 30`)
 })
 

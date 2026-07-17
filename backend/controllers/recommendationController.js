@@ -4,8 +4,8 @@ import { getRecommendations } from '../services/recommendation/index.js'
 // Thin per .claude/rules/backend.md — caller is already authenticated by
 // requireAuth and input is already validated by validateRecommendationInput;
 // all scoring logic lives in the recommendation service. Returns the ranked
-// shortlist + constraints that the (future) AI sequencing step at
-// POST /ai-agent will consume.
+// shortlist + constraints that the AI sequencing step at POST /ai-agent
+// consumes.
 async function postRecommendations(req, res) {
   const { trip, members } = req.body
 

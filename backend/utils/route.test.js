@@ -12,7 +12,7 @@ const coords = {
 }
 const coordOf = (stop) => coords[stop.pinId]
 
-const stop = (pinId, extra = {}) => ({ pinId, arriveTime: '10:00', departTime: '11:00', estimatedCostPerPerson: 0, ...extra })
+const stop = (pinId, extra = {}) => ({ pinId, arriveTime: '10:00', departTime: '11:00', ...extra })
 
 test('reorders scrambled stops into the shortest (monotonic) route', () => {
   const scrambled = [stop(1), stop(4), stop(2), stop(3)] // W, E, ...

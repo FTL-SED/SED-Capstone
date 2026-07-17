@@ -91,9 +91,11 @@ test('handoff: stops are in chronological order and inside the trip window', asy
 })
 
 test('handoff: total per-person cost stays within budget', async () => {
-  const { out } = await pipeline()
-  const total = out.itinerary.stops.reduce((sum, s) => sum + (s.estimatedCostPerPerson ?? 0), 0)
-  assert.ok(total <= TRIP.maxBudgetPerPerson * TRIP.groupSize, `total ${total} over budget`)
+  const { shortlist, out } = await pipeline()
+  // Cost is a fact of the place — sum the chosen pins' prices, not the stops.
+  const priceById = new Map(shortlist.map((p) => [p.id, p.pricePerPerson]))
+  const total = out.itinerary.stops.reduce((sum, s) => sum + (priceById.get(s.pinId) ?? 0), 0)
+  assert.ok(total <= TRIP.maxBudgetPerPerson, `total ${total} over budget`)
 })
 
 test('handoff: itinerary is substantive — multiple stops with a mix of activities and a meal', async () => {

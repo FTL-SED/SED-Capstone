@@ -40,13 +40,14 @@ function printItinerary(itinerary) {
   let total = 0
   for (const [i, stop] of itinerary.stops.entries()) {
     const pin = byId.get(stop.pinId)
+    const cost = pin?.pricePerPerson ?? 0 // cost is a fact of the place, from the shortlist
     const meal = stop.mealType ? `  [${stop.mealType}]` : ''
     console.log(`  ${i + 1}. ${stop.arriveTime}–${stop.departTime}  ${pin?.name ?? `pin ${stop.pinId}`}${meal}`)
-    console.log(`       $${stop.estimatedCostPerPerson}/person${stop.note ? ` — ${stop.note}` : ''}`)
+    console.log(`       $${cost}/person${stop.note ? ` — ${stop.note}` : ''}`)
     if (stop.travelTimeToNextMinutes != null) {
       console.log(`       ↓ ${stop.travelTimeToNextMinutes} min / ${stop.distanceToNextMeters} m to next`)
     }
-    total += stop.estimatedCostPerPerson
+    total += cost
   }
   console.log(`\n   Total: $${total}/person  (cap $${constraints.maxBudgetPerPerson})`)
 }

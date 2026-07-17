@@ -1,10 +1,7 @@
 // Shared authentication middleware, per .claude/rules/backend.md's Middleware
-// section ("Authentication" is listed as functionality shared across
-// routes). itineraryController.js/pinController.js/userController.js each
-// still inline their own copy of this same check (getAuthUser +
-// authenticateProfile) — this is the first route to use the extracted,
-// reusable version; not retrofitted onto the others to avoid unrelated
-// churn/merge risk on code owned by teammates.
+// section ("Authentication" is listed as functionality shared across routes).
+// Every protected route uses this single extracted check — controllers read
+// req.user rather than re-verifying the token themselves.
 import supabase from '../lib/supabase.js'
 import * as users from '../models/users.js'
 

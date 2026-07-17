@@ -16,11 +16,14 @@ export const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS) || 20_000
 export const AI_MAX_RETRIES = Number(process.env.AI_MAX_RETRIES) || 2
 
 // Meal anchors ("HH:MM", Pacific wall-clock) the prompt + fallback use to slot
-// restaurants and label meal stops.
+// restaurants and label meal stops. Kept generously wide (and non-overlapping)
+// so a sensible meal a little off the "ideal" hour still validates — a dinner
+// at 17:25 or a late breakfast at 10:45 shouldn't get the whole AI itinerary
+// rejected into the fallback over a few minutes.
 export const MEAL_TIME_WINDOWS = {
-  breakfast: { start: '08:00', end: '10:00' },
-  lunch: { start: '11:30', end: '13:30' },
-  dinner: { start: '17:30', end: '19:30' },
+  breakfast: { start: '07:00', end: '10:45' },
+  lunch: { start: '11:00', end: '13:45' },
+  dinner: { start: '17:00', end: '20:30' },
 }
 
 // Travel-time model, used by the scheduler to turn the straight-line distance
@@ -58,22 +61,22 @@ export function travelMinutesFor(miles, transport) {
 
 // Output schema, shared by the AI call, response validation, and the fallback
 // so downstream code never cares which produced the result. A stop is
-// deliberately minimal — the AI only sequences (which
-// shortlist pin by pinId, when, cost, travel to next); name/coords/image are
-// re-hydrated from the shortlist so it can't hallucinate a place. Array order
-// is the stop order. Times are "HH:MM" (matching validateRecommendationInput's
-// TIME_RE), converted to DateTime at persistence.
+// deliberately minimal — the AI only SEQUENCES: which shortlist pin (by
+// pinId), when, and travel to the next stop. Everything else (name, coords,
+// image, and cost) is a fact about the place, re-hydrated from the shortlist
+// by pinId downstream — so the AI can neither hallucinate a place nor misprice
+// one. Array order is the stop order. Times are "HH:MM" (matching
+// validateRecommendationInput's TIME_RE), converted to DateTime at persistence.
 const HHMM_PATTERN = '^([01][0-9]|2[0-3]):[0-5][0-9]$'
 
 const STOP_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['pinId', 'arriveTime', 'departTime', 'estimatedCostPerPerson'],
+  required: ['pinId', 'arriveTime', 'departTime'],
   properties: {
     pinId: { type: 'integer' },
     arriveTime: { type: 'string', pattern: HHMM_PATTERN },
     departTime: { type: 'string', pattern: HHMM_PATTERN },
-    estimatedCostPerPerson: { type: 'number', minimum: 0 },
     note: { type: 'string' },
     mealType: { type: 'string', enum: ['breakfast', 'lunch', 'dinner'] },
     travelTimeToNextMinutes: { type: ['integer', 'null'], minimum: 0 },

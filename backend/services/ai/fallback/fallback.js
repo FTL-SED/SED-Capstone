@@ -60,7 +60,7 @@ const mealBlockAt = (mins) => {
 // { feasible: true, title, location, description, stops[] } or
 // { feasible: false, reason } when nothing can fit.
 const fallbackSequence = (shortlist, constraints) => {
-  const { timeWindow, maxBudgetPerPerson, groupSize, meetingPoint, transport } = constraints ?? {}
+  const { timeWindow, maxBudgetPerPerson, meetingPoint, transport } = constraints ?? {}
 
   if (!Array.isArray(shortlist) || shortlist.length === 0) {
     return { feasible: false, reason: 'No places available to sequence.' }
@@ -78,10 +78,10 @@ const fallbackSequence = (shortlist, constraints) => {
     return { feasible: false, reason: 'Trip time window is empty or inverted.' }
   }
 
-  const budgetCap =
-    typeof maxBudgetPerPerson === 'number' && typeof groupSize === 'number'
-      ? maxBudgetPerPerson * groupSize
-      : Infinity
+  // Stop costs are per person, so the cap is the per-person budget directly
+  // (no groupSize multiplier — that would mix per-person costs with a
+  // whole-group cap). Matches validate.js's budget rule.
+  const budgetCap = typeof maxBudgetPerPerson === 'number' ? maxBudgetPerPerson : Infinity
 
   const stops = []
   const mealsUsed = new Set() // meal blocks already filled — one meal per block
@@ -98,6 +98,9 @@ const fallbackSequence = (shortlist, constraints) => {
     // Out of daylight — stop packing the day.
     if (depart > endMins) break
 
+    // Cost is a fact about the place (pin.pricePerPerson), used here only to
+    // stay within budget — it's NOT written onto the stop. Downstream reads the
+    // price from the shortlist by pinId (see validate.js / persist.js).
     const cost = typeof pin.pricePerPerson === 'number' ? pin.pricePerPerson : 0
     if (spent + cost > budgetCap) continue // skip this one, try the next
 
@@ -112,7 +115,6 @@ const fallbackSequence = (shortlist, constraints) => {
       pinId: pin.id,
       arriveTime: toHHMM(arrive),
       departTime: toHHMM(depart),
-      estimatedCostPerPerson: cost,
       ...(mealType ? { mealType } : {}),
     })
 
