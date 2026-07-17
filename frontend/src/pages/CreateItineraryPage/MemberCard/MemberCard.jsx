@@ -1,7 +1,7 @@
 import './MemberCard.css'
 import TextInput from '../../../components/Inputs/TextInput/TextInput.jsx'
 import AddressPicker from '../../../components/Inputs/AddressPicker/AddressPicker.jsx'
-import TagInput from '../../../components/Inputs/TagInput/TagInput.jsx'
+import TagPills from '../../../components/Inputs/TagPills/TagPills.jsx'
 import { INTEREST_TAGS, FOOD_TAGS } from '../../../api/vocab.js'
 
 // One member's inputs: name, a single starting location, and their interests +
@@ -40,19 +40,17 @@ function MemberCard({ index, member, onChange, onRemove }) {
       />
 
       <label className="member-card__label">Interests</label>
-      <TagInput
-        placeholder="Enter interests"
-        tags={member.interestTags}
+      <TagPills
+        options={INTEREST_TAGS}
+        selected={member.interestTags}
         onChange={(next) => set('interestTags', next)}
-        suggestions={INTEREST_TAGS}
       />
 
       <label className="member-card__label">Food preferences</label>
-      <TagInput
-        placeholder="Enter food preferences"
-        tags={member.foodPrefs}
+      <TagPills
+        options={FOOD_TAGS}
+        selected={member.foodPrefs}
         onChange={(next) => set('foodPrefs', next)}
-        suggestions={FOOD_TAGS}
       />
     </div>
   );

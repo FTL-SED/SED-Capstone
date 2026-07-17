@@ -6,13 +6,17 @@
 
 .itinerary-page__body {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 20px;
+  /* Two panes share a viewport-tall row; each scrolls independently. */
+  height: calc(100vh - var(--nav-h) - 220px);
+  min-height: 560px;
 }
 
 .itinerary-page__body > .itinerary-panel {
   flex: 0 0 440px;
   max-width: 440px;
+  overflow-y: auto; /* long timelines scroll; the map stays put (Wanderlog-style) */
 }
 
 .itinerary-page__body > .map-view {
@@ -23,15 +27,18 @@
 @media (max-width: 880px) {
   .itinerary-page__body {
     flex-direction: column;
+    height: auto;
   }
 
   .itinerary-page__body > .itinerary-panel {
     flex: 1 1 auto;
     max-width: none;
     width: 100%;
+    overflow-y: visible;
   }
 
   .itinerary-page__body > .map-view {
     width: 100%;
+    min-height: 400px;
   }
 }

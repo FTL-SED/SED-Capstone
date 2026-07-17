@@ -1,0 +1,38 @@
+.tag-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.tag-pill {
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--border-strong, #cbd5e1);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--surface, #fff);
+  color: var(--slate-600, #475569);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+  text-transform: capitalize;
+}
+
+.tag-pill:hover {
+  border-color: var(--accent, #0d9488);
+  color: var(--accent-strong, #0f766e);
+}
+
+.tag-pill--on {
+  background: var(--accent, #0d9488);
+  border-color: var(--accent, #0d9488);
+  color: #fff;
+}
+
+.tag-pill--on:hover {
+  background: var(--accent-strong, #0f766e);
+  color: #fff;
+}
+
+.tag-pill:focus-visible {
+  outline: 2px solid var(--accent, #0d9488);
+  outline-offset: 2px;
+}
