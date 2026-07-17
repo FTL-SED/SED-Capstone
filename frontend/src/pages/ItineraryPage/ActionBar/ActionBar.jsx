@@ -6,7 +6,14 @@ import BookmarkButton from '../BookmarkButton/BookmarkButton.jsx'
 import SaveCopyButton from '../SaveCopyButton/SaveCopyButton.jsx'
 import LikeButton from '../LikeButton/LikeButton.jsx'
 
-function ActionBar({ isOwner = true }) {
+function ActionBar({
+  isOwner = true,
+  liked,
+  bookmarked,
+  likeCount,
+  onToggleLike,
+  onToggleBookmark,
+}) {
   return (
     <div className="action-bar">
       {isOwner ? (
@@ -14,13 +21,13 @@ function ActionBar({ isOwner = true }) {
           <EditButton />
           <SaveButton />
           <DeleteButton />
-          <LikeButton />
+          <LikeButton liked={liked} likeCount={likeCount} onClick={onToggleLike} />
         </>
       ) : (
         <>
-          <BookmarkButton />
+          <BookmarkButton bookmarked={bookmarked} onClick={onToggleBookmark} />
           <SaveCopyButton />
-          <LikeButton />
+          <LikeButton liked={liked} likeCount={likeCount} onClick={onToggleLike} />
         </>
       )}
     </div>

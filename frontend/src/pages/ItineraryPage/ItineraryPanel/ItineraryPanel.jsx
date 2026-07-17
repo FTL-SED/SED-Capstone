@@ -7,7 +7,10 @@ import WrittenItinerary from '../WrittenItinerary/WrittenItinerary.jsx'
 
 // The left half of the split: the itinerary's title/description/author, the
 // CRUD action bar, and the scrolling stop timeline — all in one panel.
-function ItineraryPanel({ isOwner, pins, title, description, author }) {
+function ItineraryPanel({
+  isOwner, pins, title, description, author,
+  liked, bookmarked, likeCount, onToggleLike, onToggleBookmark,
+}) {
   return (
     <div className="itinerary-panel">
       <header className="itinerary-panel__header">
@@ -15,7 +18,14 @@ function ItineraryPanel({ isOwner, pins, title, description, author }) {
         {description && <Description text={description} />}
         {author && <Author name={author} />}
       </header>
-      <ActionBar isOwner={isOwner} />
+      <ActionBar
+        isOwner={isOwner}
+        liked={liked}
+        bookmarked={bookmarked}
+        likeCount={likeCount}
+        onToggleLike={onToggleLike}
+        onToggleBookmark={onToggleBookmark}
+      />
       <div className="itinerary-panel__timeline">
         <WrittenItinerary pins={pins} />
       </div>
