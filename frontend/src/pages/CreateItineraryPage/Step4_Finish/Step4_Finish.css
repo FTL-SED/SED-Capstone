@@ -11,3 +11,15 @@
 .step4-finish .finish-button {
   align-self: flex-end;
 }
+
+.step4-finish__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.step4-finish__field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--slate-600, #475569);
+}

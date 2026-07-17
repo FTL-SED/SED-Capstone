@@ -5,6 +5,7 @@ import ItineraryDetailsPreview from '../ItineraryDetailsPreview/ItineraryDetails
 import PrivacyField from '../PrivacyField/PrivacyField.jsx'
 import FinishButton from '../FinishButton/FinishButton.jsx'
 import ErrorMessage from '../../../components/ErrorMessage/ErrorMessage.jsx'
+import TextInput from '../../../components/Inputs/TextInput/TextInput.jsx'
 import { buildRecommendationBody } from '../buildRequest.js'
 import { getRecommendations, generateItinerary } from '../../../api/itinerary.js'
 
@@ -34,6 +35,8 @@ function Step4_Finish({ form, update }) {
         shortlist,
         constraints,
         isPublic: form.isPublic,
+        title: form.title,
+        description: form.description,
       });
 
       // Constraints too tight for any day — a valid outcome, not a crash.
@@ -58,8 +61,27 @@ function Step4_Finish({ form, update }) {
 
   return (
     <div className="step4-finish">
-      <PrivacyField form={form} update={update} />
       <ItineraryDetailsPreview />
+
+      <div className="step4-finish__field">
+        <label>Itinerary title</label>
+        <TextInput
+          placeholder="Name your itinerary (optional)"
+          value={form.title}
+          onChange={(e) => update('title', e.target.value)}
+        />
+      </div>
+
+      <div className="step4-finish__field">
+        <label>Description</label>
+        <TextInput
+          placeholder="Add a short description (optional)"
+          value={form.description}
+          onChange={(e) => update('description', e.target.value)}
+        />
+      </div>
+
+      <PrivacyField form={form} update={update} />
       {error && <ErrorMessage message={error} />}
       <FinishButton onClick={handleFinish} loading={loading} />
     </div>

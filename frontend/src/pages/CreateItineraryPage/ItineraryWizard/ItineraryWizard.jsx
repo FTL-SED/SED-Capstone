@@ -19,6 +19,8 @@ const INITIAL_FORM = {
   budget: '',
   members: [newMember()],
   isPublic: false,
+  title: '',
+  description: '',
 };
 
 function ItineraryWizard() {

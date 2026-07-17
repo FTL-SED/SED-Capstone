@@ -15,9 +15,10 @@ export async function getRecommendations(body) {
 }
 
 // POST /ai-agent
-// body: { shortlist, constraints, tripDate?, isPublic? }
-// returns: { itinerary, source } on success (201), or { feasible: false, reason }
-// (200) when the constraints are too tight for any itinerary.
+// body: { shortlist, constraints, tripDate?, isPublic?, title?, description? }
+// A user-supplied title/description override the AI-generated ones (blank ⇒
+// keep the AI's). returns: { itinerary, source } on success (201), or
+// { feasible: false, reason } (200) when constraints are too tight.
 // Hits a live model with the backend's own retry budget (~up to 40s worst
 // case), so use a generous client timeout so we don't abort before it responds.
 const AI_TIMEOUT_MS = 60_000
