@@ -1,13 +1,18 @@
 import './TagInput.css'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import DropdownInput from '../DropdownInput/DropdownInput.jsx'
 import TagList from '../TagList/TagList.jsx'
 
 // Controlled multi-value input. `tags` is the current array; `onChange(next)`
 // is called with the updated array. Type a value and press Enter to add it;
-// click a tag to remove it. See the integration roadmap (Step 5).
-function TagInput({ label, placeholder, tags = [], onChange }) {
+// click a tag to remove it. Pass `suggestions` to offer a native datalist of
+// recognized values (guides users to the engine's vocab — Step 10) without
+// hard-blocking free text. See the integration roadmap (Steps 5, 10).
+function TagInput({ label, placeholder, tags = [], onChange, suggestions }) {
   const [text, setText] = useState('');
+  const listId = useId();
+  // Only suggest values not already picked.
+  const options = suggestions?.filter((s) => !tags.includes(s));
 
   const addTag = () => {
     const value = text.trim().toLowerCase();
@@ -36,7 +41,15 @@ function TagInput({ label, placeholder, tags = [], onChange }) {
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
+        listId={options ? listId : undefined}
       />
+      {options && (
+        <datalist id={listId}>
+          {options.map((s) => (
+            <option key={s} value={s} />
+          ))}
+        </datalist>
+      )}
       <TagList tags={tags} onRemove={onChange ? removeTag : undefined} />
     </div>
   );

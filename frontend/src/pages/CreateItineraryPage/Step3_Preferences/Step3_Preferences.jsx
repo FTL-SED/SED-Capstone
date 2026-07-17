@@ -2,6 +2,7 @@ import './Step3_Preferences.css'
 import TagInput from '../../../components/Inputs/TagInput/TagInput.jsx'
 import BudgetField from '../BudgetField/BudgetField.jsx'
 import NextButton from '../../../components/Inputs/NextButton/NextButton.jsx'
+import { INTEREST_TAGS, FOOD_TAGS } from '../../../api/vocab.js'
 
 function Step3_Preferences({ form, update, onNext }) {
   return (
@@ -12,6 +13,7 @@ function Step3_Preferences({ form, update, onNext }) {
           placeholder="Enter group interests"
           tags={form.interestTags}
           onChange={(next) => update('interestTags', next)}
+          suggestions={INTEREST_TAGS}
         />
       </div>
       <div className="step3-preferences__group">
@@ -20,6 +22,7 @@ function Step3_Preferences({ form, update, onNext }) {
           placeholder="Enter group food preferences"
           tags={form.foodPrefs}
           onChange={(next) => update('foodPrefs', next)}
+          suggestions={FOOD_TAGS}
         />
       </div>
       <BudgetField form={form} update={update} />

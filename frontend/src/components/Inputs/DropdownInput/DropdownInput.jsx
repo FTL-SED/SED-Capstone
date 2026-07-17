@@ -1,6 +1,6 @@
 import './DropdownInput.css'
 
-function DropdownInput({ placeholder, value, onChange, onKeyDown }) {
+function DropdownInput({ placeholder, value, onChange, onKeyDown, listId }) {
   return (
     <input
       className="dropdown-input"
@@ -9,6 +9,7 @@ function DropdownInput({ placeholder, value, onChange, onKeyDown }) {
       value={value}
       onChange={onChange}
       onKeyDown={onKeyDown}
+      list={listId}
     />
   );
 }
