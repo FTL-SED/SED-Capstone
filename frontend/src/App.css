@@ -39,6 +39,7 @@
   /* Layout */
   --page-max: 1120px;
   --nav-h: 68px;
+  --foot-h: 65px; /* footer: ~20px padding top+bottom + one line of text */
 }
 
 *,

@@ -2,10 +2,11 @@
    footer). The parent .app__main--full is a flex column, so flex:1 stretches
    this to fill the leftover height. */
 .itinerary-page {
-  flex: 1;
   display: flex;
   align-items: stretch;
-  min-height: 0; /* allow children to own their scroll instead of growing the page */
+  /* Explicit height (viewport minus nav + footer) so the map has a concrete
+     height to fill — a flex:1 / 100% chain here collapsed the map to 0. */
+  height: calc(100vh - var(--nav-h) - var(--foot-h));
 }
 
 /* Left half: fixed-width column, wide enough for readable stop cards while the
