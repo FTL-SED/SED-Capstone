@@ -20,6 +20,9 @@ function AddressPicker({ value = null, onChange, placeholder = 'Enter a starting
   useEffect(() => {
     const query = text.trim()
     if (!query) return
+    // The text matches the picked address → it was just selected, not typed.
+    // Skip the lookup so the dropdown doesn't reappear after a pick.
+    if (value && text === value.label) return
 
     let active = true
     const timer = setTimeout(() => {
@@ -35,7 +38,7 @@ function AddressPicker({ value = null, onChange, placeholder = 'Enter a starting
       active = false
       clearTimeout(timer)
     }
-  }, [text])
+  }, [text, value])
 
   const onType = (e) => {
     const next = e.target.value
