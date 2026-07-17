@@ -11,3 +11,53 @@
   font-weight: 700;
   color: var(--slate-800);
 }
+
+.written-itinerary__stops {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.written-itinerary__stop {
+  display: flex;
+  gap: 0.9rem;
+  align-items: baseline;
+}
+
+.written-itinerary__time {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+  color: var(--text-muted, #666);
+  white-space: nowrap;
+}
+
+.written-itinerary__details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.written-itinerary__name {
+  font-weight: 600;
+}
+
+.written-itinerary__meal {
+  font-weight: 400;
+  color: var(--text-muted, #666);
+  text-transform: capitalize;
+}
+
+.written-itinerary__desc {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted, #666);
+}
+
+.written-itinerary__price {
+  font-size: 0.8rem;
+  color: var(--text-muted, #666);
+}

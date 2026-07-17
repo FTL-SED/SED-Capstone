@@ -2,10 +2,10 @@ import './Step1_TimeRange.css'
 import TimeRangeField from '../TimeRangeField/TimeRangeField.jsx'
 import NextButton from '../../../components/Inputs/NextButton/NextButton.jsx'
 
-function Step1_TimeRange({ onNext }) {
+function Step1_TimeRange({ form, update, onNext }) {
   return (
     <div className="step1-time-range">
-      <TimeRangeField />
+      <TimeRangeField form={form} update={update} />
       <NextButton onClick={onNext} />
     </div>
   );

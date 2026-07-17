@@ -1,14 +1,67 @@
 import './Step4_Finish.css'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import ItineraryDetailsPreview from '../ItineraryDetailsPreview/ItineraryDetailsPreview.jsx'
 import PrivacyField from '../PrivacyField/PrivacyField.jsx'
 import FinishButton from '../FinishButton/FinishButton.jsx'
+import ErrorMessage from '../../../components/ErrorMessage/ErrorMessage.jsx'
+import { buildRecommendationBody } from '../buildRequest.js'
+import { getRecommendations, generateItinerary } from '../../../api/itinerary.js'
 
-function Step4_Finish() {
+// The core integration: on finish, get a shortlist then sequence + persist an
+// itinerary, then navigate to it. Empty-shortlist and infeasible are normal
+// outcomes shown as messages, not errors.
+// See .claude/roadmap/frontend-backend-integration.md (Steps 7-8).
+function Step4_Finish({ form, update }) {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleFinish = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const body = buildRecommendationBody(form);
+      const { shortlist, constraints, reason } = await getRecommendations(body);
+
+      // No places matched — show the backend's friendly reason, don't proceed.
+      if (!shortlist || shortlist.length === 0) {
+        setError(reason || 'No places matched your trip. Try widening your budget or radius.');
+        return;
+      }
+
+      const result = await generateItinerary({
+        shortlist,
+        constraints,
+        isPublic: form.isPublic,
+      });
+
+      // Constraints too tight for any day — a valid outcome, not a crash.
+      if (result.feasible === false) {
+        setError(result.reason || 'No itinerary fits these constraints. Try adjusting your trip.');
+        return;
+      }
+
+      navigate(`/itinerary/${result.itinerary.id}`);
+    } catch (err) {
+      if (err.code === 'ECONNABORTED') {
+        setError('This is taking longer than expected. Please try again.');
+      } else if (err.response?.status === 401) {
+        setError('Your session expired. Please log in and try again.');
+      } else {
+        setError(err.response?.data?.error || 'Something went wrong generating your itinerary. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="step4-finish">
-      <PrivacyField />
+      <PrivacyField form={form} update={update} />
       <ItineraryDetailsPreview />
-      <FinishButton />
+      {error && <ErrorMessage message={error} />}
+      <FinishButton onClick={handleFinish} loading={loading} />
     </div>
   );
 }
