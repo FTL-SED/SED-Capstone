@@ -70,7 +70,11 @@ function recommend(trip, members, pins) {
     constraints: {
       maxBudgetPerPerson: trip.maxBudgetPerPerson,
       groupSize: members.length,
-      startingLocations: members.map((m) => m.startLocation),
+      // Each member's start coordinate ({ latitude, longitude } from the
+      // frontend's address picker), or undefined for a member without one.
+      // The AI anchors on meetingPoint below, not these — they're carried for
+      // the frontend's use (e.g. plotting members on the map).
+      startingCoordinates: members.map((m) => m.startLocation),
       timeWindow: { startTime: trip.startTime, endTime: trip.endTime },
       transport: trip.transport ?? null,
       meetingPoint,

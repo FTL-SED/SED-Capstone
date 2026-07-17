@@ -36,8 +36,8 @@ const trip = { startTime: '09:00', endTime: '18:00', maxBudgetPerPerson: 60 }
 // reachable, so a fixture relying on it to prove fairness coverage would be
 // testing the bug, not the feature. See the private-Pin test below.
 const members = [
-  { name: 'Alex', startLocation: 'Downtown', interestTags: ['art', 'scenic_views'], foodPrefs: ['mexican'] },
-  { name: 'Sam', startLocation: 'Mission', interestTags: ['nature'], foodPrefs: ['ramen'] },
+  { name: 'Alex', startLocation: { latitude: 37.7880, longitude: -122.4074 }, interestTags: ['art', 'scenic_views'], foodPrefs: ['mexican'] }, // Downtown
+  { name: 'Sam', startLocation: { latitude: 37.7599, longitude: -122.4148 }, interestTags: ['nature'], foodPrefs: ['ramen'] }, // Mission
 ]
 
 test(
@@ -49,7 +49,7 @@ test(
     assert.ok(Array.isArray(shortlist))
     assert.ok(shortlist.length > 0, 'expected at least one recommended pin from the seeded catalog')
     assert.equal(constraints.groupSize, members.length)
-    assert.deepEqual(constraints.startingLocations, ['Downtown', 'Mission'])
+    assert.deepEqual(constraints.startingCoordinates, members.map((m) => m.startLocation))
 
     for (const pin of shortlist) {
       assert.equal(typeof pin.name, 'string')
@@ -114,7 +114,7 @@ test(
     // was a real leak (fixed by scoping getAllPins() to isPublic: true),
     // not a hypothetical.
     const hikerMember = [
-      { name: 'Hiker', startLocation: 'Richmond', interestTags: ['hiking', 'scenic_views'], foodPrefs: [] },
+      { name: 'Hiker', startLocation: { latitude: 37.7801, longitude: -122.4644 }, interestTags: ['hiking', 'scenic_views'], foodPrefs: [] }, // Richmond
     ]
     const { shortlist } = await getRecommendations(trip, hikerMember)
     assert.ok(
