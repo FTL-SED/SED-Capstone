@@ -2,6 +2,7 @@
    just the cover image plus its caption, with no surrounding white card chrome. */
 
 .itinerary-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   text-decoration: none;
@@ -84,7 +85,61 @@
   margin-right: 6px;
 }
 
-.itinerary-card__likes {
+/* In the card the like button reads as plain text (like the old likes span):
+   no pill chrome, right-aligned, muted color. Both classes are used together so
+   this beats the base .like-button pill styles regardless of CSS import order. */
+.like-button.itinerary-card__like {
   flex-shrink: 0;
+  margin-left: auto;
+  padding: 0;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
   color: var(--slate-600);
+}
+
+.like-button.itinerary-card__like:hover {
+  background: transparent;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Toggle the heart color when liked: muted -> red, and fill the icon. */
+.like-button.itinerary-card__like[aria-pressed="true"] {
+  color: var(--danger);
+}
+.like-button.itinerary-card__like[aria-pressed="true"] svg {
+  fill: var(--danger);
+}
+
+/* Overlay the bookmark on the top-right corner of the cover image as a compact
+   icon-only chip. Higher specificity (both classes) beats the base
+   .bookmark-button / .action-btn styles. */
+.bookmark-button.itinerary-card__bookmark {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 6px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  color: var(--accent);
+}
+
+.bookmark-button.itinerary-card__bookmark:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: none;
+}
+
+.bookmark-button.itinerary-card__bookmark[aria-pressed="true"] svg {
+  fill: var(--accent);
+}
+
+/* The card shows only the bookmark icon — hide the "Save"/"Saved" text label. */
+.bookmark-button.itinerary-card__bookmark .bookmark-button__label {
+  display: none;
 }

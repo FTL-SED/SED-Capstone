@@ -11,7 +11,19 @@ const PLACEHOLDER_COUNT = 5;
 // `title` is the section heading; the arrows sit on the same row (right-aligned)
 // so the heading and controls line up. `headerAction` is an optional extra
 // control (e.g. the "New Trip" button) shown just left of the arrows.
-function CardCarousel({ title, headerAction, itineraries = [], loading = false }) {
+function CardCarousel({
+  title,
+  headerAction,
+  itineraries = [],
+  loading = false,
+  // Like/bookmark wiring, only supplied by the HomePage sections. Undefined
+  // elsewhere (e.g. the Created section), so the cards fall back to their own
+  // self-toggling behavior.
+  likedIds,
+  bookmarkedIds,
+  onToggleLike,
+  onToggleBookmark,
+}) {
   const trackRef = useRef(null);
   // Whether each arrow can still move: false at the very start / very end of
   // the row, so we can grey the arrows out like the design.
@@ -71,7 +83,16 @@ function CardCarousel({ title, headerAction, itineraries = [], loading = false }
               <div key={i} className="itinerary-card itinerary-card--placeholder" />
             ))
           : itineraries.map((itinerary) => (
-              <ItineraryCard key={itinerary.id} itinerary={itinerary} />
+              <ItineraryCard
+                key={itinerary.id}
+                itinerary={itinerary}
+                // Look up this card's on/off from the Sets. `?.` keeps it
+                // undefined when no Sets were passed, so the buttons self-toggle.
+                liked={likedIds?.has(itinerary.id)}
+                bookmarked={bookmarkedIds?.has(itinerary.id)}
+                onToggleLike={onToggleLike}
+                onToggleBookmark={onToggleBookmark}
+              />
             ))}
       </div>
     </div>

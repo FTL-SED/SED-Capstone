@@ -1,6 +1,20 @@
-/* Teal outline over .action-btn (App.css). */
-.bookmark-button:hover {
+/* Save/Bookmark: teal outline over .action-btn (App.css), matching the accent
+   family. Fills on hover and stays filled/tinted once saved (aria-pressed). */
+.bookmark-button {
   border-color: var(--accent);
-  color: var(--accent-strong);
+  color: var(--accent);
+}
+
+.bookmark-button:hover {
   background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.bookmark-button[aria-pressed="true"] {
+  background: var(--accent-soft);
+}
+
+.bookmark-button[aria-pressed="true"] svg {
+  fill: var(--accent);
 }
