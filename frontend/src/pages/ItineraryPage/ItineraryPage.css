@@ -8,11 +8,12 @@
   min-height: 0; /* allow children to own their scroll instead of growing the page */
 }
 
-/* Left half: fixed-width column. Its own internal areas (title, actions) stay
-   put while the timeline scrolls (see ItineraryPanel.css). */
+/* Left half: fixed-width column, wide enough for readable stop cards while the
+   map still takes the larger share. Its title/actions stay put while the
+   timeline scrolls (see ItineraryPanel.css). */
 .itinerary-page > .itinerary-panel {
-  flex: 0 0 420px;
-  max-width: 420px;
+  flex: 0 0 520px;
+  max-width: 520px;
   min-height: 0;
 }
 

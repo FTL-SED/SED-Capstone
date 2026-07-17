@@ -13,14 +13,21 @@ const numberedIcon = (n) =>
     iconAnchor: [14, 14],
   });
 
-// Pan/zoom the map to fit all markers whenever the pins change.
+// Pan/zoom the map to fit all markers, and re-measure the container once the
+// flex layout has settled (invalidateSize) so tiles fill the full height
+// instead of rendering short / cut off.
 function FitBounds({ points }) {
   const map = useMap();
-  if (points.length === 1) {
-    map.setView(points[0], 14);
-  } else if (points.length > 1) {
-    map.fitBounds(points, { padding: [40, 40] });
-  }
+  useEffect(() => {
+    map.invalidateSize();
+    if (points.length === 1) {
+      map.setView(points[0], 14);
+    } else if (points.length > 1) {
+      map.fitBounds(points, { padding: [40, 40] });
+    }
+    // points identity changes with the itinerary; JSON keys the effect on value.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, JSON.stringify(points)]);
   return null;
 }
 
