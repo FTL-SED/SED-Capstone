@@ -21,23 +21,23 @@ const scenarios = [
     label: 'Art + hiking duo, mid budget',
     trip: { startTime: '09:00', endTime: '18:00', maxBudgetPerPerson: 60 },
     members: [
-      { name: 'Alex', startLocation: 'Downtown', interestTags: ['art', 'scenic_views'], foodPrefs: ['mexican'] },
-      { name: 'Sam', startLocation: 'Mission', interestTags: ['hiking'], foodPrefs: ['ramen'] },
+      { name: 'Alex', startLocation: { latitude: 37.7880, longitude: -122.4074 }, interestTags: ['art', 'scenic_views'], foodPrefs: ['mexican'] },
+      { name: 'Sam', startLocation: { latitude: 37.7599, longitude: -122.4148 }, interestTags: ['hiking'], foodPrefs: ['ramen'] },
     ],
   },
   {
     label: 'Tight budget + vegan diet',
     trip: { startTime: '10:00', endTime: '15:00', maxBudgetPerPerson: 15 },
     members: [
-      { name: 'Priya', startLocation: 'Sunset', interestTags: ['nature'], foodPrefs: [], diet: ['vegan'] },
+      { name: 'Priya', startLocation: { latitude: 37.7599, longitude: -122.4869 }, interestTags: ['nature'], foodPrefs: [], diet: ['vegan'] },
     ],
   },
   {
     label: 'One member with a totally niche interest',
     trip: { startTime: '09:00', endTime: '18:00', maxBudgetPerPerson: 60 },
     members: [
-      { name: 'Jordan', startLocation: 'Downtown', interestTags: ['art'], foodPrefs: ['mexican'] },
-      { name: 'Casey', startLocation: 'Richmond', interestTags: ['kayaking'], foodPrefs: [] },
+      { name: 'Jordan', startLocation: { latitude: 37.7880, longitude: -122.4074 }, interestTags: ['art'], foodPrefs: ['mexican'] },
+      { name: 'Casey', startLocation: { latitude: 37.7801, longitude: -122.4644 }, interestTags: ['kayaking'], foodPrefs: [] },
     ],
   },
 ]

@@ -47,7 +47,7 @@ const tryAi = async (shortlist, constraints) => {
 
 // Generate a one-day itinerary from the recommendation engine's output.
 //   shortlist   = ranked pins (each with .id) — see services/recommendation
-//   constraints = { timeWindow?, maxBudgetPerPerson, groupSize, startingLocations, ... }
+//   constraints = { timeWindow?, maxBudgetPerPerson, groupSize, meetingPoint?, ... }
 // Returns one of:
 //   { itinerary, source: 'ai' | 'fallback' } on success
 //   { feasible: false, reason } when constraints are too tight for any day
