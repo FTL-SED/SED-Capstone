@@ -21,6 +21,7 @@ function ActionBar({
           <EditButton />
           <SaveButton />
           <DeleteButton />
+          <BookmarkButton bookmarked={bookmarked} onClick={onToggleBookmark} />
           <LikeButton liked={liked} likeCount={likeCount} onClick={onToggleLike} />
         </>
       ) : (

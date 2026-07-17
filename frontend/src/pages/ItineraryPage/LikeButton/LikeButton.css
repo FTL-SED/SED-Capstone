@@ -13,3 +13,12 @@
 .like-button:hover svg {
   fill: var(--danger);
 }
+
+/* Once liked, stay filled + tinted so the state is obvious at a glance. */
+.like-button[aria-pressed="true"] {
+  background: var(--danger-soft);
+}
+
+.like-button[aria-pressed="true"] svg {
+  fill: var(--danger);
+}
