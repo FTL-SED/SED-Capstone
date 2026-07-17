@@ -461,6 +461,8 @@ const [currentViewedItinerary, setCurrentViewedItinerary] = useState(null);
 │   │       │   ├── <TextInput> username
 │   │       │   ├── <TextInput> email
 │   │       │   ├── <PasswordInput> password
+│   │       │   ├── <ErrorMessage>            (only if a submit error occurs)
+│   │       │   ├── <ConfirmationMessage>     (only on successful register, e.g. "check your email")
 │   │       │   └── <SubmitButton> "Register"
 |   |       └── <LoginSection>
 |   |           ├── <loginText>
@@ -746,6 +748,13 @@ Context: Deciding whether or not including the attributes in the data model was 
 
 Tradeoffs: This makes it easier to handle data operations now since they will be simplified, but when implementing the edit stretch feature, we might have to add these values back if we want users to see what information about the itinerary was previously saved.
 
+Decision 3:
+
+Decision: The explore card carousel will just display all itineraries randomly. The recents card carousel on the discover page will show all recently created itineraries (so the itineraries will be sorted by date). 
+
+Context: Deciding functionality for how cards should be populated on the home page. Explore could end up using a recommendation system to display itineraries that the user would most likely want to choose from, but we will likely save this implementation as a stretch feature.
+
+Tradeoffs: Just having a randomly chosen set of cards for the Explore carousel differentiates it enough from simply listing all itineraries, as will be displayed in the Recents carousel. It is also an easier implementation than trying to tie a recommendation system to showing the itineraries that are most likely to be favored.
 
 # Sprint 2
 

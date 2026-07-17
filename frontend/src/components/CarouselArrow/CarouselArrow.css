@@ -1,0 +1,29 @@
+.carousel-arrow {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--slate-500);
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.carousel-arrow:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Greyed out at the start/end of the row (like the back arrow in the design). */
+.carousel-arrow:disabled {
+  color: var(--slate-400);
+  border-color: var(--border);
+  cursor: default;
+  opacity: 0.6;
+}

@@ -70,7 +70,7 @@ async function main() {
       location: 'San Francisco, CA',
       description:
         'Coastal views, dim sum, and a sunset over the bay — an easy, walkable first day in the city.',
-      coverImageUrl: 'https://images.navquest.dev/sf-cover.jpg',
+      coverImageUrl: 'https://picsum.photos/seed/sf-cover/640/400',
       isPublic: true,
       pins: {
         create: [
@@ -86,7 +86,7 @@ async function main() {
             endTime: '10:00',
             travelTimeToNextMinutes: 20,
             distanceToNextMeters: 6500,
-            locationImageUrl: 'https://images.navquest.dev/ggb.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/ggb/640/400',
           }),
           pin(2, {
             name: 'Ferry Building Marketplace',
@@ -100,7 +100,7 @@ async function main() {
             endTime: '11:45',
             travelTimeToNextMinutes: 12,
             distanceToNextMeters: 2100,
-            locationImageUrl: 'https://images.navquest.dev/ferry-building.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/ferry-building/640/400',
           }),
           pin(3, {
             name: 'Golden Gate Park & Japanese Tea Garden',
@@ -114,7 +114,7 @@ async function main() {
             endTime: '15:30',
             travelTimeToNextMinutes: 15,
             distanceToNextMeters: 4200,
-            locationImageUrl: 'https://images.navquest.dev/tea-garden.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/tea-garden/640/400',
           }),
           pin(4, {
             name: 'Lands End Coastal Trail',
@@ -128,7 +128,7 @@ async function main() {
             endTime: '17:15',
             travelTimeToNextMinutes: 18,
             distanceToNextMeters: 5300,
-            locationImageUrl: 'https://images.navquest.dev/lands-end.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/lands-end/640/400',
           }),
           pin(5, {
             name: 'Dinner at Nopa',
@@ -142,7 +142,7 @@ async function main() {
             endTime: '19:30',
             travelTimeToNextMinutes: 14,
             distanceToNextMeters: 3800,
-            locationImageUrl: 'https://images.navquest.dev/nopa.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/nopa/640/400',
           }),
           pin(6, {
             name: 'Twin Peaks Sunset',
@@ -154,7 +154,7 @@ async function main() {
             address: '501 Twin Peaks Blvd, San Francisco, CA 94114',
             startTime: '20:00',
             endTime: '20:45',
-            locationImageUrl: 'https://images.navquest.dev/twin-peaks.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/twin-peaks/640/400',
           }),
         ],
       },
@@ -169,7 +169,7 @@ async function main() {
       title: 'Mission District Taco Crawl',
       location: 'San Francisco, CA',
       description: 'Three stops, three styles of tacos, one very happy afternoon.',
-      coverImageUrl: 'https://images.navquest.dev/mission-tacos.jpg',
+      coverImageUrl: 'https://picsum.photos/seed/mission-tacos/640/400',
       isPublic: true,
       pins: {
         create: [
@@ -185,7 +185,7 @@ async function main() {
             endTime: '13:00',
             travelTimeToNextMinutes: 8,
             distanceToNextMeters: 900,
-            locationImageUrl: 'https://images.navquest.dev/la-taqueria.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/la-taqueria/640/400',
           }),
           pin(2, {
             name: 'El Farolito',
@@ -199,7 +199,7 @@ async function main() {
             endTime: '14:30',
             travelTimeToNextMinutes: 6,
             distanceToNextMeters: 650,
-            locationImageUrl: 'https://images.navquest.dev/el-farolito.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/el-farolito/640/400',
           }),
           pin(3, {
             name: 'Taqueria Cancún',
@@ -213,7 +213,7 @@ async function main() {
             endTime: '16:00',
             travelTimeToNextMinutes: 5,
             distanceToNextMeters: 500,
-            locationImageUrl: 'https://images.navquest.dev/taqueria-cancun.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/taqueria-cancun/640/400',
           }),
           pin(4, {
             name: 'Bi-Rite Creamery',
@@ -225,7 +225,7 @@ async function main() {
             address: '3692 18th St, San Francisco, CA 94110',
             startTime: '16:15',
             endTime: '16:45',
-            locationImageUrl: 'https://images.navquest.dev/bi-rite.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/bi-rite/640/400',
           }),
         ],
       },
@@ -255,7 +255,7 @@ async function main() {
             endTime: '09:30',
             travelTimeToNextMinutes: 12,
             distanceToNextMeters: 3400,
-            locationImageUrl: 'https://images.navquest.dev/hawk-hill.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/hawk-hill/640/400',
           }),
           pin(2, {
             name: 'Point Bonita Lighthouse',
@@ -269,7 +269,7 @@ async function main() {
             endTime: '11:15',
             travelTimeToNextMinutes: 10,
             distanceToNextMeters: 2600,
-            locationImageUrl: 'https://images.navquest.dev/point-bonita.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/point-bonita/640/400',
           }),
           pin(3, {
             name: 'Rodeo Beach',
@@ -283,7 +283,7 @@ async function main() {
             endTime: '13:00',
             travelTimeToNextMinutes: 16,
             distanceToNextMeters: 6100,
-            locationImageUrl: 'https://images.navquest.dev/rodeo-beach.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/rodeo-beach/640/400',
           }),
           pin(4, {
             name: 'Tennessee Valley Trail',
@@ -295,7 +295,7 @@ async function main() {
             address: 'Tennessee Valley Rd, Mill Valley, CA 94941',
             startTime: '13:30',
             endTime: '15:30',
-            locationImageUrl: 'https://images.navquest.dev/tennessee-valley.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/tennessee-valley/640/400',
           }),
         ],
       },
@@ -312,7 +312,7 @@ async function main() {
       title: 'My Take on a Perfect Day in San Francisco',
       location: 'San Francisco, CA',
       description: 'Forked from Avery — swapped the afternoon for a museum stop.',
-      coverImageUrl: 'https://images.navquest.dev/sf-cover.jpg',
+      coverImageUrl: 'https://picsum.photos/seed/sf-cover/640/400',
       isPublic: true,
       pins: {
         create: [
@@ -328,7 +328,7 @@ async function main() {
             endTime: '10:00',
             travelTimeToNextMinutes: 22,
             distanceToNextMeters: 7000,
-            locationImageUrl: 'https://images.navquest.dev/ggb.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/ggb/640/400',
           }),
           pin(2, {
             name: 'de Young Museum',
@@ -342,7 +342,7 @@ async function main() {
             endTime: '15:00',
             travelTimeToNextMinutes: 20,
             distanceToNextMeters: 5600,
-            locationImageUrl: 'https://images.navquest.dev/de-young.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/de-young/640/400',
           }),
           pin(3, {
             name: 'Ocean Beach Sunset',
@@ -354,7 +354,7 @@ async function main() {
             address: 'Great Hwy, San Francisco, CA 94122',
             startTime: '18:30',
             endTime: '19:30',
-            locationImageUrl: 'https://images.navquest.dev/ocean-beach.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/ocean-beach/640/400',
           }),
         ],
       },
@@ -370,7 +370,7 @@ async function main() {
       title: 'Arts & Eats Around Lake Merritt',
       location: 'Oakland, CA',
       description: 'A relaxed East Bay loop: a lakeside walk, a museum, and some of Oakland\u2019s best comfort food.',
-      coverImageUrl: 'https://images.navquest.dev/oakland-cover.jpg',
+      coverImageUrl: 'https://picsum.photos/seed/oakland-cover/640/400',
       isPublic: true,
       pins: {
         create: [
@@ -386,7 +386,7 @@ async function main() {
             endTime: '10:45',
             travelTimeToNextMinutes: 8,
             distanceToNextMeters: 1200,
-            locationImageUrl: 'https://images.navquest.dev/lake-merritt.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/lake-merritt/640/400',
           }),
           pin(2, {
             name: 'Oakland Museum of California',
@@ -400,7 +400,7 @@ async function main() {
             endTime: '12:45',
             travelTimeToNextMinutes: 9,
             distanceToNextMeters: 1600,
-            locationImageUrl: 'https://images.navquest.dev/omca.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/omca/640/400',
           }),
           pin(3, {
             name: 'Grand Lake Farmers Market',
@@ -414,7 +414,7 @@ async function main() {
             endTime: '14:00',
             travelTimeToNextMinutes: 4,
             distanceToNextMeters: 550,
-            locationImageUrl: 'https://images.navquest.dev/grand-lake-market.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/grand-lake-market/640/400',
           }),
           pin(4, {
             name: 'Fentons Creamery',
@@ -428,7 +428,7 @@ async function main() {
             endTime: '15:00',
             travelTimeToNextMinutes: 18,
             distanceToNextMeters: 7400,
-            locationImageUrl: 'https://images.navquest.dev/fentons.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/fentons/640/400',
           }),
           pin(5, {
             name: 'Redwood Regional Park',
@@ -440,7 +440,7 @@ async function main() {
             address: '7867 Redwood Rd, Oakland, CA 94619',
             startTime: '15:30',
             endTime: '17:00',
-            locationImageUrl: 'https://images.navquest.dev/redwood-regional.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/redwood-regional/640/400',
           }),
         ],
       },
@@ -455,7 +455,7 @@ async function main() {
       title: 'Berkeley Hills & Bites',
       location: 'Berkeley, CA',
       description: 'Campus views, a big regional park, and a legendary cheese-and-pizza stop.',
-      coverImageUrl: 'https://images.navquest.dev/berkeley-cover.jpg',
+      coverImageUrl: 'https://picsum.photos/seed/berkeley-cover/640/400',
       isPublic: true,
       pins: {
         create: [
@@ -471,7 +471,7 @@ async function main() {
             endTime: '11:00',
             travelTimeToNextMinutes: 15,
             distanceToNextMeters: 5200,
-            locationImageUrl: 'https://images.navquest.dev/campanile.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/campanile/640/400',
           }),
           pin(2, {
             name: 'Tilden Regional Park',
@@ -485,7 +485,7 @@ async function main() {
             endTime: '13:15',
             travelTimeToNextMinutes: 16,
             distanceToNextMeters: 5800,
-            locationImageUrl: 'https://images.navquest.dev/tilden.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/tilden/640/400',
           }),
           pin(3, {
             name: 'Cheese Board Collective',
@@ -499,7 +499,7 @@ async function main() {
             endTime: '14:45',
             travelTimeToNextMinutes: 10,
             distanceToNextMeters: 2300,
-            locationImageUrl: 'https://images.navquest.dev/cheese-board.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/cheese-board/640/400',
           }),
           pin(4, {
             name: 'Indian Rock Park',
@@ -511,7 +511,7 @@ async function main() {
             address: 'Indian Rock Ave, Berkeley, CA 94707',
             startTime: '18:00',
             endTime: '19:00',
-            locationImageUrl: 'https://images.navquest.dev/indian-rock.jpg',
+            locationImageUrl: 'https://picsum.photos/seed/indian-rock/640/400',
           }),
         ],
       },

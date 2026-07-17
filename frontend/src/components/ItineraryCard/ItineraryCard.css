@@ -1,0 +1,90 @@
+/* Base .itinerary-card visuals live in App.css — overridden here so the card is
+   just the cover image plus its caption, with no surrounding white card chrome. */
+
+.itinerary-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: var(--slate-600);
+  /* Drop the white box: no fixed height, border, background, padding or shadow. */
+  aspect-ratio: auto;
+  height: auto;
+  border: none;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+  overflow: visible;
+  /* As a flex/grid item, allow the card to shrink to its assigned column width.
+     Without this, min-width:auto lets the image's intrinsic width blow out the
+     card, so cards (and their images) end up different sizes. */
+  min-width: 0;
+}
+
+.itinerary-card:hover {
+  box-shadow: none;
+  border-color: transparent;
+}
+
+.itinerary-card h3 {
+  color: var(--ink);
+}
+
+.itinerary-card__cover {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: var(--radius);
+  display: block;
+}
+
+.itinerary-card__body {
+  flex-shrink: 0;
+  padding-top: 10px;
+}
+
+.itinerary-card__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.itinerary-card__title-row h3 {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itinerary-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  font-size: 0.8125rem;
+  color: var(--slate-500);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.itinerary-card__meta p {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itinerary-card__creator {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.itinerary-card__creator::before {
+  content: "•";
+  margin-right: 6px;
+}
+
+.itinerary-card__likes {
+  flex-shrink: 0;
+  color: var(--slate-600);
+}

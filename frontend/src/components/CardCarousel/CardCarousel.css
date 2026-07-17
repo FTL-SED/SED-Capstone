@@ -1,0 +1,57 @@
+.card-carousel {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Arrow pair (plus any header action) aligned to the right of the heading row,
+   so the title and the arrows line up (matches the design). */
+.card-carousel__controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-carousel__track {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  /* proximity (not mandatory) so momentum swipes glide instead of being yanked
+     to the nearest card on every gesture — noticeably smoother with many cards. */
+  scroll-snap-type: x proximity;
+  /* Reserve the card height (4:3 ratio) so the row keeps its space while
+     itineraries load, preventing layout shift between sections. */
+  min-height: 150px;
+  /* Hide the horizontal scrollbar (Firefox + legacy IE/Edge) while keeping the
+     row scrollable/swipeable, like the Uber-style carousels. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Hide the scrollbar in Chrome, Safari, and other WebKit/Blink browsers. */
+.card-carousel__track::-webkit-scrollbar {
+  display: none;
+}
+
+/* Show exactly 5 cards across the visible track. Four 16px gaps are shared
+   across the five cards (4 * 16 / 5 = 12.8px subtracted from each). */
+.card-carousel__track .itinerary-card {
+  flex: 0 0 calc((100% - 64px) / 5);
+  scroll-snap-align: start;
+}
+
+/* Loading placeholder: same footprint as a real card's cover, with a pulse.
+   Scoped to the track so its background beats .itinerary-card's transparent
+   override (which loads after this file) on specificity, not source order. */
+.card-carousel__track .itinerary-card--placeholder {
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius);
+  background: var(--border);
+  animation: card-placeholder-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes card-placeholder-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

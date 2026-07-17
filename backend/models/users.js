@@ -8,6 +8,7 @@ const profileSelect = {
   id: true,
   username: true,
   email: true,
+  avatarUrl: true,
   createdAt: true,
 }
 
@@ -43,7 +44,7 @@ function update(id, data) {
   return prisma.user.update({
     where: { id },
     data,
-    select: { id: true, username: true },
+    select: { id: true, username: true, avatarUrl: true },
   })
 }
 
