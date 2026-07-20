@@ -1,5 +1,5 @@
 import './DiscoverPage.css'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import SearchBar from './SearchBar/SearchBar.jsx'
 import FilterControls from './FilterControls/FilterControls.jsx'
 import SearchResultsSection from './SearchResultsSection/SearchResultsSection.jsx'
@@ -28,10 +28,19 @@ function DiscoverPage() {
     )
   }, [])
 
+  // Bumps whenever the search/filter/sort inputs change. loadMore reads this at
+  // call time and drops its result if it changes before the request resolves,
+  // so a slow page append can't land on a newer, differently-filtered feed.
+  const generationRef = useRef(0)
+  // Guards against overlapping loadMore calls (e.g. a double-click), which would
+  // otherwise fetch the same page twice and skip the next one.
+  const loadingMoreRef = useRef(false)
+
   // Debounced fetch of the FIRST page whenever the search/filter/sort inputs
   // change. `ignore` guards against a slow earlier request overwriting a newer
   // one (React strict-mode / fast typing).
   useEffect(() => {
+    generationRef.current += 1
     let ignore = false
 
     const timer = setTimeout(async () => {
@@ -61,17 +70,25 @@ function DiscoverPage() {
     }
   }, [query, interests, sort])
 
-  // Append the next page. Uses the current offset; on success advances it.
+  // Append the next page. Ignores overlapping clicks, and drops its result if
+  // the filters changed while the request was in flight.
   const loadMore = useCallback(async () => {
+    if (loadingMoreRef.current) return
+    loadingMoreRef.current = true
+    const generation = generationRef.current
     try {
       const params = buildDiscoverParams(query, interests, sort, offset, PAGE_LIMIT)
       const data = await listItineraries(params)
+      if (generation !== generationRef.current) return
       setResults((prev) => [...prev, ...data])
       setOffset((prev) => prev + data.length)
       setHasMore(data.length === PAGE_LIMIT)
     } catch (err) {
+      if (generation !== generationRef.current) return
       console.error('Failed to load more itineraries:', err)
       setError('Something went wrong loading more itineraries. Please try again.')
+    } finally {
+      loadingMoreRef.current = false
     }
   }, [query, interests, sort, offset])
 
