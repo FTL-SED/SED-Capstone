@@ -1,10 +1,12 @@
-# Pin Split Phase 3 Implementation Plan — Switch Reads
+# Pin Split Phase 3 Implementation Plan — Switch Engine Catalog Reads
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Switch the recommendation engine and itinerary reads to the new explicit columns + `ItineraryStop`/`hoursOpen`, using the already-written `mapVenue` mapper — deleting the dedup pass and privacy filter, using real per-day hours — while keeping the API response shape byte-for-byte identical so the frontend never changes.
+**Goal:** Switch the recommendation **engine's catalog reads** to the new explicit columns + `hoursOpen`, using the already-written `mapVenue` mapper — deleting the dedup pass and privacy filter, using real per-day hours. Itinerary read reshaping is deliberately deferred to Phase 4 (see below).
 
-**Architecture:** Reads flip from the legacy shape (derive from `tags`, approximate hours from `startTime`/`endTime`, dedup, privacy-filter) to the new shape (`mapVenue` reads explicit columns + `hoursOpen`). The itinerary read path joins `ItineraryStop → Pin` and reshapes back into the flat `pins[]` array the frontend expects. Writes still go to the legacy columns (Phase 4); the legacy columns are dropped only in Phase 5. Design: `docs/superpowers/specs/2026-07-20-pin-split-design.md`.
+**Scope decision — itinerary reads move to Phase 4, not here.** Reshaping itinerary reads (`ItineraryStop → Pin` → `pins[]`) is coupled to the write switch: if reads flipped now while writes stayed legacy until Phase 4, itineraries created in between would have legacy `Pin` rows but no `stops`, forcing a messy dual-read bridge. Flipping itinerary reads and writes together in Phase 4 removes that window entirely — and since Phase 5 drops the legacy columns anyway, there's no benefit to switching itinerary reads early (the frontend can't tell the shape changed either way). So Phase 3 is scoped to the **engine catalog reads only**, which are independent of any write path (the catalog is `itineraryId = null` pins nothing writes to).
+
+**Architecture:** The engine's catalog read flips from the legacy shape (derive from `tags`, approximate hours from `startTime`/`endTime`, dedup, privacy-filter) to the new shape (`mapVenue` reads explicit columns + `hoursOpen`). Itinerary read/write reshaping happens together in Phase 4; legacy columns are dropped in Phase 5. Design: `docs/superpowers/specs/2026-07-20-pin-split-design.md`.
 
 **Tech Stack:** Node ESM, Express, Prisma + PostgreSQL (Supabase), `node:test`.
 
@@ -267,110 +269,18 @@ git commit -m "Drop pins explicitly closed on the trip day"
 
 ---
 
-## Task 3.3: Itinerary reads join `ItineraryStop → Pin`, reshape to `pins[]`
+## Task 3.3: (moved to Phase 4)
 
-**Files:**
-- Modify: `backend/models/itineraries.js`
-- Test: `backend/models/itineraries.test.js` (create if absent)
-
-**Interfaces:**
-- Produces: `itineraryInclude` includes `stops` (ordered by `orderInItinerary asc`) with their `pin`, instead of `pins`.
-- Produces: a `reshapeItinerary(itinerary)` mapper that flattens each `stop + stop.pin` into the SAME object shape the old `pins[]` had, exposed under the `pins` key, so API responses are unchanged. Also exposes `mealType` as a field.
-
-- [ ] **Step 1: Write the failing test**
-
-```js
-// backend/models/itineraries.test.js
-import { test } from 'node:test'
-import assert from 'node:assert/strict'
-import { reshapeItinerary } from './itineraries.js'
-
-test('reshapeItinerary flattens stops+pin into the legacy pins[] shape', () => {
-  const row = {
-    id: 7, title: 'Day', location: 'SF', _count: { likes: 2 },
-    stops: [
-      { orderInItinerary: 0, startTime: new Date('2026-01-01T17:00:00Z'), endTime: new Date('2026-01-01T18:00:00Z'),
-        travelTimeToNextMinutes: 10, distanceToNextMeters: 500, mealType: 'lunch', note: 'grab tacos',
-        pin: { id: 3, name: 'Taqueria', description: 'tacos', tags: ['food','mexican'], interests: [], cuisines: ['mexican'], diets: [],
-               rating: 4.5, pricePerPerson: 14, latitude: 37.75, longitude: -122.41, address: 'SF', locationImageUrl: null } },
-    ],
-  }
-  const out = reshapeItinerary(row)
-  assert.equal(out.likeCount, 2)
-  assert.ok(Array.isArray(out.pins))
-  assert.equal(out.stops, undefined) // stops folded away
-  const p = out.pins[0]
-  assert.equal(p.name, 'Taqueria')          // venue field
-  assert.equal(p.orderInItinerary, 0)       // stop field
-  assert.equal(p.pricePerPerson, 14)        // venue field
-  assert.equal(p.travelTimeToNextMinutes, 10) // stop field
-  assert.equal(p.mealType, 'lunch')         // exposed
-  // tags reconstructed so the frontend meal badge + tag display keep working:
-  // interests+cuisines+diets (+ mealType appended)
-  assert.ok(p.tags.includes('mexican'))
-  assert.ok(p.tags.includes('lunch'))
-  assert.equal(p.description, 'grab tacos') // stop.note overrides pin.description (matches persist.js today)
-})
-```
-
-- [ ] **Step 2: Run to verify fail**
-
-Run: `cd backend && node --test models/itineraries.test.js`
-Expected: FAIL — `reshapeItinerary` not exported.
-
-- [ ] **Step 3: Implement the reshape in `itineraries.js`**
-
-Change `itineraryInclude` to include `stops` (ordered) with `pin`, plus keep `_count.likes` (from the earlier likeCount work). Add `reshapeItinerary`:
-
-```js
-// Flatten each ItineraryStop + its Pin back into the flat pin object the API
-// has always returned, so the frontend is unaffected by the venue/stop split.
-// tags is reconstructed from the explicit fields (+ mealType) for the meal badge.
-function reshapeItinerary(itinerary) {
-  if (!itinerary) return itinerary
-  const { _count, stops, ...rest } = itinerary
-  const pins = (stops ?? []).map((s) => {
-    const p = s.pin
-    const tags = [...(p.interests ?? []), ...(p.cuisines ?? []), ...(p.diets ?? [])]
-    if (s.mealType) tags.push(s.mealType)
-    return {
-      id: p.id,
-      name: p.name,
-      description: s.note ?? p.description ?? null,
-      tags,
-      rating: p.rating,
-      pricePerPerson: p.pricePerPerson,
-      latitude: p.latitude,
-      longitude: p.longitude,
-      address: p.address,
-      locationImageUrl: p.locationImageUrl,
-      orderInItinerary: s.orderInItinerary,
-      startTime: s.startTime,
-      endTime: s.endTime,
-      travelTimeToNextMinutes: s.travelTimeToNextMinutes,
-      distanceToNextMeters: s.distanceToNextMeters,
-      mealType: s.mealType ?? null,
-    }
-  })
-  return { ...rest, likeCount: _count?.likes ?? 0, pins }
-}
-```
-
-Wire `reshapeItinerary` into the read functions (`findById`, `findMany`, `create` return values) in place of the current `withLikeCount`, or compose them. **Important:** during Phase 3, writes still create legacy `Pin` rows (Phase 4 switches writes), so an itinerary created now has `pins` (legacy) but no `stops`. The reshape must not break for itineraries that still have legacy pins.
-
-> ⚠️ DECISION POINT for the implementer: itineraries created before Phase 4 have legacy `Pin` rows (via `itineraryId`), NOT `ItineraryStop` rows — Phase 2 backfilled stops for EXISTING itineraries, but any itinerary created between Phase 2 and Phase 4 will have only legacy pins. Options: (a) include BOTH `pins` and `stops` in `itineraryInclude` and prefer `stops` when present, else fall back to legacy `pins`; (b) defer Task 3.3 until Phase 4 switches writes. **Recommend (a)** — it keeps reads correct through the transition. Implement the reshape to use `stops` if non-empty, else pass through the legacy `pins` unchanged.
-
-- [ ] **Step 4: Run tests**
-
-Run: `cd backend && npm test 2>&1 | grep -E "^ℹ (pass|fail)"`
-Expected: `fail 0`.
-
-- [ ] **Step 5: Commit**
-
-```bash
-cd backend && git add models/itineraries.js models/itineraries.test.js
-git commit -m "Reshape itinerary reads from ItineraryStop+Pin into legacy pins[] shape"
-```
+Itinerary read reshaping (`ItineraryStop → Pin` → `pins[]`) has moved to Phase 4,
+where it flips together with the write switch. Doing it here would strand
+itineraries created between Phase 3 and Phase 4 (legacy `pins`, no `stops`) behind
+a dual-read bridge for no benefit — the frontend can't tell the shape changed, and
+Phase 5 drops the legacy columns regardless. Phase 4 will: switch `persist.js` /
+`pinController` / `copyItinerary` / seeds to write `ItineraryStop`, AND change
+`models/itineraries.js` `itineraryInclude` to `stops → pin` with a `reshapeItinerary`
+mapper that flattens back to the existing `pins[]` shape (reconstructing `tags` from
+`interests+cuisines+diets` + `mealType` for the frontend badge). Reads and writes
+change in lockstep, so there's never a mismatch window.
 
 ---
 
@@ -424,14 +334,14 @@ git commit -m "Add Phase 3 recommendation parity check script"
 
 ## Out of scope (later phases)
 
-- **Writes** still create legacy `Pin` rows (Phase 4: `persist.js` → `ItineraryStop`, `pinController` stop CRUD, copy duplicates stops, seeds write the new shape). Task 3.3's dual-read (stops-else-legacy-pins) bridges the gap until then.
+- **Itinerary reads AND writes** flip together in Phase 4: `persist.js` → `ItineraryStop`, `pinController` stop CRUD, `copyItinerary` duplicates stops, seeds write the new shape, AND `models/itineraries.js` reshapes `stops → pin` back to `pins[]`. Deferred here so reads never lead writes (no dual-read window).
 - **classify-on-write** for `createPin`/`updatePin` (so API-created pins get the explicit columns) lands in Phase 4.
 - **Dropping legacy columns** (`itineraryId`/`orderInItinerary`/times/`tags` on Pin) is Phase 5.
 - **Real per-day hours** data seeding is a separate data task; `mapVenue` already handles it when present.
 
 ## Self-review notes
 
-- **Spec coverage:** engine reads via mapVenue + drop dedup/privacy (3.1) ✓; privacy intent preserved via catalog-only scoping (3.1b) ✓; null-hours = closed = drop (3.2) ✓; itinerary reads reshape stops+pin → pins[] with mealType, API-shape-identical (3.3) ✓; parity check (3.4) ✓; Issues 1 & 2 already fixed in mapVenue (prerequisite) ✓.
-- **Placeholder scan:** Tasks 3.1, 3.2, 3.3 carry full code. Tasks 3.1b and parts of 3.2/3.3-tests reference "the existing harness/fixtures" — flagged as adapt-existing rather than invented code, because they modify existing test files whose fixtures must be reused, not duplicated.
-- **Type consistency:** `mapVenue(pin, tripDate)` signature matches `getAllPins(tripDate)`'s call; `isClosedThisDay(pin)` checks `openingHours === null` matching mapVenue's null output; `reshapeItinerary` consumes `_count.likes` (from the likeCount work) + `stops[].pin`.
-- **Landmine coverage:** Issue 1 (emptyToUndefined) done in mapVenue; Issue 2 (per-day hours) done in mapVenue; Issue 3a (dedup) resolved by catalog-only scoping in 3.1; Issue 3b (classify-on-write) explicitly deferred to Phase 4 with a bridging dual-read in 3.3.
+- **Spec coverage (Phase 3 scope = engine catalog reads only):** engine reads via mapVenue + drop dedup/privacy (3.1) ✓; privacy intent preserved via catalog-only scoping (3.1b) ✓; null-hours = closed = drop (3.2) ✓; parity check (3.4) ✓; Issues 1 & 2 already fixed in mapVenue (prerequisite) ✓. Itinerary read reshaping intentionally moved to Phase 4 (see Task 3.3 note + Architecture).
+- **Placeholder scan:** Tasks 3.1 and 3.2 carry full code. Task 3.1b and parts of 3.2's tests reference "the existing harness/fixtures" — flagged as adapt-existing rather than invented code, because they modify existing test files whose fixtures must be reused, not duplicated.
+- **Type consistency:** `mapVenue(pin, tripDate)` signature matches `getAllPins(tripDate)`'s call; `isClosedThisDay(pin)` checks `openingHours === null` matching mapVenue's null output.
+- **Landmine coverage:** Issue 1 (emptyToUndefined) done in mapVenue; Issue 2 (per-day hours) done in mapVenue; Issue 3a (dedup) resolved by catalog-only scoping in 3.1; Issue 3b (classify-on-write) + itinerary read/write switch both deferred to Phase 4 (flipped in lockstep — no bridge needed).
