@@ -62,6 +62,8 @@ model Itinerary {
   sourceItinerary   Itinerary?  @relation("ForkedItinerary", fields: [sourceItineraryId], references: [id], onDelete: SetNull)
   savedCopies       Itinerary[] @relation("ForkedItinerary")
   pins              Pin[]
+
+  @@index([isPublic])
 }
 
 model Pin {
