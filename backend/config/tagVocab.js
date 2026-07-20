@@ -13,9 +13,9 @@ const FOOD_INDICATOR_TAGS = new Set(['food', 'restaurant'])
 // What a restaurant serves. Doubles as `place.cuisine` for the engine's
 // cuisine-overlap scoring (score/score.js) and matching (helpers/helpers.js).
 const CUISINE_TAGS = new Set([
-  'mexican', 'italian', 'thai', 'sushi', 'japanese', 'chinese', 'indian',
-  'french', 'mediterranean', 'vietnamese', 'korean', 'american', 'bbq',
-  'seafood', 'pizza', 'ramen', 'noodles', 'steak', 'vegan', 'burgers',
+  'mexican', 'italian', 'thai', 'japanese', 'chinese', 'indian',
+  'french', 'mediterranean', 'vietnamese', 'korean', 'american',
+  'seafood', 'noodles', 'steak', 'vegan',
 ])
 
 // Dietary restrictions a restaurant can accommodate. Doubles as `place.diet`
