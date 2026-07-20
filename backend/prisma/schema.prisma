@@ -61,6 +61,7 @@ model Itinerary {
   sourceItinerary   Itinerary?  @relation("ForkedItinerary", fields: [sourceItineraryId], references: [id], onDelete: SetNull)
   savedCopies       Itinerary[] @relation("ForkedItinerary")
   pins              Pin[]
+  stops             ItineraryStop[]
 
   @@index([isPublic])
 }
@@ -77,6 +78,10 @@ model Pin {
   name                    String
   description             String?
   tags                    String[]
+  category                String    @default("activity")
+  interests               String[]
+  cuisines                String[]
+  diets                   String[]
   rating                  Float?
   pricePerPerson          Float
   latitude                Float
@@ -87,7 +92,9 @@ model Pin {
   travelTimeToNextMinutes Int?
   distanceToNextMeters    Float?
   locationImageUrl        String?
+  hoursOpen               Json?
   itinerary               Itinerary? @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+  stops                   ItineraryStop[]
 
   // Each stop has a unique position WITHIN its itinerary. This intentionally does
   // NOT constrain catalog pins: Postgres treats NULLs as distinct, so any number of
@@ -113,4 +120,21 @@ model Bookmark {
   itinerary   Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
 
   @@id([userId, itineraryId])
+}
+
+model ItineraryStop {
+  id                      Int       @id @default(autoincrement())
+  pinId                   Int
+  itineraryId             Int
+  orderInItinerary        Int
+  startTime               DateTime
+  endTime                 DateTime
+  travelTimeToNextMinutes Int?
+  distanceToNextMeters    Float?
+  mealType                String?
+  note                    String?
+  pin                     Pin       @relation(fields: [pinId], references: [id])
+  itinerary               Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+
+  @@unique([itineraryId, orderInItinerary])
 }

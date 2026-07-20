@@ -26,4 +26,15 @@ const DIET_TAGS = new Set([
   'vegan', 'vegetarian', 'gluten-free', 'halal', 'kosher', 'dairy-free', 'pescatarian',
 ])
 
-export { FOOD_INDICATOR_TAGS, CUISINE_TAGS, DIET_TAGS }
+// The engine's missing-data rule needs UNKNOWN to be `undefined`, never `[]`:
+// an empty diet/cuisine list must read as "we don't know" (keep the pin), not
+// "confirmed to serve/match nothing" (which would wrongly drop it). The Pin
+// table's `interests`/`cuisines`/`diets` columns default to `[]` on rows that
+// were never populated, so any reader mapping those columns into the engine's
+// pin shape must funnel them through this. See passesDiet/overlap in
+// ../services/recommendation/helpers/helpers.js.
+function emptyToUndefined(arr) {
+  return Array.isArray(arr) && arr.length > 0 ? arr : undefined
+}
+
+export { FOOD_INDICATOR_TAGS, CUISINE_TAGS, DIET_TAGS, emptyToUndefined }
