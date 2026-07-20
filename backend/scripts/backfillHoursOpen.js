@@ -18,4 +18,11 @@ async function main() {
   console.log(`Set hoursOpen on ${result} pins.`)
 }
 
-main().then(() => process.exit(0))
+main()
+  .catch((err) => {
+    console.error(err)
+    process.exit(1)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
+  })
