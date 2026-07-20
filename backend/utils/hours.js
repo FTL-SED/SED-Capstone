@@ -7,9 +7,12 @@
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 const RANGE_RE = /^([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d$/
 
+// The weekday of a YYYY-MM-DD calendar date is timezone-independent, so we
+// anchor the probe at UTC noon and read getUTCDay(). Noon keeps us far from any
+// midnight boundary, and using UTC on both sides means no offset (and no DST) is
+// involved. Do NOT reuse this for wall-clock times — it only yields the day key.
 function dayKeyFromDate(dateISO) {
-  // Parse as a Pacific-local calendar date; noon avoids any tz edge flipping the day.
-  const probe = new Date(`${dateISO}T12:00:00-08:00`)
+  const probe = new Date(`${dateISO}T12:00:00Z`)
   return DAY_KEYS[probe.getUTCDay()]
 }
 
