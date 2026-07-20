@@ -22,11 +22,26 @@ const INITIAL_FORM = {
   description: '',
 };
 
-function ItineraryWizard() {
+function ItineraryWizard({setActiveStep}) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(INITIAL_FORM);
-  const next = () => setStep((s) => s + 1);
-  const back = () => setStep((s) => Math.max(1, s - 1));
+  
+  const next = () => {
+    setStep((s) => {
+      const newStep = s + 1;
+      setActiveStep(newStep);
+      return newStep;
+    });
+  };
+
+  const back = () => {
+    setStep((s) => {
+      const newStep = Math.max(1, s - 1);
+      setActiveStep(newStep);
+      return newStep;
+    });
+  };
+
   const goTo = (n) => setStep(n);
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }));
 
