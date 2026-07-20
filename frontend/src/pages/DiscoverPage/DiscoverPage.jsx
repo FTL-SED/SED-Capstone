@@ -96,13 +96,14 @@ function DiscoverPage() {
 
   return (
     <div className="discover-page">
-      <SearchBar value={query} onChange={(e) => setQuery(e.target.value)} />
       <FilterControls
         interests={interests}
         sort={sort}
         onToggleInterest={toggleInterest}
         onSortChange={setSort}
-      />
+      >
+        <SearchBar value={query} onChange={(e) => setQuery(e.target.value)} />
+      </FilterControls>
       {hasFilter ? (
         <SearchResultsSection
           itineraries={results}

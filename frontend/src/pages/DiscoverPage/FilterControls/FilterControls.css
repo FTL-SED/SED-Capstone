@@ -1,33 +1,78 @@
-/* Discover filter bar: a row of selectable interest chips plus a
+/* Discover filter bar: a tags dropdown (checkbox multi-select) plus a
    Recent/Popular sort toggle. */
+/* One row: [Tags]  [search bar]  [Recent/Popular]. The search bar grows to
+   fill the space between the two filter groups. */
 .filter-controls {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
 }
 
-.filter-controls__interests {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+/* The search bar sits in the middle and takes the remaining width. Its own
+   auto margins (used when standalone/centered) are cancelled here. */
+.filter-controls__search {
+  flex: 1;
 }
 
-.filter-chip {
+.filter-controls__search .search-bar {
+  margin: 0;
+  max-width: none;
+}
+
+/* Anchor for the absolutely-positioned dropdown menu. */
+.filter-controls__interests {
+  position: relative;
+}
+
+.tags-dropdown__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 12px;
   border: 1px solid #ccc;
   border-radius: 999px;
   background: #fff;
   cursor: pointer;
   font-size: 0.85rem;
+}
+
+.tags-dropdown__caret {
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.tags-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 10;
+  min-width: 180px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.tags-dropdown__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
   text-transform: capitalize;
 }
 
-.filter-chip--selected {
-  background: #2d3a4a;
-  color: #fff;
-  border-color: #2d3a4a;
+.tags-dropdown__option:hover {
+  background: #f2f4f6;
+}
+
+.tags-dropdown__option input {
+  cursor: pointer;
 }
 
 .filter-controls__sort {
