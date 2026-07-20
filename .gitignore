@@ -8,3 +8,5 @@ node_modules
 
 # Prisma generated client
 /generated/prisma
+
+CLAUDE.md
