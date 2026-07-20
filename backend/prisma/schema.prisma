@@ -78,6 +78,10 @@ model Pin {
   name                    String
   description             String?
   tags                    String[]
+  category                String    @default("activity")
+  interests               String[]
+  cuisines                String[]
+  diets                   String[]
   rating                  Float?
   pricePerPerson          Float
   latitude                Float
