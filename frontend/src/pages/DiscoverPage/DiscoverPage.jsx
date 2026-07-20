@@ -28,13 +28,6 @@ function DiscoverPage() {
     )
   }, [])
 
-  // Reset loading/error immediately when the search/filter/sort inputs change,
-  // before the debounce fires — so the loading state shows right away.
-  useEffect(() => {
-    setLoading(true)
-    setError(null)
-  }, [query, interests, sort])
-
   // Debounced fetch of the FIRST page whenever the search/filter/sort inputs
   // change. `ignore` guards against a slow earlier request overwriting a newer
   // one (React strict-mode / fast typing).
@@ -42,6 +35,8 @@ function DiscoverPage() {
     let ignore = false
 
     const timer = setTimeout(async () => {
+      setLoading(true)
+      setError(null)
       try {
         const params = buildDiscoverParams(query, interests, sort, 0, PAGE_LIMIT)
         const data = await listItineraries(params)
