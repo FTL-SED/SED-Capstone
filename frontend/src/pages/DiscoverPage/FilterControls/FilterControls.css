@@ -1,0 +1,50 @@
+/* Discover filter bar: a row of selectable interest chips plus a
+   Recent/Popular sort toggle. */
+.filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.filter-controls__interests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-chip {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-transform: capitalize;
+}
+
+.filter-chip--selected {
+  background: #2d3a4a;
+  color: #fff;
+  border-color: #2d3a4a;
+}
+
+.filter-controls__sort {
+  display: flex;
+  gap: 4px;
+}
+
+.sort-toggle {
+  padding: 6px 14px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.sort-toggle--active {
+  background: #2d3a4a;
+  color: #fff;
+  border-color: #2d3a4a;
+}
