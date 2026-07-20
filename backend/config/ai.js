@@ -12,6 +12,12 @@ export { AVG_STOP_DURATION_MIN } from './recommendation.js'
 // timeout).
 export const AI_MODEL =
   'claude-sonnet-4-5-20250929'
+// OpenRouter model id, used when the client talks to OpenRouter instead of the
+// Salesforce gateway (they namespace model ids differently, so the gateway id
+// above isn't valid there). Override with OPENROUTER_MODEL if you want a
+// different/free tier.
+export const AI_OPENROUTER_MODEL =
+  process.env.OPENROUTER_MODEL || 'anthropic/claude-sonnet-4.5'
 export const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS) || 20_000
 export const AI_MAX_RETRIES = Number(process.env.AI_MAX_RETRIES) || 2
 
