@@ -26,20 +26,17 @@ function ItineraryWizard({setActiveStep}) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(INITIAL_FORM);
   
+  // Keep the parent's activeStep in sync with our step. Call both setters
+  // directly from the handler (not inside the setStep updater) so we never
+  // update CreateItineraryPage during ItineraryWizard's render.
   const next = () => {
-    setStep((s) => {
-      const newStep = s + 1;
-      setActiveStep(newStep);
-      return newStep;
-    });
+    setStep((s) => Math.min(3, s + 1));
+    setActiveStep((s) => Math.min(3, s + 1));
   };
 
   const back = () => {
-    setStep((s) => {
-      const newStep = Math.max(1, s - 1);
-      setActiveStep(newStep);
-      return newStep;
-    });
+    setStep((s) => Math.max(1, s - 1));
+    setActiveStep((s) => Math.max(1, s - 1));
   };
 
   const goTo = (n) => setStep(n);
