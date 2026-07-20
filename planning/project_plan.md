@@ -162,6 +162,13 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 
 ## Data Model
 
+> **As built:** the reference below matches the live Prisma schema
+> (`backend/prisma/schema.prisma`). Notable evolutions from the original plan:
+> `Itinerary.likeCount` was **removed** (the count is computed live from `Like`
+> rows), `Pin.itineraryId` and `Pin.locationImageUrl` are now **nullable** (to
+> support the seeded place catalog and photoless catalog entries), `Pin.rating`
+> was **added**, and `Itinerary` gained an **`@@index([isPublic])`**.
+
 ### User
 | Attribute | Type | Additional Info |
 | --- | --- | --- |
@@ -180,7 +187,6 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 | --- | --- | --- |
 | id | Int | @default(autoincrement()) |
 | userId | Int | Foreign key → User.id |
-| likeCount | Int | @default(0)|
 | sourceItineraryId | Int? | Foreign key → Itinerary.id. Null for original itineraries; set when this itinerary is a saved copy of another. |
 | title | String | |
 | location | String | Human-readable city/area label (e.g. "San Francisco, CA") shown on itinerary cards and used to search/filter itineraries by location on the Discover page (US #9) |
@@ -191,34 +197,45 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 | updatedAt | DateTime | @updatedAt |
 | creator | User | @relation("CreatedItineraries", fields: [userId],
 references: [id], onDelete: Cascade) |
-| likes | Like[] | Join rows for the users who have liked this itinerary; `likeCount` is the denormalized count of these |
+| likes | Like[] | Join rows for the users who have liked this itinerary. The like count is computed live from these via Prisma `_count` (exposed as `likeCount` in API responses) — there is no stored counter column |
 | bookmarks | Bookmark[] | Join rows for the users who have bookmarked this itinerary |
 | sourceItinerary |	Itinerary? |	@relation("ForkedItinerary", fields: [sourceItineraryId], references: [id], onDelete: SetNull) |
 | savedCopies |	Itinerary[] |	@relation("ForkedItinerary") |
 | pins | Pin[] | |
 
+**Model Constraints**
+- `@@index([isPublic])` — the Discover feed and recommendation engine both filter on `isPublic`; the index keeps those queries fast as the table grows.
+
 ### Pin
+
+> **As built:** `Pin` doubles as both the **seeded place catalog** (rows with
+> `itineraryId = null`, loaded by `scripts/seedSfPlaces.js`) and the **stops of an
+> itinerary** (`itineraryId` set). See the AI Feature Decisions Log and
+> `.claude/docs/database-schema.md` for the reasoning and the future
+> `Place`/`ItineraryStop` split.
+
 | Attribute | Type | Additional Info |
 | --- | --- | --- |
 | id | Int | @default(autoincrement()) |
-| itineraryId | Int | Foreign key → Itinerary.id |
-| orderInItinerary | Int | |
+| itineraryId | Int? | Foreign key → Itinerary.id. **Nullable** — null for catalog places (exist independent of any trip); set for a stop on a specific itinerary |
+| orderInItinerary | Int | Position within the itinerary; `0` for catalog pins (no meaningful order) |
 | name | String | |
 | description | String? | |
-| tags | String[] | |
+| tags | String[] | Interest + cuisine + diet tags (see `config/tagVocab.js`); the recommendation engine derives category/cuisine/diet from these |
+| rating | Float? | Star rating (0–5) when known; null otherwise |
 | pricePerPerson | Float | |
 | latitude | Float | |
 | longitude | Float | |
 | address | String? | |
-| startTime | DateTime | When the group is scheduled to arrive at this activity |
-| endTime | DateTime | When the group is scheduled to leave this activity |
-| travelTimeToNextMinutes | Int? | Estimated travel time (in minutes) from this activity to the next pin in order (US #3). Null for the last pin, which has no next stop |
-| distanceToNextMeters | Float? | Estimated distance (in meters) from this activity to the next pin in order (US #3). Null for the last pin, which has no next stop |
-| locationImageUrl | String | |
-| itinerary | Itinerary | @relation( fields: [itineraryId], references: [id], onDelete: Cascade ) | 
+| startTime | DateTime | Pacific wall-clock. For a stop: scheduled arrival. For a catalog pin: a neutral all-day window used as a weak open-hours proxy |
+| endTime | DateTime | Pacific wall-clock. For a stop: scheduled departure |
+| travelTimeToNextMinutes | Int? | Estimated travel time (in minutes) from this activity to the next pin in order (US #3). Null for the last pin / catalog pins |
+| distanceToNextMeters | Float? | Estimated distance (in meters) from this activity to the next pin in order (US #3). Null for the last pin / catalog pins |
+| locationImageUrl | String? | **Nullable** — catalog pins have no real photo, so the UI falls back to a placeholder |
+| itinerary | Itinerary? | @relation( fields: [itineraryId], references: [id], onDelete: Cascade ) | 
 
 **Model Constraints**
-- `@@unique([itineraryId, orderInItinerary])` — Ensures that each pin has a unique position within an itinerary (i.e., no two pins in the same itinerary can have the same `orderInItinerary`).
+- `@@unique([itineraryId, orderInItinerary])` — Ensures that each pin has a unique position within an itinerary. Catalog pins (`itineraryId = null`, `orderInItinerary = 0`) never collide because Postgres treats NULLs as distinct.
 
 ### Like
 | Attribute | Type | Additional Info |
@@ -230,7 +247,7 @@ references: [id], onDelete: Cascade) |
 | itinerary | Itinerary | @relation(fields: [itineraryId], references: [id], onDelete: Cascade) |
 
 **Model Constraints**
-- `@@id([userId, itineraryId])` — Composite primary key; a user can like a given itinerary at most once (dedupe), keeping the `Itinerary.likeCount` cache honest.
+- `@@id([userId, itineraryId])` — Composite primary key; a user can like a given itinerary at most once (dedupe). These rows are the single source of truth for the like count (computed live via `_count`; no cached counter).
 
 ### Bookmark
 | Attribute | Type | Additional Info |
@@ -294,7 +311,7 @@ PUT /itineraries/:id - Update an itinerary
 - User stories: 7, 8
 - Request: { title, location, description, coverImageUrl, maxBudgetPerPerson, dayStart, dayEnd, interests, foodPreferences, travelRadius, transport, startingLocations, isPublic, pins } (all fields optional)
 - Response (200): the changed fields
-- Note: likeCount is not editable here; it is maintained only by the like/unlike endpoints below
+- Note: the like count is not editable here; it is derived from Like rows via the like/unlike endpoints below
 - Errors: 401 if the user is not signed in, 403 if the user does not have access to the itinerary, 404 if the itinerary cannot be found
 
 DELETE /itineraries/:id - Delete an itinerary
@@ -305,14 +322,14 @@ DELETE /itineraries/:id - Delete an itinerary
 
 POST /itineraries/:id/like - Like an itinerary
 - User story: 11
-- Description: Adds the authenticated user to the itinerary's likedBy relation and increments likeCount. Idempotent — liking an already-liked itinerary is a no-op.
+- Description: Adds a Like row for the authenticated user. Idempotent — liking an already-liked itinerary is a no-op. Returns the current like count (computed live from the Like rows).
 - Request: none
 - Response (200): { likeCount }
 - Errors: 401 if the user is not signed in, 404 if the itinerary cannot be found
 
 DELETE /itineraries/:id/like - Unlike an itinerary
 - User story: 11
-- Description: Removes the authenticated user from the itinerary's likedBy relation and decrements likeCount. Idempotent — unliking a not-liked itinerary is a no-op.
+- Description: Removes the authenticated user's Like row. Idempotent — unliking a not-liked itinerary is a no-op. Returns the current like count (computed live from the Like rows).
 - Request: none
 - Response (200): { likeCount }
 - Errors: 401 if the user is not signed in, 404 if the itinerary cannot be found
@@ -333,7 +350,7 @@ DELETE /itineraries/:id/bookmark - Remove a bookmark
 
 POST /itineraries/:id/copy - Save an editable copy of an itinerary
 - User stories: 9, 11
-- Description: Deep-duplicates the itinerary and its pins into a new itinerary owned by the authenticated user, with sourceItineraryId set to the original's id. The copy defaults to isPublic=false and likeCount=0, and appears in the user's "Created Itineraries" list.
+- Description: Deep-duplicates the itinerary and its pins into a new itinerary owned by the authenticated user, with sourceItineraryId set to the original's id. The copy defaults to isPublic=false (and starts with no likes), and appears in the user's "Created Itineraries" list.
 - Request: none
 - Response (201): the created copy (same shape as POST /itineraries response)
 - Errors: 401 if the user is not signed in, 403 if the source itinerary is not public and not owned by the user, 404 if the source itinerary cannot be found
@@ -348,9 +365,9 @@ GET /pins/:id - Get a single pin
 
 POST /pins - Create a pin for an itinerary
 - User stories: 1, 2, 3, 4, 10
-- Request: { itineraryId, orderInItinerary, name, pricePerPerson, latitude, longitude, startTime, endTime, locationImageUrl, description?, address? }
+- Request: { itineraryId, orderInItinerary, name, pricePerPerson, latitude, longitude, startTime, endTime, description?, address?, tags?, rating?, locationImageUrl?, travelTimeToNextMinutes?, distanceToNextMeters? }
 - Response (201): the created pin (including id)
-- Errors: 400 if required fields are missing or wrongly structured (description and address are optional), 401 if the user is not signed in, 403 if the user does not own the target itinerary, 404 if the itinerary cannot be found
+- Errors: 400 if required fields are missing or wrongly structured (description, address, tags, rating, and locationImageUrl are optional), 401 if the user is not signed in, 403 if the user does not own the target itinerary, 404 if the itinerary cannot be found
 
 PUT /pins/:id - Update a pin
 - User story: 7
@@ -366,16 +383,16 @@ DELETE /pins/:id - Delete a pin from an itinerary
 
 ### AI Agent
 
-POST /ai-agent - Generate a structured itinerary from AI
+POST /ai-agent - Generate a structured itinerary from AI  **(BUILT)**
 - User stories: 1, 2, 3, 5, 6, 10
 - Description: The deterministic recommendation engine builds a shortlist of real, pre-ranked places from the group's constraints, then the AI sequences them into an ordered one-day itinerary (see "Itinerary Sequencing" in the AI Feature Specification). Returns a structured itinerary to be stored and rendered.
-- Request: { shortlist, timeWindow, budget, groupSize, startingLocations }
-- Response (200): { itinerary } — an ordered set of stops with arrive/depart times, per-stop cost estimate, and travel time and distance to the next stop
-- Errors: 200 with a "constraints too tight" message if no feasible day fits the constraints, 401 if the user is not signed in
+- Request: { shortlist, constraints } — constraints carry timeWindow, maxBudgetPerPerson, groupSize, meetingPoint, travelRadius, transport
+- Response (200): { itinerary } — ordered stops identified by pinId with arrive/depart times and travel time + distance to the next stop. Stops carry no place details or cost; those are re-hydrated from the shortlist by pinId when persisting (so the AI can neither invent nor misprice a place)
+- Errors: 200 with a "constraints too tight" (feasible: false) message if no feasible day fits, 401 if the user is not signed in
 
-POST /ai-agent/edit - Revise an itinerary from a natural-language request
+POST /ai-agent/edit - Revise an itinerary from a natural-language request  **(NOT BUILT — future, US #7)**
 - User story: 7
-- Description: Interprets a plain-language request (e.g. "make it cheaper," "less walking") into constraint changes, then re-runs the recommendation engine and sequencing step to produce a revised itinerary (see "Natural-Language Itinerary Editing" in the AI Feature Specification). The AI only adjusts constraints — it never edits the list of places directly.
+- Description: Interprets a plain-language request (e.g. "make it cheaper," "less walking") into constraint changes, then re-runs the recommendation engine and sequencing step to produce a revised itinerary (see "Natural-Language Itinerary Editing" in the AI Feature Specification). The AI only adjusts constraints — it never edits the list of places directly. This route is designed but not yet implemented.
 - Request: { currentItinerary, userRequest, currentConstraints }
 - Response (200): { itinerary } — the revised itinerary, or the unchanged itinerary with a clarification prompt if the request is ambiguous
 - Errors: 401 if the user is not signed in
@@ -588,14 +605,21 @@ const [currentViewedItinerary, setCurrentViewedItinerary] = useState(null);
 
 ## AI Feature Specification
 
-The app uses AI in three distinct places. The recommendation engine stays
-deterministic (it selects and ranks real places from our database); the AI is a
-language layer around it that either enriches data offline or turns constraints
-and plain language into a usable day. Every model call is made through OpenRouter
-and must return structured JSON, and each feature has a non-AI fallback so the
-app never hard-fails on a bad response.
+The AI's one **built** job is itinerary sequencing. The recommendation engine
+stays deterministic (it selects and ranks real places from our database); the AI
+is a language layer that turns the resulting shortlist + constraints into a usable
+day. Model calls go through the **Salesforce internal model gateway** (called via
+the OpenAI SDK, model `claude-sonnet-4-5`), are asked to return structured JSON,
+and have a deterministic non-AI fallback so the app never hard-fails on a bad
+response. The two other AI uses below (**tag enrichment** and **natural-language
+editing**) are **designed but not yet built** — kept here as intended future work.
 
-### Tag Enrichment (offline seed step)
+### Tag Enrichment (offline seed step) — NOT BUILT (future)
+
+> The current catalog is a hand-curated static dataset whose tags are authored by
+> hand, so there is no live enrichment pass. Kept as a future option if the catalog
+> grows too large to hand-tag.
+
 
 Enriches sparsely-tagged places with additional interest tags from the fixed
 vocabulary so the recommendation engine has richer signal to match on.
@@ -612,7 +636,7 @@ vocabulary so the recommendation engine has richer signal to match on.
     - Suggested tags are reviewed by a person before being committed
     - Results are written to the place's tags column and cached, so there is zero cost at request time
 
-### Itinerary Sequencing (POST /ai-agent)
+### Itinerary Sequencing (POST /ai-agent) — BUILT
 
 Organizes a shortlist of real, pre-ranked places into a sensible one-day
 itinerary. The AI sequences only — it does not choose or invent places.
@@ -620,15 +644,20 @@ itinerary. The AI sequences only — it does not choose or invent places.
 - User stories: 1, 2, 3, 5, 6, 10
 - Description: Receives the recommendation engine's shortlist plus the group's
   constraints and returns an ordered day to be stored and rendered.
-- Input: { shortlist (places with id, category, coordinates, hours, cost estimate), timeWindow, budget, groupSize, startingLocations }
-- Output (200): a structured JSON itinerary — a generated title, location label, and short description for the overall day, plus ordered stops with arrive/depart times, a per-stop cost estimate, and travel time and distance to the next stop
+- Input: { shortlist (places with id, category, tags, coordinates, pricePerPerson, openingHours), constraints (timeWindow, maxBudgetPerPerson, groupSize, meetingPoint, travelRadius, transport) }
+- Output (200): a structured JSON itinerary — a generated title, location label, and short description for the overall day, plus ordered stops identified by pinId with arrive/depart times and travel time + distance to the next stop. A stop carries no cost or place details; name, coords, image, and pricePerPerson are re-hydrated from the shortlist by pinId when persisting
 - Behavior:
-    - Orders stops by geography, inserts meal stops at meal times, and respects each place's opening hours and the itinerary's time window
-    - Uses only place IDs from the provided shortlist — no hallucinated places
-    - Keeps the estimated total cost within the group's budget; if no feasible day fits the constraints, it returns a "constraints too tight" message instead of an itinerary
-    - If the AI call fails or its output fails validation, the system falls back to a deterministic ordering so an itinerary is always produced
+    - Anchors the day near the meetingPoint, orders stops by geography, inserts meal stops at meal times, and respects each place's opening hours and the itinerary's time window
+    - Uses only pinId values from the provided shortlist — no hallucinated places
+    - Keeps total per-person cost within maxBudgetPerPerson (the shortlist is pre-trimmed to fit); if no feasible day fits, returns a "constraints too tight" message instead of an itinerary
+    - If the AI call fails or its output fails validation, the system falls back to a deterministic sequencer so an itinerary is always produced
 
-### Natural-Language Itinerary Editing
+### Natural-Language Itinerary Editing — NOT BUILT (future)
+
+> Designed, not implemented — there is no `/ai-agent/edit` route today. Clear next
+> AI feature: reuses the existing engine + sequencer, adding only a "free text →
+> constraint delta" step in front.
+
 
 Lets the organizer adjust a generated itinerary in plain language instead of
 manually editing each stop.
@@ -648,6 +677,11 @@ manually editing each stop.
 
 | Decision | Sprint | What Changed | Why|
 | --- | --- | --- | --- |
+| LLM provider | 2 | OpenRouter → **Salesforce internal model gateway** (OpenAI SDK, `claude-sonnet-4-5`) | The gateway we had reliable, keyed access to; same OpenAI-SDK shape |
+| AI scope trimmed | 2 | Stops carry **only** pinId + times + travel; no place details or cost | Cost/details are re-hydrated from the shortlist by pinId, so the AI can't invent or misprice a place |
+| Fallback | 2 | Added a **deterministic sequencer** fallback (`services/ai/fallback/`) | An itinerary is always produced even if the AI call/validation fails |
+| Tag enrichment dropped | 2 | Offline AI tag-enrichment **not built** | Catalog is hand-curated with tags authored by hand — nothing to enrich |
+| NL editing deferred | — | `POST /ai-agent/edit` **not built** | Out of MVP scope; designed for later, reuses the deterministic engine |
 
 ## Milestones
 
@@ -672,6 +706,10 @@ Checkpoint:
 
 Milestone 2: Generating Itineraries
 Goal: Create the itinerary generation algorithm using real place data to generate itinerary information
+
+> **As built:** place data ended up being a **hand-curated static SF dataset**
+> (not a live OSM/Overpass pull), and maps use **Leaflet/react-leaflet over OSM
+> tiles** on the frontend (not MapLibre). See `.claude/docs/data-strategy.md`.
 
 Requirements:
 - Set up OSM and MapLibre on the backend to handle fetching/displaying place data
@@ -727,6 +765,11 @@ Checkpoint:
 
 Stretch Goals:
 - Google Places enrichment to fill in ratings, price level, and reliable hours for recommended places
+  - **As built:** not pursued — the hand-curated static dataset already carries real ratings and prices, so enrichment was unnecessary. A no-op enrichment hook remains in the engine for a future offline+cached pass. See `.claude/docs/data-strategy.md`.
+- Natural-language itinerary editing (`POST /ai-agent/edit`) — designed, not built (see AI Feature Specification)
+- Split the overloaded `Pin` table: keep `Pin` as venue-only (adding a per-day `hoursOpen` JSON column and explicit `interests`/`cuisines`/`diets` fields instead of one derived `tags` array) and move per-visit data to a new `ItineraryStop` table. The modular data shape once the catalog grows or places become user-editable. See `.claude/pin-split-tasks.md` and `.claude/docs/database-schema.md`.
+- **Saved user preferences** — let a logged-in user store their own interests, food preferences, diets, home location, and typical budget (plain columns/arrays on `User`, no join). A host can then search users and prefill a member card from their saved values (a snapshot copy — member info stays transient per the Sprint-1 decision, not a live link). Simple and additive; see `.claude/docs/user-preferences-and-friends-stretch.md`.
+- **Friend requests** — a `Friendship` join table (`requesterId`, `addresseeId`, `status: pending|accepted`; decline = delete the row) so the user search above can be gated to friends only rather than anyone opted-in. Backend is small; the frontend (request button, incoming-requests inbox, friends list) is the bulk of the work. Depends on / gates the saved-preferences search. See `.claude/docs/user-preferences-and-friends-stretch.md`.
 
 ## Decision Log
 

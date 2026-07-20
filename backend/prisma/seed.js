@@ -545,12 +545,6 @@ async function main() {
     ],
   })
 
-  // Keep the denormalized likeCount in sync with the Like rows we just made.
-  for (const itineraryId of [sfDay.id, foodCrawl.id, oaklandDay.id, berkeleyDay.id]) {
-    const likeCount = await prisma.like.count({ where: { itineraryId } })
-    await prisma.itinerary.update({ where: { id: itineraryId }, data: { likeCount } })
-  }
-
   console.log('Seed complete.')
 }
 

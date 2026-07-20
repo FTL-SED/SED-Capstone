@@ -33,17 +33,12 @@ function coordKey(name, latitude, longitude) {
   return `${name}|${latitude.toFixed(4)}|${longitude.toFixed(4)}`
 }
 
-function slugify(name) {
-  return name
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
-
-// A dataset place -> a full Pin row.
+// A dataset place -> a full Pin row. Catalog places have no real photo, so
+// locationImageUrl is left null; the UI falls back to a placeholder image.
 function toPin(place) {
   return {
+    // A catalog place belongs to no itinerary. orderInItinerary is meaningless
+    // for it, so we use the sentinel 0 (see the Pin model comment in schema.prisma).
     itineraryId: null,
     orderInItinerary: 0,
     name: place.name,
@@ -58,7 +53,7 @@ function toPin(place) {
     endTime: new Date(`${CATALOG_DAY}T${CLOSE_TIME}:00-07:00`),
     travelTimeToNextMinutes: null,
     distanceToNextMeters: null,
-    locationImageUrl: `https://images.navquest.dev/places/${slugify(place.name)}.jpg`,
+    locationImageUrl: null,
   }
 }
 

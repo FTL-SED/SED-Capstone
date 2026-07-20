@@ -47,7 +47,6 @@ model User {
 model Itinerary {
   id                Int        @id @default(autoincrement())
   userId            Int
-  likeCount         Int        @default(0)
   sourceItineraryId Int?
   title             String
   location          String
@@ -62,8 +61,15 @@ model Itinerary {
   sourceItinerary   Itinerary?  @relation("ForkedItinerary", fields: [sourceItineraryId], references: [id], onDelete: SetNull)
   savedCopies       Itinerary[] @relation("ForkedItinerary")
   pins              Pin[]
+
+  @@index([isPublic])
 }
 
+// A Pin is either a CATALOG place (itineraryId = null — a seeded venue that exists
+// independent of any trip) or an ITINERARY STOP (itineraryId set — a scheduled stop
+// within one itinerary). orderInItinerary only means something for stops; catalog
+// pins are unordered and use the sentinel value 0 (enforced by scripts/seedSfPlaces.js;
+// user-created pins always have an itineraryId, so only the seed makes catalog pins).
 model Pin {
   id                      Int       @id @default(autoincrement())
   itineraryId             Int?
@@ -80,9 +86,12 @@ model Pin {
   endTime                 DateTime
   travelTimeToNextMinutes Int?
   distanceToNextMeters    Float?
-  locationImageUrl        String
+  locationImageUrl        String?
   itinerary               Itinerary? @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
 
+  // Each stop has a unique position WITHIN its itinerary. This intentionally does
+  // NOT constrain catalog pins: Postgres treats NULLs as distinct, so any number of
+  // catalog pins (itineraryId = null, orderInItinerary = 0) coexist without colliding.
   @@unique([itineraryId, orderInItinerary])
 }
 
