@@ -100,7 +100,7 @@ async function listItineraries(req, res) {
 
   const orderBy =
     resolvedSort === 'popular'
-      ? [{ likeCount: 'desc' }, { createdAt: 'desc' }]
+      ? [{ likes: { _count: 'desc' } }, { createdAt: 'desc' }]
       : { createdAt: 'desc' }
 
   const result = await itineraries.findMany({ where, orderBy, take, skip })
@@ -131,7 +131,7 @@ async function getItinerary(req, res) {
 
 // PUT /itineraries/:id
 // Updates the caller's own itinerary. Only scalar fields are editable here; pins
-// are managed through the /pins endpoints, and likeCount only via like/unlike.
+// are managed through the /pins endpoints, and likes via the like/unlike routes.
 async function updateItinerary(req, res) {
   const id = Number(req.params.id)
   if (!Number.isInteger(id)) {
@@ -206,16 +206,8 @@ async function deleteItinerary(req, res) {
   return res.status(204).send()
 }
 
-// Recomputes the denormalized likeCount from the Like rows and persists it.
-// Spans two tables, so it's controller-level orchestration over the models.
-async function syncLikeCount(itineraryId) {
-  const likeCount = await likes.countForItinerary(itineraryId)
-  await itineraries.updateLikeCount(itineraryId, likeCount)
-  return likeCount
-}
-
 // POST /itineraries/:id/like
-// Likes an itinerary (safe to call repeatedly) and returns the refreshed like count.
+// Likes an itinerary (safe to call repeatedly) and returns the current like count.
 async function likeItinerary(req, res) {
   const id = Number(req.params.id)
   if (!Number.isInteger(id)) {
@@ -229,12 +221,12 @@ async function likeItinerary(req, res) {
 
   await likes.upsert(req.user.id, id)
 
-  const likeCount = await syncLikeCount(id)
+  const likeCount = await likes.countForItinerary(id)
   return res.status(200).json({ likeCount })
 }
 
 // DELETE /itineraries/:id/like
-// Unlikes an itinerary (safe to call repeatedly) and returns the refreshed like count.
+// Unlikes an itinerary (safe to call repeatedly) and returns the current like count.
 async function unlikeItinerary(req, res) {
   const id = Number(req.params.id)
   if (!Number.isInteger(id)) {
@@ -248,7 +240,7 @@ async function unlikeItinerary(req, res) {
 
   await likes.remove(req.user.id, id)
 
-  const likeCount = await syncLikeCount(id)
+  const likeCount = await likes.countForItinerary(id)
   return res.status(200).json({ likeCount })
 }
 
@@ -317,7 +309,6 @@ async function copyItinerary(req, res) {
     description: source.description,
     coverImageUrl: source.coverImageUrl,
     isPublic: false,
-    likeCount: 0,
     pins: {
       create: source.pins.map((pin) => ({
         orderInItinerary: pin.orderInItinerary,
