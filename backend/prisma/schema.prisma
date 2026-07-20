@@ -13,8 +13,27 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+/*
+  Prisma relationship syntax:
+
+  One-to-many:
+
+  The "many" side stores the foreign key using @relation("relationship name", fields: [], references: []).
+  The "one" side uses a list field (Model[]) to represent multiple related records.
+
+  You can give a relationship a specific name (@relation("relationship name")).
+  A name is only needed if the same two models have multiple different relationships.
+
+  Many-to-many:
+
+  A join model is needed to store foreign keys to both related models. The join model usually uses a composite
+   key (@@id([field1, field2])) to prevent duplicate relationships.
+*/
+
 model User {
   id                 Int         @id @default(autoincrement())
+
+  // References the user's ID in Supabase Auth
   authUserId         String      @unique
   email              String      @unique
   username           String      @unique
