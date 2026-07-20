@@ -68,9 +68,6 @@ async function createPin(req, res) {
   if (typeof longitude !== 'number' || !Number.isFinite(longitude)) {
     return res.status(400).json({ error: 'longitude is required and must be a number' })
   }
-  if (!locationImageUrl || typeof locationImageUrl !== 'string' || locationImageUrl.trim() === '') {
-    return res.status(400).json({ error: 'locationImageUrl is required' })
-  }
 
   const parsedStart = parseDate(startTime)
   if (!parsedStart) {
@@ -105,6 +102,13 @@ async function createPin(req, res) {
   ) {
     return res.status(400).json({ error: 'distanceToNextMeters must be a number or null' })
   }
+  if (
+    locationImageUrl !== undefined &&
+    locationImageUrl !== null &&
+    (typeof locationImageUrl !== 'string' || locationImageUrl.trim() === '')
+  ) {
+    return res.status(400).json({ error: 'locationImageUrl must be a non-empty string or null' })
+  }
 
   const itinerary = await itineraries.findByIdBasic(itineraryId)
   if (!itinerary) {
@@ -128,7 +132,7 @@ async function createPin(req, res) {
     endTime: parsedEnd,
     travelTimeToNextMinutes: travelTimeToNextMinutes ?? null,
     distanceToNextMeters: distanceToNextMeters ?? null,
-    locationImageUrl: locationImageUrl.trim(),
+    locationImageUrl: locationImageUrl ? locationImageUrl.trim() : null,
   })
 
   return res.status(201).json(pin)
