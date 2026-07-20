@@ -1,6 +1,7 @@
 import AccountAvatar from './AccountAvatar/AccountAvatar.jsx'
 import AccountNav from './AccountNav/AccountNav.jsx'
 import ProfileSection from './ProfileSection/ProfileSection.jsx'
+import UsernameField from './ProfileSection/UsernameField/UsernameField.jsx'
 import ChangePasswordSection from './ChangePasswordSection/ChangePasswordSection.jsx'
 import './AccountPage.css'
 
@@ -13,6 +14,7 @@ function AccountPage({ currentUser, setCurrentUser }) {
       </div>
       <div className="account-page__main">
         <ProfileSection currentUser={currentUser} />
+        <UsernameField currentUser={currentUser} setCurrentUser={setCurrentUser} />
         <ChangePasswordSection currentUser={currentUser} />
       </div>
     </div>

@@ -1,9 +1,80 @@
+import SectionHeader from '../../../../components/SectionHeader/SectionHeader.jsx'
 import TextInput from '../../../../components/Inputs/TextInput/TextInput.jsx'
+import ErrorMessage from '../../../../components/ErrorMessage/ErrorMessage.jsx'
+import { useState } from 'react'
+import axios from 'axios'
 import './UsernameField.css'
 
-function UsernameField({ username }) {
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+
+// Change-username section: shows the current username (read-only) and takes a
+// new one. Saving PUTs to the backend (which owns the uniqueness check) and
+// folds the returned profile into currentUser so the new name shows everywhere
+// and survives a refresh.
+function UsernameField({ currentUser, setCurrentUser }) {
+  const [newUsername, setNewUsername] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setError("");
+    setMessage("");
+
+    const trimmed = newUsername.trim();
+    if (!trimmed) {
+      setError("Please enter a new username.");
+      return;
+    }
+    if (trimmed === currentUser?.username) {
+      setError("That's already your username.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await axios.put(
+        `${BASE_URL}/users/${currentUser.id}`,
+        { username: trimmed },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+      setCurrentUser({ ...currentUser, username: response.data.username });
+      setMessage("Username updated.");
+      setNewUsername("");
+    } catch (err) {
+      setError(err.response?.data?.error || "Something went wrong. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <TextInput label="Username" value={username ?? ""} readOnly />
+    <section className="change-username-section">
+      <SectionHeader title="Change Username" />
+      <TextInput
+        label="Current username"
+        value={currentUser?.username ?? ""}
+        readOnly
+      />
+      <TextInput
+        label="New username"
+        value={newUsername}
+        onChange={(e) => setNewUsername(e.target.value)}
+      />
+      <ErrorMessage message={error} />
+      {message && <p className="change-username-section__success">{message}</p>}
+      <button
+        className="change-username-section__save"
+        type="button"
+        onClick={handleSave}
+        disabled={saving}>
+          {saving ? "Updating..." : "Update username"}
+      </button>
+    </section>
   );
 }
 

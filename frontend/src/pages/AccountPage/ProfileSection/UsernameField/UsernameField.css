@@ -1,1 +1,40 @@
-/* Layout handled by ProfileSection; field uses shared .text-input styles. */
+.change-username-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.change-username-section .section-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.change-username-section .text-input + .text-input {
+  margin-top: 16px;
+}
+
+.change-username-section__save {
+  margin-top: 20px;
+  margin-left: auto;
+  display: block;
+  padding: 10px 20px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--slate-600);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: background 0.15s ease;
+}
+
+.change-username-section__save:hover {
+  background: var(--slate-800);
+}
+
+.change-username-section__success {
+  margin-top: 12px;
+  color: var(--success, #1a7f37);
+  font-size: 0.9rem;
+}
