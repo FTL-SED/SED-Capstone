@@ -51,6 +51,15 @@
   animation: card-placeholder-pulse 1.2s ease-in-out infinite;
 }
 
+/* Empty-state note shown in place of the cards. Centered vertically in the
+   reserved track height so it doesn't collapse the row. */
+.card-carousel__empty {
+  margin: 0;
+  align-self: center;
+  color: var(--slate-500, #64748b);
+  font-size: 0.95rem;
+}
+
 @keyframes card-placeholder-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }

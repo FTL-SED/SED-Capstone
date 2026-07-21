@@ -4,6 +4,23 @@
   gap: 20px;
 }
 
+/* Loading placeholder: same footprint as a real card's cover, with the same
+   pulse the carousel uses. Scoped to the grid so its background beats
+   .itinerary-card's transparent override on specificity, not source order. */
+.itineraries-grid .itinerary-card--placeholder {
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius);
+  background: var(--border);
+  animation: card-placeholder-pulse 1.2s ease-in-out infinite;
+}
+
+/* Same pulse as the carousel; redefined here so the grid doesn't depend on a
+   carousel being present on the page to supply the keyframe. */
+@keyframes card-placeholder-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 @media (max-width: 900px) {
   .itineraries-grid {
     grid-template-columns: repeat(2, 1fr);

@@ -16,6 +16,9 @@ function CardCarousel({
   headerAction,
   itineraries = [],
   loading = false,
+  // Shown in place of the cards once loading is done and the list is empty
+  // (e.g. "You haven't liked any itineraries yet."). Omit to show nothing.
+  emptyMessage,
   // Like/bookmark wiring, only supplied by the HomePage sections. Undefined
   // elsewhere (e.g. the Created section), so the cards fall back to their own
   // self-toggling behavior.
@@ -82,6 +85,10 @@ function CardCarousel({
           ? Array.from({ length: PLACEHOLDER_COUNT }).map((_, i) => (
               <div key={i} className="itinerary-card itinerary-card--placeholder" />
             ))
+          : itineraries.length === 0
+          ? emptyMessage && (
+              <p className="card-carousel__empty">{emptyMessage}</p>
+            )
           : itineraries.map((itinerary) => (
               <ItineraryCard
                 key={itinerary.id}
