@@ -167,3 +167,21 @@ test('travelRadius set but no member coords => radius filter is a no-op', () => 
   assert.equal(meetingPoint, null)
   assert.equal(candidates.length, 1) // not dropped — can't anchor without coords
 })
+
+test('drops a pin explicitly closed on the trip day (openingHours: null)', () => {
+  const { candidates, flags } = run([
+    { name: 'Closed Today', category: 'museum', tags: ['art'], priceLevel: 1, openingHours: null },
+  ])
+  assert.equal(candidates.length, 0) // hard drop, not kept
+  assert.equal(flags.hoursUnknown.includes('Closed Today'), false) // not flagged as unknown
+})
+
+test('keeps a pin with unknown hours (openingHours: undefined) and flags it', () => {
+  const { candidates, flags } = run([
+    { name: 'Unknown Hours', category: 'museum', tags: ['art'], priceLevel: 1, openingHours: undefined },
+  ])
+  assert.equal(candidates.length, 1)
+  assert.equal(candidates[0].name, 'Unknown Hours')
+  assert.equal(candidates[0].hoursUnknown, true)
+  assert.ok(flags.hoursUnknown.includes('Unknown Hours'))
+})

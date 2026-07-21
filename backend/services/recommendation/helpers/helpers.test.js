@@ -12,6 +12,7 @@ import {
   hasUsableHours,
   toMinutes,
   withinRadius,
+  isClosedThisDay,
 } from './helpers.js'
 
 test('shareTag: true when a pin tag is in the group set', () => {
@@ -143,4 +144,21 @@ test('withinRadius: keeps a pin inside the radius, drops one outside', () => {
 test('withinRadius: a pin exactly at the center is always within radius', () => {
   const center = { latitude: 37.7955, longitude: -122.3937 }
   assert.equal(withinRadius({ ...center }, center, 0), true)
+})
+
+test('isClosedThisDay: null openingHours means closed', () => {
+  assert.equal(isClosedThisDay({ openingHours: null }), true)
+})
+
+test('isClosedThisDay: undefined openingHours is NOT closed (unknown)', () => {
+  assert.equal(isClosedThisDay({ openingHours: undefined }), false)
+  assert.equal(isClosedThisDay({}), false)
+})
+
+test('isClosedThisDay: an interval array is NOT closed', () => {
+  assert.equal(isClosedThisDay({ openingHours: [{ open: '09:00', close: '17:00' }] }), false)
+})
+
+test('hasUsableHours: false for null openingHours (explicitly closed)', () => {
+  assert.equal(hasUsableHours({ openingHours: null }), false)
 })

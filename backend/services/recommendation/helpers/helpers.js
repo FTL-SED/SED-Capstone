@@ -123,6 +123,13 @@ function pinIdentity(pin) {
   return pin.id ?? pin.name
 }
 
+// Explicitly closed on the trip day: mapVenue emits openingHours === null when
+// the pin's hoursOpen marks that weekday closed. Distinct from `undefined`
+// (unknown hours ⇒ keep) — a known-closed pin is a real hard drop.
+function isClosedThisDay(pin) {
+  return pin.openingHours === null
+}
+
 export {
   shareTag,
   overlap,
@@ -135,4 +142,5 @@ export {
   hasUsableHours,
   withinRadius,
   pinIdentity,
+  isClosedThisDay,
 }
