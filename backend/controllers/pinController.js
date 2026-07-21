@@ -3,13 +3,7 @@ import * as itineraryStops from '../models/itineraryStops.js'
 import * as itineraries from '../models/itineraries.js'
 import { classifyTags } from '../services/recommendation/pinsRepository/classify.js'
 import { addStop } from '../services/itinerary/addStop.js'
-import { parseIdParam } from './helpers.js'
-
-// Parses a value into a valid Date, or returns null if it isn't a usable date.
-function parseDate(value) {
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? null : date
-}
+import { parseIdParam, parseDate } from './helpers.js'
 
 // GET /pins/:id
 // Returns an itinerary stop with its venue. Readable when the parent itinerary
