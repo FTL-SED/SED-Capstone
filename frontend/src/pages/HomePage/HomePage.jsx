@@ -24,6 +24,8 @@ function HomePage() {
   // deduped by id. The Liked/Bookmarked bars filter THIS, so a like that isn't
   // in the Explore top-10 still shows up after a refresh.
   const [pool, setPool] = useState([]);
+  // Itineraries the current user created, straight from their dashboard.
+  const [createdItineraries, setCreatedItineraries] = useState([]);
   const [loading, setLoading] = useState(true);
   // Just the ids I've liked / bookmarked, held in Sets for instant has()/add()/delete().
   const [likedIds, setLikedIds] = useState(() => new Set());
@@ -45,17 +47,20 @@ function HomePage() {
         const explore = await listItineraries({ scope: 'public', limit: 10 });
         setExploreItineraries(explore);
 
-        // GET /users/:id returns my liked + bookmarked itineraries (owner-only).
+        // GET /users/:id returns my created + liked + bookmarked itineraries
+        // (owner-only).
         const me = await getUserDashboard(currentUserId);
+        const created = me.createdItineraries ?? [];
         const liked = me.likedItineraries ?? [];
         const bookmarked = me.bookmarkedItineraries ?? [];
+        setCreatedItineraries(created);
         setLikedIds(new Set(liked.map((it) => it.id)));
         setBookmarkedIds(new Set(bookmarked.map((it) => it.id)));
 
         // Merge all three sources into one deduped pool (by id) so the bars can
         // show liked/bookmarked items even if they're not in the Explore top-10.
         const byId = new Map();
-        [...explore, ...liked, ...bookmarked].forEach((it) => byId.set(it.id, it));
+        [...explore, ...created, ...liked, ...bookmarked].forEach((it) => byId.set(it.id, it));
         setPool([...byId.values()]);
       } catch (err) {
         console.error('Failed to load home page:', err);
@@ -117,10 +122,15 @@ function HomePage() {
         onToggleLike={toggleLike}
         onToggleBookmark={toggleBookmark}
       />
-      <CreatedItinerariesSection />
-      {/* The Liked/Bookmarked bars are just the pool filtered by the Sets.
-          They read the same state a click just changed, so they update live with
-          no refetch. */}
+      <CreatedItinerariesSection
+        itineraries={createdItineraries}
+        loading={loading}
+        likedIds={likedIds}
+        bookmarkedIds={bookmarkedIds}
+        onToggleLike={toggleLike}
+        onToggleBookmark={toggleBookmark}
+      />
+    
       <LikedItinerariesSection
         itineraries={pool.filter((it) => likedIds.has(it.id))}
         loading={loading}
