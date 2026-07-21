@@ -1,14 +1,236 @@
+/* The landing page opens on a full-bleed cinematic hero, so it drops the
+   centered, padded column the rest of the app uses. Any information sections
+   live below the hero and can reintroduce their own padding. */
 .landing-page {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 3.5rem;
-  padding: 3rem 0 4rem;
 }
 
-@media (max-width: 640px) {
-  .landing-page {
-    gap: 2.5rem;
-    padding: 1.5rem 0 3rem;
+/* ==========================================================================
+   The journey — everything below the hero.
+
+   The page reads as ONE continuous drive rather than stacked marketing
+   sections. A single winding road is the spine: it leaves the hero at the
+   horizontal centre and threads down through every section, weaving left and
+   right, until it vanishes at the horizon in the final CTA.
+
+   Continuity trick (why the seams never show): every section is a full-width
+   SVG on a 1440×900 canvas drawn with preserveAspectRatio="xMidYMid slice".
+   Slice-scaling pins the canvas *centre* to the screen centre at any width, so
+   as long as each section's road ENTERS at x=720,y=0 and EXITS at x=720,y=900
+   with a vertical tangent, the ribbons line up edge-to-edge on every viewport
+   without any pixel math. The road only wanders off-centre in the middle of a
+   section — never at a seam.
+
+   The warm golden-hour palette is continued from the hero and scoped here to
+   .journey, so the rest of the app's navy/teal system stays untouched.
+   ========================================================================== */
+.journey {
+  /* Continued from the hero, kept local to the journey */
+  --j-cream: #f6efe1;
+  --j-cream-deep: #efe3cd;
+  --j-card: #f1e7d2;
+  --j-moss: #47583a;
+  --j-moss-deep: #33402a;
+  --j-hill: #6c7a4e;
+  --j-hill-light: #77864a;
+  --j-stone: #6e6656;
+  --j-sunset: #e1783c;
+  --j-road: #e6d4ac;
+  --j-road-line: #b89a66;
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--j-cream);
+  background: var(--j-moss-deep);
+}
+
+/* ---- One section of the drive ------------------------------------------ */
+.journey-section {
+  position: relative;
+  width: 100%;
+  min-height: 80vh;
+  /* clamp keeps every beat between the 80–100vh the brief asks for */
+  height: clamp(560px, 92vh, 1000px);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* The terrain + road for a section: a background SVG that slices to fill */
+.journey-section__scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.journey-section__scene svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The dashed centre-line that rides on top of the road ribbon in every scene */
+.journey-road-line {
+  fill: none;
+  stroke: var(--j-road-line);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 4 30;
+  opacity: 0.6;
+}
+
+/* The content column that floats over the terrain */
+.journey-section__inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(20px, 5vw, 64px);
+}
+
+/* ---- Shared editorial type for the journey ----------------------------- */
+.journey-eyebrow {
+  display: inline-block;
+  margin: 0 0 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--j-sunset);
+}
+
+.journey-headline {
+  margin: 0;
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(1.9rem, 3.6vw, 3.2rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--j-cream);
+  text-wrap: balance;
+}
+
+.journey-copy {
+  margin: 18px 0 0;
+  max-width: 46ch;
+  font-size: clamp(1rem, 1.2vw, 1.18rem);
+  line-height: 1.6;
+  color: rgba(246, 239, 225, 0.82);
+}
+
+/* ---- Generic placeholder surfaces (the user refines art later) --------- */
+.journey-placeholder {
+  border: 1px dashed rgba(246, 239, 225, 0.28);
+  border-radius: 18px;
+  background: rgba(246, 239, 225, 0.06);
+  backdrop-filter: blur(2px);
+}
+
+/* ==========================================================================
+   The beat — the shared two-part rhythm every drive section now follows.
+
+   Each beat pairs a solid dark-green TEXT CARD on one side with a VISUAL panel
+   (mockup / diagram / image) on the other, and leaves a wide, content-free
+   corridor down the middle for the winding road to thread through. Sections
+   alternate which side the visual sits on (.beat--flip), so scanning down the
+   page the eye reads text → road → text → road while the visuals zig-zag
+   left/right. Because the copy lives inside an opaque card and the road never
+   leaves the centre corridor, the ribbon can wind freely without ever crossing
+   text or artwork.
+   ========================================================================== */
+.beat__inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  /* the gap IS the road corridor — kept wide so the ribbon never touches
+     either column */
+  gap: clamp(120px, 18vw, 300px);
+}
+
+/* Solid describing card. Sits darker than the surrounding meadow so it reads
+   as a distinct panel, lifted off the terrain with a soft shadow. */
+.beat__text {
+  justify-self: start;
+  max-width: 520px;
+  padding: clamp(28px, 3.4vw, 46px);
+  border-radius: 22px;
+  border: 1px solid rgba(246, 239, 225, 0.1);
+  background: linear-gradient(160deg, #34412a, #2b3622);
+  box-shadow: 0 26px 60px rgba(18, 24, 14, 0.5);
+}
+
+.beat__visual {
+  justify-self: end;
+  width: 100%;
+  max-width: 520px;
+}
+
+/* Flip: visual leads on the left, text card follows on the right */
+.beat--flip .beat__visual {
+  order: 1;
+  justify-self: start;
+}
+
+.beat--flip .beat__text {
+  order: 2;
+  justify-self: end;
+}
+
+/* The card carries its own tightened type so the shared journey styles don't
+   need per-section overrides */
+.beat__text .journey-eyebrow {
+  margin-bottom: 12px;
+}
+
+.beat__text .journey-copy {
+  max-width: none;
+}
+
+/* ---- Responsive: the beat collapses to a single centred column --------- */
+@media (max-width: 820px) {
+  .beat__inner {
+    grid-template-columns: 1fr;
+    gap: 36px;
+    justify-items: center;
+  }
+
+  /* text always leads on mobile, visual follows, regardless of flip */
+  .beat__text {
+    order: 1;
+    justify-self: center;
+    max-width: 560px;
+  }
+
+  .beat__visual,
+  .beat--flip .beat__visual {
+    order: 2;
+    justify-self: center;
+    max-width: 560px;
+  }
+}
+
+/* ==========================================================================
+   Responsive — the drive stacks to a single readable column on small screens.
+   Individual sections override their grid in their own stylesheet.
+   ========================================================================== */
+@media (max-width: 820px) {
+  .journey-section {
+    height: auto;
+    min-height: 0;
+    padding-block: clamp(56px, 12vh, 96px);
+  }
+}
+
+/* ---- Reduced motion: hold every scrolling / drifting scene still -------- */
+@media (prefers-reduced-motion: reduce) {
+  .journey [class*="--anim"] {
+    animation: none !important;
   }
 }

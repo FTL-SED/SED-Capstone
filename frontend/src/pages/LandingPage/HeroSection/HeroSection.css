@@ -1,8 +1,214 @@
-.hero-section {
+/* ==========================================================================
+   NavQuest hero — a full-bleed golden-hour landscape with a branching road.
+   The warm palette is scoped to this component so the rest of the app keeps
+   its own navy/teal design system untouched.
+   ========================================================================== */
+
+/* Editorial display face for the headline + wordmark. Body/UI stays on the
+   app's Inter. Fraunces is loaded here, local to the hero. */
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&display=swap");
+
+.hero {
+  /* Golden hour in a national park — moss leads, sunset is used sparingly */
+  --cream: #f6efe1;
+  --cream-deep: #efe3cd;
+  --moss: #47583a;
+  --moss-deep: #33402a;
+  --stone: #6e6656;
+  --sunset: #e1783c;
+
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100svh;
+  overflow: hidden;
+  background: var(--cream-deep);
+  isolation: isolate;
+}
+
+/* ---- Scene -------------------------------------------------------------- */
+.hero__scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hero__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Legibility scrim: darkens the lower third just enough for the headline,
+   fading to nothing over the sky so the scene stays bright and open. */
+.hero__scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(60, 74, 46, 0) 40%,
+    rgba(45, 57, 36, 0.42) 74%,
+    rgba(32, 41, 27, 0.72) 100%
+  );
+  pointer-events: none;
+}
+
+/* ---- Branching routes: hover to weigh each option ----------------------- */
+/* Each route is a hoverable group. On hover/focus its warm glow fades in and
+   its destination lifts and brightens; the other two quietly recede so the
+   considered path stands alone. */
+.hero__route {
+  cursor: pointer;
+}
+
+.hero__route-glow {
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.hero__dest {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+
+.hero__route:hover .hero__route-glow,
+.hero__route:focus-visible .hero__route-glow {
+  opacity: 0.9;
+}
+
+.hero__route:hover .hero__dest,
+.hero__route:focus-visible .hero__dest {
+  transform: scale(1.08) translateY(-4px);
+}
+
+/* Dim the unconsidered routes while one is being weighed */
+.hero__paths:hover .hero__route:not(:hover) {
+  opacity: 0.55;
+  transition: opacity 0.4s ease;
+}
+
+.hero__route:focus-visible {
+  outline: none;
+}
+
+/* ---- Minimal overlay: headline + CTA, seated low over the scene --------- */
+.hero__overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: clamp(9vh, 14vh, 180px);
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 30px;
+  padding: 0 24px;
   text-align: center;
-  gap: 1.25rem;
-  width: 100%;
+}
+
+/* Retune the shared Heading for the editorial hero (scoped to .hero) */
+.hero .hero-heading {
+  max-width: 15ch;
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(2.6rem, 6vw, 5rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: var(--cream);
+  text-wrap: balance;
+  text-shadow: 0 2px 30px rgba(28, 36, 22, 0.55);
+}
+
+/* Retune the shared Start-Planning CTA to the sunset accent (scoped) */
+.hero .start-planning-button {
+  margin-top: 0;
+}
+
+.hero .start-planning-button__btn {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--sunset);
+  padding: 0.95rem 2.4rem;
+  border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(225, 120, 60, 0.34);
+}
+
+.hero .start-planning-button__btn:hover {
+  background: #d16a2f;
+  box-shadow: 0 14px 38px rgba(225, 120, 60, 0.42);
+  transform: translateY(-2px);
+}
+
+.hero .start-planning-button__btn:focus-visible {
+  outline: 3px solid rgba(225, 120, 60, 0.35);
+  outline-offset: 3px;
+}
+
+/* ==========================================================================
+   Motion — elegant and almost unnoticeable. All of it is disabled under
+   prefers-reduced-motion below.
+   ========================================================================== */
+
+/* Clouds drift slowly across the sky. One shared left-to-right traversal: each
+   begins just off the left edge and exits fully off the right before the loop
+   resets, so the wrap is always off-screen. Equal negative delays keep the
+   three evenly spaced as they go. */
+.hero__cloud--1 { animation: hero-drift 96s linear infinite; }
+.hero__cloud--2 { animation: hero-drift 96s linear infinite; animation-delay: -32s; }
+.hero__cloud--3 { animation: hero-drift 96s linear infinite; animation-delay: -64s; }
+
+@keyframes hero-drift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(1780px); }
+}
+
+/* A small plane crosses the sky every so often (long pause between passes) */
+.hero__plane { animation: hero-plane 34s linear infinite; }
+
+@keyframes hero-plane {
+  0%      { transform: translate(0, 0); opacity: 0; }
+  4%      { opacity: 0.75; }
+  44%     { opacity: 0.75; }
+  48%     { transform: translate(1600px, 0); opacity: 0; }
+  100%    { transform: translate(1600px, 0); opacity: 0; }
+}
+
+/* ---- Responsive --------------------------------------------------------- */
+@media (max-width: 860px) {
+  .hero__overlay {
+    bottom: clamp(8vh, 12vh, 140px);
+    gap: 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Keep the headline within the viewport on narrow phones */
+  .hero .hero-heading {
+    font-size: clamp(2rem, 8vw, 2.6rem);
+  }
+}
+
+/* ---- Reduced motion: hold the scene perfectly still --------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .hero__cloud--1,
+  .hero__cloud--2,
+  .hero__cloud--3,
+  .hero__plane {
+    animation: none;
+  }
+
+  /* Keep the highlight (color/opacity) but drop the motion of the lift */
+  .hero__dest,
+  .hero__route-glow,
+  .hero__paths:hover .hero__route:not(:hover) {
+    transition: none;
+  }
+
+  .hero__route:hover .hero__dest,
+  .hero__route:focus-visible .hero__dest {
+    transform: none;
+  }
 }

@@ -1,17 +1,219 @@
-.auth-card {
+/* ==========================================================================
+   NavQuest auth scene — a quiet continuation of the landing-page world, set up
+   in the clouds. It reuses the landing hero's warm golden-hour sky. The palette
+   is scoped to .auth-scene: the reused inputs, buttons, links and messages pick
+   up the identity here (via retinted design tokens) without their component
+   files changing, and the rest of the app keeps its navy/teal system untouched.
+   ========================================================================== */
+
+/* Editorial display face for the headings, matching the landing hero. */
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&display=swap");
+
+.auth-scene {
+  /* Golden-hour palette carried over from the hero */
+  --cream: #f6efe1;
+  --cream-deep: #efe3cd;
+  --panel: #fdf8ee;
+  --moss: #47583a;
+  --moss-deep: #33402a;
+  --stone: #6e6656;
+  --sunset: #e1783c;
+  --sunset-soft: #f7dcc7;
+
+  /* Retint the shared design tokens for descendants only, so the reused
+     inputs/buttons/links adopt the warm identity in this context. */
+  --ink: var(--moss-deep);
+  --slate-800: #46402f;
+  --slate-600: #5c5646;
+  --slate-500: var(--stone);
+  --slate-400: #b0a58c;
+  --border: #e7ddc6;
+  --border-strong: #d8caa6;
+  --surface: #fffaf0;
+  --surface-muted: #f7efdd;
+  --accent: var(--sunset);
+  --accent-strong: #cf6a2f;
+  --accent-soft: var(--sunset-soft);
+  --radius-sm: 12px;
+
+  position: relative;
   width: 100%;
-  max-width: 440px;
-  margin: 80px auto;
-  padding: 40px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  /* The auth top bar floats over this scene (see Navbar.css) and the footer is
+     hidden on auth pages, so the sky fills the whole viewport. */
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--nav-h) + 32px) 20px 56px;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--cream-deep);
 }
 
+/* ---- Sky backdrop ------------------------------------------------------- */
+.auth-scene__sky {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.auth-sky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- The authentication panel ------------------------------------------- */
+.auth-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 456px;
+  padding: 48px 44px;
+  background: var(--panel);
+  border: 1px solid rgba(120, 104, 74, 0.16);
+  border-radius: 24px;
+  box-shadow:
+    0 2px 6px rgba(74, 64, 40, 0.05),
+    0 30px 60px -24px rgba(74, 64, 40, 0.34);
+}
+
+/* Welcoming editorial heading + supporting line */
+.auth-card__head {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.auth-title {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  font-size: 2.05rem;
+  letter-spacing: -0.02em;
+  color: var(--moss-deep);
+}
+
+.auth-subtitle {
+  margin-top: 10px;
+  font-size: 0.98rem;
+  line-height: 1.5;
+  color: var(--stone);
+}
+
+/* ---- Reused inputs, warmed --------------------------------------------- */
+.auth-card .text-input input,
+.auth-card .password-input input {
+  padding: 12px 14px;
+  background: var(--surface);
+}
+
+/* Primary CTA — moss green, the brand's action colour */
+.auth-card .submit-button {
+  padding: 13px;
+  border-radius: var(--radius-pill);
+  background: var(--moss);
+}
+
+.auth-card .submit-button:hover:not(:disabled) {
+  background: var(--moss-deep);
+}
+
+/* The sign-up / log-in switch link picks up the sunset accent */
+.auth-card .register-link,
+.auth-card .login-link {
+  color: var(--sunset);
+}
+
+/* ==========================================================================
+   Motion — gentle and almost unnoticeable; stilled for reduced-motion users.
+   ========================================================================== */
+/* One shared left-to-right traversal. Clouds begin just off the left edge and
+   exit fully off the right before the loop resets, so the wrap is always
+   off-screen. Equal negative delays keep the three evenly spaced as they go. */
+.auth-cloud--1 { animation: auth-drift 90s linear infinite; }
+.auth-cloud--2 { animation: auth-drift 90s linear infinite; animation-delay: -30s; }
+.auth-cloud--3 { animation: auth-drift 90s linear infinite; animation-delay: -60s; }
+
+@keyframes auth-drift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(1780px); }
+}
+
+/* Birds fly left-to-right and wrap around, exactly like the clouds: they begin
+   just off the left edge and exit fully off the right before the loop resets.
+   Equal negative delays keep the three well spaced as they cross. */
+.auth-bird-fly--1 { animation: auth-fly 76s linear infinite; }
+.auth-bird-fly--2 { animation: auth-fly 76s linear infinite; animation-delay: -25.3s; }
+.auth-bird-fly--3 { animation: auth-fly 76s linear infinite; animation-delay: -50.6s; }
+
+@keyframes auth-fly {
+  from { transform: translateX(0); }
+  to   { transform: translateX(1580px); }
+}
+
+/* Each bird bobs gently up and down… */
+.auth-bird--1 { animation: auth-bird 9s ease-in-out infinite; }
+.auth-bird--2 { animation: auth-bird 11s ease-in-out infinite; }
+.auth-bird--3 { animation: auth-bird 13s ease-in-out infinite; }
+
+@keyframes auth-bird {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-9px); }
+}
+
+/* …and flaps by swapping between the wings-up and wings-down artwork every two
+   seconds. The down frame is hidden by default so a single, correct pose shows
+   when motion is disabled. */
+.auth-bird__frame--down { opacity: 0; }
+
+.auth-bird__frame--up { animation: auth-flap-up 4s linear infinite; }
+.auth-bird__frame--down { animation: auth-flap-down 4s linear infinite; }
+
+.auth-bird--2 .auth-bird__frame--up,
+.auth-bird--2 .auth-bird__frame--down { animation-delay: -1.3s; }
+.auth-bird--3 .auth-bird__frame--up,
+.auth-bird--3 .auth-bird__frame--down { animation-delay: -2.6s; }
+
+@keyframes auth-flap-up {
+  0%, 49.999% { opacity: 1; }
+  50%, 100%   { opacity: 0; }
+}
+
+@keyframes auth-flap-down {
+  0%, 49.999% { opacity: 0; }
+  50%, 100%   { opacity: 1; }
+}
+
+/* ---- Responsive --------------------------------------------------------- */
 @media (max-width: 640px) {
+  .auth-scene {
+    padding: 40px 16px;
+  }
+
   .auth-card {
-    margin: 48px auto;
-    padding: 28px 20px;
+    padding: 34px 24px;
+    border-radius: 20px;
+  }
+
+  .auth-title {
+    font-size: 1.72rem;
+  }
+}
+
+/* ---- Reduced motion: hold the sky perfectly still ----------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .auth-cloud--1,
+  .auth-cloud--2,
+  .auth-cloud--3,
+  .auth-bird-fly--1,
+  .auth-bird-fly--2,
+  .auth-bird-fly--3,
+  .auth-bird--1,
+  .auth-bird--2,
+  .auth-bird--3,
+  .auth-bird__frame--up,
+  .auth-bird__frame--down {
+    animation: none;
   }
 }

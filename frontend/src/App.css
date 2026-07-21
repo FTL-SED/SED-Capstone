@@ -235,3 +235,61 @@ img {
     font-size: 1.35rem;
   }
 }
+
+/* ==========================================================================
+   Sky page transitions (View Transitions API)
+   The landing and auth pages share one continuous sky, so navigating between
+   them can feel like moving through it. Driven by a data-sky-transition flag
+   set on <html> by the nav / auth-card links (opt-in), so browsers without the
+   API — and every other route — just navigate normally.
+     • "ascend"  Landing → Login/Register: the ground drops away as we rise and
+                 the destination settles in from above, clearing a cloud haze.
+     • "card"    Login ↔ Register: the sky is held perfectly still and only the
+                 auth card morphs between the two forms.
+   ========================================================================== */
+
+/* --- Ascend into the clouds --- */
+:root[data-sky-transition="ascend"]::view-transition-old(root) {
+  animation: sky-ascend-out 700ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+:root[data-sky-transition="ascend"]::view-transition-new(root) {
+  animation: sky-ascend-in 700ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes sky-ascend-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(30%) scale(1.15); }
+}
+
+@keyframes sky-ascend-in {
+  from { opacity: 0; transform: translateY(-12%) scale(1.02); filter: blur(10px); }
+  to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+/* --- Card-only switch: hold the sky still, morph just the card --- */
+:root[data-sky-transition="card"]::view-transition-old(root),
+:root[data-sky-transition="card"]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* Lift the auth card into its own transition group so it morphs between the
+   login and register forms while the sky behind it stays put. */
+:root[data-sky-transition="card"] .auth-card {
+  view-transition-name: auth-card;
+}
+
+:root[data-sky-transition="card"]::view-transition-group(auth-card) {
+  animation-duration: 480ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Respect reduced-motion: swap instantly, with no movement. */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-sky-transition]::view-transition-old(root),
+  :root[data-sky-transition]::view-transition-new(root),
+  :root::view-transition-group(auth-card) {
+    animation: none;
+  }
+}

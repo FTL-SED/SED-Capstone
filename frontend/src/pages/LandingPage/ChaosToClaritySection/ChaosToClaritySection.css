@@ -1,0 +1,163 @@
+/* The journey field — the single flat green section below the hero, with one
+   straight road running down its centre from top to bottom. */
+
+.journey-section.journey-field {
+  /* one solid green, no gradient, so there's no banding down the field.
+     Height is driven by the stacked beats + gap bands, and the centre road
+     (absolute, top/bottom 0) spans whatever that comes to. */
+  position: relative;
+  height: auto;
+  background: #586c43;
+  display: block;
+}
+
+/* ---- Beats laid over the field ---------------------------------------- */
+/* The beats sit above the road, stacked down the field with generous spacing
+   so the drive reads text → road → image → road as you scroll. */
+.journey-field__beats {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: clamp(160px, 22vh, 340px) clamp(20px, 5vw, 64px);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* One row = a beat plus the grassy gap that follows it. The gap band is where
+   greenery lives, so plants only ever sit in the empty space between beats. */
+.field-beat-row {
+  display: flex;
+  flex-direction: column;
+}
+
+/* One beat: a text box and an image on opposite sides of the centre road. The
+   wide middle gap is the road corridor, so neither column ever covers it. */
+.field-beat {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: clamp(120px, 18vw, 300px);
+}
+
+/* Default: text on the left, image on the right */
+.field-beat__text {
+  justify-self: start;
+  max-width: 560px;
+  padding: clamp(36px, 4vw, 60px);
+  border-radius: 22px;
+  border: 1px solid rgba(246, 239, 225, 0.12);
+  background: linear-gradient(160deg, #34412a, #2b3622);
+  box-shadow: 0 26px 60px rgba(18, 24, 14, 0.5);
+}
+
+.field-beat__title {
+  margin: 0;
+}
+
+.field-beat__text .journey-copy {
+  max-width: none;
+}
+
+.field-beat__image {
+  position: relative;
+  justify-self: end;
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 4 / 3;
+  display: grid;
+  place-items: center;
+  border-radius: 22px;
+  border: 1px dashed rgba(246, 239, 225, 0.4);
+  background: rgba(246, 239, 225, 0.1);
+  color: rgba(246, 239, 225, 0.7);
+}
+
+.field-beat__image-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Flip: image leads on the left, text follows on the right */
+.field-beat--flip .field-beat__image {
+  order: 1;
+  justify-self: start;
+}
+
+.field-beat--flip .field-beat__text {
+  order: 2;
+  justify-self: end;
+}
+
+/* ---- Responsive: beats collapse to a single centred column ------------ */
+@media (max-width: 820px) {
+  .field-beat {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    justify-items: center;
+  }
+
+  /* text always leads on mobile, image follows, regardless of flip */
+  .field-beat__text,
+  .field-beat--flip .field-beat__text {
+    order: 1;
+    justify-self: center;
+    max-width: 560px;
+  }
+
+  .field-beat__image,
+  .field-beat--flip .field-beat__image {
+    order: 2;
+    justify-self: center;
+    max-width: 560px;
+  }
+}
+
+/* The grassy band between two beats. Greenery is placed inside here and only
+   here, so plants live purely in the open space separating sections — never
+   beside a text box or image. The band's own height IS the vertical spacing
+   between beats, and it's set per-band (tree bands run taller than flower
+   bands) so the rhythm stays uneven. */
+.field-gap {
+  position: relative;
+  pointer-events: none;
+}
+
+.field-flora {
+  position: absolute;
+  /* seat each item on its baseline so it grows upward from its point */
+  transform: translate(0, -100%);
+}
+
+.field-flora__svg {
+  display: block;
+  height: auto;
+}
+
+/* The straight road: a centred vertical ribbon spanning the whole field, with
+   a dashed centre-line drawn on top via a repeating gradient. */
+.journey-field__route {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 76px;
+  z-index: 1;
+  transform: translateX(-50%);
+  background:
+    /* dashed centre-line */
+    repeating-linear-gradient(
+      to bottom,
+      var(--j-road-line) 0 6px,
+      transparent 6px 34px
+    ),
+    /* road surface */
+    var(--j-road);
+  background-size: 4px 100%, 100% 100%;
+  background-position: center top, center top;
+  background-repeat: no-repeat, no-repeat;
+}
