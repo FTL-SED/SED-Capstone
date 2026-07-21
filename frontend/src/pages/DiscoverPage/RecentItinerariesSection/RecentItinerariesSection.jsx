@@ -13,7 +13,7 @@ function RecentItinerariesSection({ itineraries, loading, error, hasMore, onLoad
       {!error && itineraries.length === 0 && !loading && (
         <p className="recent-itineraries-section__empty">No itineraries yet.</p>
       )}
-      <ItinerariesGrid itineraries={itineraries} />
+      <ItinerariesGrid itineraries={itineraries} loading={loading} />
       {hasMore && <LoadMoreButton onClick={onLoadMore} />}
     </section>
   )
