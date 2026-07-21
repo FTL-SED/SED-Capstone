@@ -32,9 +32,10 @@ function recommend(trip, members, pins) {
   const groupFood = new Set(members.flatMap((m) => m.foodPrefs ?? []))
 
   // Stage 1: hard filters (relevance, diet, budget sanity, hours) + Stage 0's
-  // meeting point / travel-radius drop. meetingPoint is null when members carry
-  // no coordinates; memberCoords is reused for the fairness metric below.
-  const { candidates, meetingPoint, memberCoords } = hardFilter(pins, members, trip)
+  // meeting point / travel-radius drop. Pass the already-computed groupTags so
+  // hardFilter doesn't rebuild the identical Set. meetingPoint is null when
+  // members carry no coordinates; memberCoords is reused for the fairness metric.
+  const { candidates, meetingPoint, memberCoords } = hardFilter(pins, members, trip, groupTags)
 
   // Stage 2: soft score + rank the full survivor pool.
   const scoredCandidates = scoreAndSort(candidates, members, groupTags, groupFood)

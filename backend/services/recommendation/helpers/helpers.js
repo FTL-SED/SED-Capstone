@@ -1,7 +1,12 @@
-// Pure primitives for the recommendation engine. Every function here is
-// side-effect free and operates only on plain objects passed in — no DB, no
-// Express — so each is independently unit-testable (see helpers.test.js).
-// Composed by the hard filters (Step 3) and soft score (Step 4).
+// Pure primitives for the recommendation engine. No DB, no Express, so each is
+// independently unit-testable (see helpers.test.js). Composed by the hard
+// filters (Step 3) and soft score (Step 4).
+//
+// One deliberate exception to "purely functional": memberInterestSet/
+// memberFoodSet memoize a Set onto the member under a NON-ENUMERABLE key
+// (idempotent, invisible to JSON/spreads, output-neutral). It's a caching
+// optimization for the (pins × members) scoring hot path, not observable
+// behavior — members arrive fresh per request and aren't mutated mid-run.
 //
 // Assumed normalized shapes (mapVenue produces these from a Pin row):
 //   pin  = { name, category, tags[], cuisine[]?, diet[]?, priceLevel?,
@@ -23,12 +28,31 @@ function shareTag(pinTags, groupTagsSet) {
   return pinTags.some((tag) => groupTagsSet.has(tag))
 }
 
+// A member's interest/food-pref values as a Set, memoized on the member object
+// under a non-enumerable key. The scoring pass calls memberLikes for every
+// (pin × member) pair, so without this each call rebuilt an identical Set from
+// the same array — O(pins × members) throwaway allocations. Building it once
+// per member and caching it makes the hot path O(members) instead. The cache
+// key is non-enumerable so it never leaks into JSON responses or `...pin` spreads.
+function cachedSet(obj, cacheKey, sourceKey) {
+  let set = obj[cacheKey]
+  if (set === undefined) {
+    set = new Set(obj[sourceKey] ?? [])
+    Object.defineProperty(obj, cacheKey, { value: set, enumerable: false, configurable: true })
+  }
+  return set
+}
+
+const memberInterestSet = (member) => cachedSet(member, '__interestSet', 'interestTags')
+const memberFoodSet = (member) => cachedSet(member, '__foodSet', 'foodPrefs')
+
 // True if the pin's cuisine overlaps a member's food preferences. Drives the
 // restaurant side of the soft score (a sushi-loving group floats sushi up).
-function overlap(pinCuisine, memberFoodPrefs) {
+// Takes the member (not a raw array) so it can reuse the memoized food-pref Set.
+function overlap(pinCuisine, member) {
   if (!pinCuisine || pinCuisine.length === 0) return false
-  if (!memberFoodPrefs || memberFoodPrefs.length === 0) return false
-  const prefs = new Set(memberFoodPrefs)
+  const prefs = memberFoodSet(member)
+  if (prefs.size === 0) return false
   return pinCuisine.some((c) => prefs.has(c))
 }
 
@@ -136,6 +160,8 @@ function isClosedThisDay(pin) {
 export {
   shareTag,
   overlap,
+  memberInterestSet,
+  memberFoodSet,
   passesDiet,
   memberCanEat,
   estPricePerPerson,

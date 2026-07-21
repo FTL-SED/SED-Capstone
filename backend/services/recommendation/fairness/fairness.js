@@ -10,27 +10,38 @@ import { memberCanEat, pinIdentity } from '../helpers/helpers.js'
 
 const isRestaurant = (pin) => pin.category === 'restaurant'
 
-const isInList = (list, pin) =>
-  list.some((p) => pinIdentity(p) === pinIdentity(pin))
+// Single-pass best-scoring candidate satisfying `matches`, skipping any already
+// in `coveredIds`. Replaces a `.filter().sort()[0]` (which sorts the whole match
+// set just to take its head) with one linear scan tracking the max.
+function bestUncovered(candidates, coveredIds, matches) {
+  let best = null
+  for (const pin of candidates) {
+    if (coveredIds.has(pinIdentity(pin)) || !matches(pin)) continue
+    if (best === null || (pin.score ?? 0) > (best.score ?? 0)) best = pin
+  }
+  return best
+}
 
 // candidates must already carry a `.score` (set by softScore, Step 4) — this
 // function only decides *whom* to inject for, not how to score them.
 function ensureEveryMemberCovered(shortlist, members, candidates) {
   const covered = [...shortlist]
+  // Identity Set of what's covered, maintained incrementally — avoids the old
+  // O(covered) re-scan (`isInList`) inside a filter over all candidates.
+  const coveredIds = new Set(covered.map(pinIdentity))
 
   for (const member of members) {
     const alreadyCovered = covered.some((pin) => memberLikes(pin, member))
     if (alreadyCovered) continue
 
-    const bestMatch = candidates
-      .filter((pin) => memberLikes(pin, member) && !isInList(covered, pin))
-      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0]
+    const bestMatch = bestUncovered(candidates, coveredIds, (pin) => memberLikes(pin, member))
 
     // No candidate matches this member's interests at all — nothing to inject.
     // (A hard gap in the data/vocab, not something this function can fix.)
     if (!bestMatch) continue
 
     covered.push(bestMatch)
+    coveredIds.add(pinIdentity(bestMatch))
   }
 
   return covered
@@ -44,6 +55,7 @@ function ensureEveryMemberCovered(shortlist, members, candidates) {
 // implicitly, since those already rank higher via memberLikes.
 function ensureEveryDietCovered(shortlist, members, candidates) {
   const covered = [...shortlist]
+  const coveredIds = new Set(covered.map(pinIdentity))
 
   for (const member of members) {
     const needs = member.diet ?? []
@@ -52,15 +64,18 @@ function ensureEveryDietCovered(shortlist, members, candidates) {
     const hasMeal = covered.some((pin) => isRestaurant(pin) && memberCanEat(pin, member))
     if (hasMeal) continue
 
-    const bestMeal = candidates
-      .filter((pin) => isRestaurant(pin) && memberCanEat(pin, member) && !isInList(covered, pin))
-      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0]
+    const bestMeal = bestUncovered(
+      candidates,
+      coveredIds,
+      (pin) => isRestaurant(pin) && memberCanEat(pin, member),
+    )
 
     // No edible restaurant exists for this member anywhere — a real data gap
     // (surfaced elsewhere as thin/absent diet data), not fixable here.
     if (!bestMeal) continue
 
     covered.push(bestMeal)
+    coveredIds.add(pinIdentity(bestMeal))
   }
 
   return covered
