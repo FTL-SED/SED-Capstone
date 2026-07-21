@@ -1,7 +1,6 @@
 import 'dotenv/config'
 
 import { PrismaClient } from '@prisma/client'
-import { classifyTags } from '../services/recommendation/pinsRepository/classify.js'
 
 // Self-contained client for the seed so it doesn't depend on the app's
 // lib/prisma.js (which uses a driver adapter — a preview feature under Prisma
@@ -40,13 +39,10 @@ async function seedUsers() {
   return created
 }
 
-// A venue pin is a catalog entry carrying only venue data.
-// It exists independent of any itinerary.
+// A venue pin is a catalog entry carrying only venue data. It exists
+// independent of any itinerary. Each entry supplies its own structured
+// category/interests/cuisines/diets (see the overrides at each call site).
 function venue(overrides) {
-  // Extract tags from overrides (if present) to derive category/interests/cuisines/diets
-  const tags = overrides.tags || []
-  const { category, interests, cuisines, diets } = classifyTags(tags)
-
   // Neutral all-week hours (08:00-22:00) — real venues would have actual per-day schedules
   const hoursOpen = {
     mon: '08:00-22:00',
@@ -63,14 +59,11 @@ function venue(overrides) {
     description: null,
     locationImageUrl: null,
     rating: null,
-    category,
-    interests,
-    cuisines,
-    diets,
+    interests: [],
+    cuisines: [],
+    diets: [],
     hoursOpen,
     ...overrides,
-    // Remove tags from the final object — it's not a Pin column anymore
-    tags: undefined,
   }
 }
 
@@ -106,7 +99,7 @@ async function main() {
     data: venue({
       name: 'Golden Gate Bridge Vista Point',
       description: 'Start with the classic view before the fog rolls in.',
-      tags: ['scenic_views', 'landmark', 'photography'],
+      category: 'activity', interests: ['scenic_views', 'landmark', 'photography'], cuisines: [], diets: [],
       pricePerPerson: 0,
       latitude: 37.8078,
       longitude: -122.4753,
@@ -119,7 +112,7 @@ async function main() {
     data: venue({
       name: 'Ferry Building Marketplace',
       description: 'Grab coffee and pastries from the local vendors.',
-      tags: ['food', 'market', 'coffee'],
+      category: 'restaurant', interests: ['market', 'coffee'], cuisines: [], diets: [],
       pricePerPerson: 18.5,
       latitude: 37.7955,
       longitude: -122.3937,
@@ -132,7 +125,7 @@ async function main() {
     data: venue({
       name: 'Golden Gate Park & Japanese Tea Garden',
       description: 'Wander the gardens and rest with a pot of tea.',
-      tags: ['nature', 'garden', 'relaxing'],
+      category: 'activity', interests: ['nature', 'garden', 'relaxing'], cuisines: [], diets: [],
       pricePerPerson: 12,
       latitude: 37.7702,
       longitude: -122.4703,
@@ -145,7 +138,7 @@ async function main() {
     data: venue({
       name: 'Lands End Coastal Trail',
       description: 'An easy cliffside walk with views of the bridge and the ruins of Sutro Baths.',
-      tags: ['hiking', 'scenic_views', 'nature'],
+      category: 'activity', interests: ['hiking', 'scenic_views', 'nature'], cuisines: [], diets: [],
       pricePerPerson: 0,
       latitude: 37.7802,
       longitude: -122.5111,
@@ -158,7 +151,7 @@ async function main() {
     data: venue({
       name: 'Nopa',
       description: 'California comfort food and a lively room to end the day.',
-      tags: ['food', 'californian'],
+      category: 'restaurant', interests: ['californian'], cuisines: [], diets: [],
       pricePerPerson: 45,
       latitude: 37.7748,
       longitude: -122.4376,
@@ -171,7 +164,7 @@ async function main() {
     data: venue({
       name: 'Twin Peaks Sunset',
       description: 'Cap the night with a panorama of the whole city lighting up.',
-      tags: ['scenic_views', 'sunset', 'photography'],
+      category: 'activity', interests: ['scenic_views', 'sunset', 'photography'], cuisines: [], diets: [],
       pricePerPerson: 0,
       latitude: 37.7544,
       longitude: -122.4477,
@@ -184,7 +177,7 @@ async function main() {
     data: venue({
       name: 'La Taqueria',
       description: 'Famous for its no-rice burritos and crispy tacos.',
-      tags: ['food', 'mexican', 'casual'],
+      category: 'restaurant', interests: ['casual'], cuisines: ['mexican'], diets: [],
       pricePerPerson: 14,
       latitude: 37.7509,
       longitude: -122.418,
@@ -197,7 +190,7 @@ async function main() {
     data: venue({
       name: 'El Farolito',
       description: 'Late-night favorite with legendary super quesadillas.',
-      tags: ['food', 'mexican'],
+      category: 'restaurant', interests: [], cuisines: ['mexican'], diets: [],
       pricePerPerson: 13,
       latitude: 37.7521,
       longitude: -122.4181,
@@ -210,7 +203,7 @@ async function main() {
     data: venue({
       name: 'Taqueria Cancún',
       description: 'The al pastor with a squeeze of lime is the move here.',
-      tags: ['food', 'mexican', 'casual'],
+      category: 'restaurant', interests: ['casual'], cuisines: ['mexican'], diets: [],
       pricePerPerson: 12,
       latitude: 37.7621,
       longitude: -122.4194,
@@ -223,7 +216,7 @@ async function main() {
     data: venue({
       name: 'Bi-Rite Creamery',
       description: 'Cool down with salted caramel ice cream to finish the crawl.',
-      tags: ['food', 'dessert', 'ice_cream'],
+      category: 'restaurant', interests: ['dessert', 'ice_cream'], cuisines: [], diets: [],
       pricePerPerson: 8,
       latitude: 37.7615,
       longitude: -122.4257,
@@ -236,7 +229,7 @@ async function main() {
     data: venue({
       name: 'Hawk Hill',
       description: 'Best raptor-watching spot in the headlands, with a wide bay view.',
-      tags: ['hiking', 'scenic_views'],
+      category: 'activity', interests: ['hiking', 'scenic_views'], cuisines: [], diets: [],
       pricePerPerson: 0,
       latitude: 37.826,
       longitude: -122.4997,
@@ -249,7 +242,7 @@ async function main() {
     data: venue({
       name: 'Point Bonita Lighthouse',
       description: 'Cross the little suspension bridge out to the lighthouse.',
-      tags: ['landmark', 'scenic_views', 'history'],
+      category: 'activity', interests: ['landmark', 'scenic_views', 'history'], cuisines: [], diets: [],
       pricePerPerson: 0,
       latitude: 37.8158,
       longitude: -122.5296,
@@ -262,7 +255,7 @@ async function main() {
     data: venue({
       name: 'Rodeo Beach',
       description: 'Pebbly beach and lagoon — a good spot to eat a packed lunch.',
-      tags: ['beach', 'nature', 'relaxing'],
+      category: 'activity', interests: ['beach', 'nature', 'relaxing'], cuisines: [], diets: [],
       pricePerPerson: 0,
       latitude: 37.8324,
       longitude: -122.5395,
@@ -275,7 +268,7 @@ async function main() {
     data: venue({
       name: 'Tennessee Valley Trail',
       description: 'Flat out-and-back trail that ends at a quiet cove.',
-      tags: ['hiking', 'nature', 'scenic_views'],
+      category: 'activity', interests: ['hiking', 'nature', 'scenic_views'], cuisines: [], diets: [],
       pricePerPerson: 0,
       latitude: 37.8598,
       longitude: -122.5363,
@@ -288,7 +281,7 @@ async function main() {
     data: venue({
       name: 'de Young Museum',
       description: 'Swapped the tea garden for an afternoon of art.',
-      tags: ['art', 'museum', 'indoor'],
+      category: 'activity', interests: ['art', 'museum', 'indoor'], cuisines: [], diets: [],
       pricePerPerson: 20,
       latitude: 37.7715,
       longitude: -122.4686,
@@ -301,7 +294,7 @@ async function main() {
     data: venue({
       name: 'Ocean Beach Sunset',
       description: 'End at the coast as the sun drops into the Pacific.',
-      tags: ['beach', 'sunset', 'scenic_views'],
+      category: 'activity', interests: ['beach', 'sunset', 'scenic_views'], cuisines: [], diets: [],
       pricePerPerson: 0,
       latitude: 37.7594,
       longitude: -122.5107,
@@ -314,7 +307,7 @@ async function main() {
     data: venue({
       name: 'Lake Merritt Loop',
       description: 'Start with an easy 3-mile loop around the tidal lagoon.',
-      tags: ['nature', 'walking', 'scenic_views'],
+      category: 'activity', interests: ['nature', 'walking', 'scenic_views'], cuisines: [], diets: [],
       pricePerPerson: 0,
       latitude: 37.8044,
       longitude: -122.2573,
@@ -327,7 +320,7 @@ async function main() {
     data: venue({
       name: 'Oakland Museum of California',
       description: 'Art, history, and natural science under one roof.',
-      tags: ['art', 'museum', 'history', 'indoor'],
+      category: 'activity', interests: ['art', 'museum', 'history', 'indoor'], cuisines: [], diets: [],
       pricePerPerson: 16,
       latitude: 37.7975,
       longitude: -122.2646,
@@ -340,7 +333,7 @@ async function main() {
     data: venue({
       name: 'Grand Lake Farmers Market',
       description: 'Graze your way through stalls for a build-your-own lunch.',
-      tags: ['food', 'market', 'casual'],
+      category: 'restaurant', interests: ['market', 'casual'], cuisines: [], diets: [],
       pricePerPerson: 20,
       latitude: 37.8113,
       longitude: -122.2469,
@@ -353,7 +346,7 @@ async function main() {
     data: venue({
       name: 'Fentons Creamery',
       description: 'A century-old ice cream parlor — the black-and-tan sundae is iconic.',
-      tags: ['food', 'dessert', 'ice_cream'],
+      category: 'restaurant', interests: ['dessert', 'ice_cream'], cuisines: [], diets: [],
       pricePerPerson: 12,
       latitude: 37.8265,
       longitude: -122.2477,
@@ -366,7 +359,7 @@ async function main() {
     data: venue({
       name: 'Redwood Regional Park',
       description: 'Finish among towering coast redwoods on the Stream Trail.',
-      tags: ['hiking', 'nature', 'scenic_views'],
+      category: 'activity', interests: ['hiking', 'nature', 'scenic_views'], cuisines: [], diets: [],
       pricePerPerson: 0,
       latitude: 37.8095,
       longitude: -122.1636,
@@ -379,7 +372,7 @@ async function main() {
     data: venue({
       name: 'UC Berkeley Campanile',
       description: 'Ride to the top of Sather Tower for a view over the bay.',
-      tags: ['landmark', 'scenic_views', 'photography'],
+      category: 'activity', interests: ['landmark', 'scenic_views', 'photography'], cuisines: [], diets: [],
       pricePerPerson: 5,
       latitude: 37.8721,
       longitude: -122.2578,
@@ -392,7 +385,7 @@ async function main() {
     data: venue({
       name: 'Tilden Regional Park',
       description: 'Wander the botanical garden and the shore of Lake Anza.',
-      tags: ['nature', 'hiking', 'garden'],
+      category: 'activity', interests: ['nature', 'hiking', 'garden'], cuisines: [], diets: [],
       pricePerPerson: 0,
       latitude: 37.9061,
       longitude: -122.2453,
@@ -405,7 +398,7 @@ async function main() {
     data: venue({
       name: 'Cheese Board Collective',
       description: 'Worker-owned spot serving one inventive vegetarian pizza a day.',
-      tags: ['food', 'pizza', 'vegetarian'],
+      category: 'restaurant', interests: ['pizza'], cuisines: [], diets: ['vegetarian'],
       pricePerPerson: 15,
       latitude: 37.8797,
       longitude: -122.2691,
@@ -418,7 +411,7 @@ async function main() {
     data: venue({
       name: 'Indian Rock Park',
       description: 'Scramble up the rock outcrop for a sunset over the Golden Gate.',
-      tags: ['scenic_views', 'sunset', 'nature'],
+      category: 'activity', interests: ['scenic_views', 'sunset', 'nature'], cuisines: [], diets: [],
       pricePerPerson: 0,
       latitude: 37.8916,
       longitude: -122.2725,

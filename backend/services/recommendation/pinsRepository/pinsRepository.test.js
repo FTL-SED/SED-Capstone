@@ -7,7 +7,6 @@ test('getAllPins queries catalog-only and maps via mapVenue', async (t) => {
       id: 1,
       name: 'Taqueria',
       category: 'restaurant',
-      tags: ['food', 'mexican'],
       interests: [],
       cuisines: ['mexican'],
       diets: [],

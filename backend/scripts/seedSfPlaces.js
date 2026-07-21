@@ -3,7 +3,6 @@ import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
 
 import sfPlaces from '../prisma/data/sfPlaces/index.js'
-import { classifyTags } from '../services/recommendation/pinsRepository/classify.js'
 
 // Loads the hand-curated San Francisco place catalog (prisma/data/sfPlaces/)
 // into the Pin table as standalone catalog pins (itineraryId: null). These
@@ -41,17 +40,16 @@ function coordKey(name, latitude, longitude) {
 
 // A dataset place -> a full Pin row. Catalog places have no real photo, so
 // locationImageUrl is left null; the UI falls back to a placeholder image.
-// Post-Phase 2: writes explicit category/interests/cuisines/diets instead of
-// legacy per-visit columns (itineraryId, orderInItinerary, startTime, endTime).
+// The dataset supplies explicit category/interests/cuisines/diets, so they're
+// stored verbatim (no tag derivation).
 function toPin(place) {
-  const { category, interests, cuisines, diets } = classifyTags(place.tags)
   return {
     name: place.name,
     description: place.description,
-    category,
-    interests,
-    cuisines,
-    diets,
+    category: place.category,
+    interests: place.interests ?? [],
+    cuisines: place.cuisines ?? [],
+    diets: place.diets ?? [],
     hoursOpen: ALL_DAY_HOURS,
     rating: place.rating,
     pricePerPerson: place.pricePerPerson,
