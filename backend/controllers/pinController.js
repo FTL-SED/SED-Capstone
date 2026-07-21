@@ -1,6 +1,7 @@
 import * as pins from '../models/pins.js'
 import * as itineraryStops from '../models/itineraryStops.js'
 import * as itineraries from '../models/itineraries.js'
+import { classifyTags } from '../services/recommendation/pinsRepository/classify.js'
 
 // Parses a value into a valid Date, or returns null if it isn't a usable date.
 function parseDate(value) {
@@ -141,22 +142,24 @@ async function createPin(req, res) {
       return res.status(400).json({ error: 'locationImageUrl must be a non-empty string or null' })
     }
 
-    // Create catalog venue pin (itineraryId = null)
+    // Create catalog venue pin (itineraryId = null). A venue holds only place
+    // facts — the per-visit fields (order/times/travel) live on the ItineraryStop
+    // created below, not on the Pin. Derive the explicit tag columns from the
+    // supplied tags via the same classifier the seed/engine use.
+    const { category, interests, cuisines, diets } = classifyTags(tags ?? [])
     const venue = await pins.create({
-      itineraryId: null,
-      orderInItinerary: 0,
       name: name.trim(),
       description: description ?? null,
-      tags: tags ?? [],
+      category,
+      interests,
+      cuisines,
+      diets,
       rating: rating ?? null,
       pricePerPerson,
       latitude,
       longitude,
       address: address ?? null,
-      startTime: parsedStart,
-      endTime: parsedEnd,
-      travelTimeToNextMinutes: null,
-      distanceToNextMeters: null,
+      hoursOpen: null,
       locationImageUrl: locationImageUrl ? locationImageUrl.trim() : null,
     })
     venuePinId = venue.id

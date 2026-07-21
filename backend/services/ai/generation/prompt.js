@@ -11,7 +11,9 @@ const toPromptPin = (pin) => ({
   id: pin.id,
   name: pin.name,
   category: pin.category,
-  tags: pin.tags,
+  // The venue's descriptive tags for the model's context. mapVenue exposes the
+  // split fields (not a combined `tags`), so reconstruct a tag list from them.
+  tags: [...(pin.interests ?? []), ...(pin.cuisine ?? []), ...(pin.diet ?? [])],
   latitude: pin.latitude,
   longitude: pin.longitude,
   pricePerPerson: pin.pricePerPerson,
