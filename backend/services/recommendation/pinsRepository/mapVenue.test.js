@@ -78,5 +78,17 @@ test('passes through id/name/category/price/coords unchanged', () => {
   assert.equal(r.category, 'restaurant')
   assert.equal(r.pricePerPerson, 20)
   assert.equal(r.latitude, 37.76)
-  assert.deepEqual(r.tags, ['food', 'mexican'])
+  assert.equal(r.longitude, -122.42)
+})
+
+test('does not expose legacy tags field', () => {
+  const r = mapVenue(base, THU)
+  assert.equal(r.tags, undefined)
+})
+
+test('exposes split fields (interests, cuisine, diet)', () => {
+  const r = mapVenue({ ...base, interests: ['art'], cuisines: ['mexican'], diets: ['vegan'] }, THU)
+  assert.deepEqual(r.interests, ['art'])
+  assert.deepEqual(r.cuisine, ['mexican'])
+  assert.deepEqual(r.diet, ['vegan'])
 })

@@ -26,10 +26,8 @@ function mapVenue(pin, tripDate) {
     id: pin.id,
     name: pin.name,
     category: pin.category,
-    // Full tag list stays available for activity tag-overlap matching, exactly
-    // as the engine matches today. interests/cuisines/diets are the explicit
-    // split; tags remains the superset until it's dropped in a later phase.
-    tags: pin.tags ?? [],
+    // Split fields are exposed (interests/cuisine/diet) for the engine's
+    // activity and food matching. The legacy tags field has been dropped.
     interests: emptyToUndefined(pin.interests),
     cuisine: emptyToUndefined(pin.cuisines),
     diet: emptyToUndefined(pin.diets),

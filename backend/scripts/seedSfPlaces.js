@@ -3,6 +3,7 @@ import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
 
 import sfPlaces from '../prisma/data/sfPlaces/index.js'
+import { classifyTags } from '../services/recommendation/pinsRepository/classify.js'
 
 // Loads the hand-curated San Francisco place catalog (prisma/data/sfPlaces/)
 // into the Pin table as standalone catalog pins (itineraryId: null). These
@@ -20,12 +21,17 @@ import sfPlaces from '../prisma/data/sfPlaces/index.js'
 // driver adapter and works with the connection string directly.
 const prisma = new PrismaClient({ datasourceUrl: process.env.DATABASE_URL })
 
-// Catalog pins carry no real business hours. Give them a neutral all-day SF
-// window so the engine's isOpenInWindow stays permissive (openingHours is a
-// weak proxy for these — see pinsRepository.js). -07:00 matches seed.js.
-const CATALOG_DAY = '2026-08-15'
-const OPEN_TIME = '08:00'
-const CLOSE_TIME = '22:00'
+// Catalog pins carry a neutral all-day SF window as their hoursOpen so the
+// engine's isOpenInWindow stays permissive. Phase 3 uses explicit hours.
+const ALL_DAY_HOURS = {
+  mon: '08:00-22:00',
+  tue: '08:00-22:00',
+  wed: '08:00-22:00',
+  thu: '08:00-22:00',
+  fri: '08:00-22:00',
+  sat: '08:00-22:00',
+  sun: '08:00-22:00',
+}
 
 // OSM/dataset coords carry ~4 decimals; round to the same precision so the
 // dedupe key is stable across the DB round-trip.
@@ -35,24 +41,23 @@ function coordKey(name, latitude, longitude) {
 
 // A dataset place -> a full Pin row. Catalog places have no real photo, so
 // locationImageUrl is left null; the UI falls back to a placeholder image.
+// Post-Phase 2: writes explicit category/interests/cuisines/diets instead of
+// legacy per-visit columns (itineraryId, orderInItinerary, startTime, endTime).
 function toPin(place) {
+  const { category, interests, cuisines, diets } = classifyTags(place.tags)
   return {
-    // A catalog place belongs to no itinerary. orderInItinerary is meaningless
-    // for it, so we use the sentinel 0 (see the Pin model comment in schema.prisma).
-    itineraryId: null,
-    orderInItinerary: 0,
     name: place.name,
     description: place.description,
-    tags: place.tags,
+    category,
+    interests,
+    cuisines,
+    diets,
+    hoursOpen: ALL_DAY_HOURS,
     rating: place.rating,
     pricePerPerson: place.pricePerPerson,
     latitude: place.latitude,
     longitude: place.longitude,
     address: place.address,
-    startTime: new Date(`${CATALOG_DAY}T${OPEN_TIME}:00-07:00`),
-    endTime: new Date(`${CATALOG_DAY}T${CLOSE_TIME}:00-07:00`),
-    travelTimeToNextMinutes: null,
-    distanceToNextMeters: null,
     locationImageUrl: null,
   }
 }
