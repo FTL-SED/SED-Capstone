@@ -32,9 +32,10 @@ after(async () => {
 
 const trip = { startTime: '09:00', endTime: '18:00', maxBudgetPerPerson: 60 }
 // 'nature' (not 'hiking') deliberately - the only 'hiking'-tagged seeded Pin
-// ("Hawk Hill") lives on a private draft itinerary and must NOT be
-// reachable, so a fixture relying on it to prove fairness coverage would be
-// testing the bug, not the feature. See the private-Pin test below.
+// ("Hawk Hill") is attached to an itinerary (not a catalog pin), so it's not in
+// the engine's catalog and must NOT be reachable; a fixture relying on it to
+// prove fairness coverage would be testing the bug, not the feature. See the
+// private-Pin test below.
 const members = [
   { name: 'Alex', startLocation: { latitude: 37.7880, longitude: -122.4074 }, interestTags: ['art', 'scenic_views'], foodPrefs: ['mexican'] }, // Downtown
   { name: 'Sam', startLocation: { latitude: 37.7599, longitude: -122.4148 }, interestTags: ['nature'], foodPrefs: ['ramen'] }, // Mission
@@ -105,14 +106,16 @@ test(
 )
 
 test(
-  'getRecommendations never surfaces a Pin from a private/draft itinerary, even for a strongly matching interest',
+  'getRecommendations never surfaces a Pin attached to an itinerary (only catalog pins), even for a strongly matching interest',
   { skip: dbReason },
   async () => {
-    // "Hawk Hill" only exists on the seeded private draft itinerary
-    // ("Weekend Draft: Marin Headlands", isPublic: false). A member whose
-    // interests match it exactly must still never see it recommended - this
-    // was a real leak (fixed by scoping getAllPins() to isPublic: true),
-    // not a hypothetical.
+    // "Hawk Hill" only exists as a Pin on the seeded itinerary
+    // ("Weekend Draft: Marin Headlands"), not as a catalog pin. A member whose
+    // interests match it exactly must still never see it recommended: the engine
+    // catalog is scoped to itineraryId = null (true catalog pins only), so no
+    // itinerary-attached pin — public or private draft — can leak into a
+    // stranger's recommendations. This was a real leak historically, not a
+    // hypothetical; catalog-only scoping closes it structurally.
     const hikerMember = [
       { name: 'Hiker', startLocation: { latitude: 37.7801, longitude: -122.4644 }, interestTags: ['hiking', 'scenic_views'], foodPrefs: [] }, // Richmond
     ]
