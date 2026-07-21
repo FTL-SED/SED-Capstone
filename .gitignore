@@ -9,4 +9,7 @@ node_modules
 # Prisma generated client
 /generated/prisma
 
+# Database dumps / backups (contain real user data — never commit)
+*.dump
+
 CLAUDE.md
