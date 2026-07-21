@@ -3,10 +3,13 @@
 // Express — so each is independently unit-testable (see helpers.test.js).
 // Composed by the hard filters (Step 3) and soft score (Step 4).
 //
-// Assumed normalized shapes (an OSM parser produces these upstream):
+// Assumed normalized shapes (mapVenue produces these from a Pin row):
 //   pin  = { name, category, tags[], cuisine[]?, diet[]?, priceLevel?,
 //              rating?, openingHours? }
-//     openingHours = [ { open: 'HH:MM', close: 'HH:MM' }, ... ] | null
+//     openingHours has THREE meaningful states for the trip's day:
+//       [ { open: 'HH:MM', close: 'HH:MM' }, ... ]  open — check overlap
+//       null       — explicitly CLOSED that day (isClosedThisDay ⇒ hard drop)
+//       undefined  — hours UNKNOWN (kept + flagged hoursUnknown, never dropped)
 //     diet         = list of diets the pin can serve, e.g. ['vegetarian']
 //   member = { name, interestTags[], foodPrefs[], diet[]? }
 
