@@ -7,7 +7,10 @@ import { getAllPins } from './pinsRepository/pinsRepository.js'
 import { recommend } from './recommend/recommend.js'
 
 async function getRecommendations(trip, members) {
-  const pins = await getAllPins()
+  // Per-day hours need the trip's calendar day; default to a fixed day when the
+  // caller omits it (matches services/itinerary/persist.js's fallback).
+  const tripDate = trip?.tripDate ?? '2026-01-01'
+  const pins = await getAllPins(tripDate)
   return recommend(trip, members, pins)
 }
 

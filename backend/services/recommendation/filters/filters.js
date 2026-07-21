@@ -15,6 +15,7 @@ import {
   isOpenInWindow,
   hasUsableHours,
   withinRadius,
+  isClosedThisDay,
 } from '../helpers/helpers.js'
 import { geometricMedian } from '../../../utils/geo.js'
 
@@ -74,6 +75,10 @@ function hardFilter(pins, members, trip) {
     // Budget sanity: drop only if one person's visit alone blows the whole
     // per-person budget. Real enforcement is summing the chosen itinerary.
     if (!budgetSanityOk(pin, trip)) continue
+
+    // Known-closed on the trip day (mapVenue emitted null): a real hard drop,
+    // no flag. Distinct from unknown hours (undefined), handled below.
+    if (isClosedThisDay(pin)) continue
 
     // Hours: drop only when usable hours exist AND the pin can't open in the
     // window. Missing OR malformed hours count as unknown — kept and flagged,
