@@ -28,11 +28,11 @@ test('getAllPins queries catalog-only and maps via mapVenue', async (t) => {
       },
     },
   ]
-  let capturedWhere
+  let capturedArgs
   const prismaMock = {
     pin: {
-      findMany: async ({ where }) => {
-        capturedWhere = where
+      findMany: async (args) => {
+        capturedArgs = args
         return rows
       },
     },
@@ -41,8 +41,8 @@ test('getAllPins queries catalog-only and maps via mapVenue', async (t) => {
   const getAllPins = makeGetAllPins(prismaMock)
   const result = await getAllPins('2026-01-01')
 
-  // catalog-only: no privacy OR, no attached pins
-  assert.deepEqual(capturedWhere, { itineraryId: null })
+  // All pins are now catalog venues, no filter needed
+  assert.deepEqual(capturedArgs, undefined)
   assert.equal(result.length, 1)
   assert.equal(result[0].category, 'restaurant')
   assert.deepEqual(result[0].cuisine, ['mexican'])

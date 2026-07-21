@@ -65,7 +65,7 @@ function hardFilter(pins, members, trip) {
     // stay (ranked later by quality).
     const relevant = isRestaurant(pin)
       ? passesDiet(pin, members)
-      : !hasGroupInterests || shareTag(pin.tags, groupTags)
+      : !hasGroupInterests || shareTag(pin.interests ?? [], groupTags)
     if (!relevant) continue
 
     // Travel radius: hard drop pins too far from the meeting point. No flag —

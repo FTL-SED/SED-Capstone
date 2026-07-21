@@ -1,6 +1,7 @@
 import 'dotenv/config'
 
 import { PrismaClient } from '@prisma/client'
+import { classifyTags } from '../services/recommendation/pinsRepository/classify.js'
 
 // Self-contained client for the seed so it doesn't depend on the app's
 // lib/prisma.js (which uses a driver adapter — a preview feature under Prisma
@@ -39,26 +40,37 @@ async function seedUsers() {
   return created
 }
 
-// A venue pin is a catalog entry (itineraryId = null) carrying only venue data.
+// A venue pin is a catalog entry carrying only venue data.
 // It exists independent of any itinerary.
 function venue(overrides) {
+  // Extract tags from overrides (if present) to derive category/interests/cuisines/diets
+  const tags = overrides.tags || []
+  const { category, interests, cuisines, diets } = classifyTags(tags)
+
+  // Neutral all-week hours (08:00-22:00) — real venues would have actual per-day schedules
+  const hoursOpen = {
+    mon: '08:00-22:00',
+    tue: '08:00-22:00',
+    wed: '08:00-22:00',
+    thu: '08:00-22:00',
+    fri: '08:00-22:00',
+    sat: '08:00-22:00',
+    sun: '08:00-22:00',
+  }
+
   return {
-    itineraryId: null,
-    orderInItinerary: 0,
-    tags: [],
     address: null,
     description: null,
     locationImageUrl: null,
-    category: 'activity',
-    interests: [],
-    cuisines: [],
-    diets: [],
     rating: null,
-    hoursOpen: null,
-    // Placeholder dates — catalog venues are timeless; real hours would go in hoursOpen.
-    startTime: new Date('2026-08-15T08:00:00-07:00'),
-    endTime: new Date('2026-08-15T22:00:00-07:00'),
+    category,
+    interests,
+    cuisines,
+    diets,
+    hoursOpen,
     ...overrides,
+    // Remove tags from the final object — it's not a Pin column anymore
+    tags: undefined,
   }
 }
 

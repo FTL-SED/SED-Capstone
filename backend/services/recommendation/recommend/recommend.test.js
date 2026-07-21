@@ -10,11 +10,10 @@ const members = [
 ]
 const trip = { startTime: '09:00', endTime: '18:00', maxBudgetPerPerson: 60 }
 
-const activity = (name, tags) => ({ name, category: 'museum', tags })
+const activity = (name, interests) => ({ name, category: 'museum', interests })
 const restaurant = (name, cuisine, priceLevel = 1) => ({
   name,
   category: 'restaurant',
-  tags: [],
   cuisine,
   priceLevel,
 })
@@ -28,7 +27,7 @@ const pins = [
   ...Array.from({ length: 10 }, (_, i) =>
     restaurant(`Restaurant ${i}`, i % 2 === 0 ? ['sushi'] : ['ramen'])
   ),
-  { name: 'Stamp Museum', category: 'museum', tags: ['stamps'] }, // Cara's only match
+  { name: 'Stamp Museum', category: 'museum', interests: ['stamps'] }, // Cara's only match
 ]
 
 test('runs end-to-end and returns a { shortlist, constraints } shape', () => {
@@ -92,8 +91,8 @@ test('Stage 0: with geocoded members + a radius, constraints carry the meeting p
   ]
   const geoTrip = { startTime: '09:00', endTime: '18:00', maxBudgetPerPerson: 60, travelRadius: 3 }
   const geoPins = [
-    { name: 'Near Gallery', category: 'museum', tags: ['art'], priceLevel: 1, latitude: 37.7845, longitude: -122.4079 },
-    { name: 'Far Gallery', category: 'museum', tags: ['art'], priceLevel: 1, latitude: 37.7594, longitude: -122.5107 }, // ~5+ mi
+    { name: 'Near Gallery', category: 'museum', interests: ['art'], priceLevel: 1, latitude: 37.7845, longitude: -122.4079 },
+    { name: 'Far Gallery', category: 'museum', interests: ['art'], priceLevel: 1, latitude: 37.7594, longitude: -122.5107 }, // ~5+ mi
   ]
   const { shortlist, constraints } = recommend(geoTrip, geoMembers, geoPins)
 
@@ -125,9 +124,9 @@ test('mixed-diet group: meal pool is not emptied, and each dieted member can eat
   ]
   const dietPins = [
     activity('Museum', ['art']),
-    { name: 'Vegan Vibes', category: 'restaurant', tags: [], cuisine: ['vegan'], diet: ['vegan'], priceLevel: 2 },
-    { name: 'Halal Grill', category: 'restaurant', tags: [], cuisine: ['mediterranean'], diet: ['halal'], priceLevel: 2 },
-    { name: 'Steakhouse', category: 'restaurant', tags: [], cuisine: ['steak'], diet: ['none'], priceLevel: 2 },
+    { name: 'Vegan Vibes', category: 'restaurant', cuisine: ['vegan'], diet: ['vegan'], priceLevel: 2 },
+    { name: 'Halal Grill', category: 'restaurant', cuisine: ['mediterranean'], diet: ['halal'], priceLevel: 2 },
+    { name: 'Steakhouse', category: 'restaurant', cuisine: ['steak'], diet: ['none'], priceLevel: 2 },
   ]
   const { shortlist } = recommend(trip, dietMembers, dietPins)
   const restaurants = shortlist.filter((p) => p.category === 'restaurant')
@@ -148,8 +147,8 @@ test('does not mutate the input pins array', () => {
 test('drops pins that fail hard filters (irrelevant activity, over-budget restaurant)', () => {
   const noisyPins = [
     ...pins,
-    { name: 'Skate Park', category: 'park', tags: ['skating'] }, // no interest overlap
-    { name: 'Fancy Tasting Menu', category: 'restaurant', tags: [], priceLevel: 4 }, // $80 > $60 budget
+    { name: 'Skate Park', category: 'park', interests: ['skating'] }, // no interest overlap
+    { name: 'Fancy Tasting Menu', category: 'restaurant', cuisine: ['fusion'], priceLevel: 4 }, // $80 > $60 budget
   ]
   const { shortlist } = recommend(trip, members, noisyPins)
   assert.ok(!shortlist.some((p) => p.name === 'Skate Park'))

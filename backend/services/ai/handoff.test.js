@@ -19,8 +19,10 @@ import { toMinutes } from '../recommendation/helpers/helpers.js'
 // A compact but realistic SF-ish catalog: enough activities + restaurants,
 // with coordinates, hours, prices, and diet/cuisine tags, so the engine has
 // real signal and the sequencer has a real day to build.
+// Activity pins match on `interests` (the engine reads pin.interests, not the
+// legacy pin.tags). `tags` is kept for any code still displaying it.
 const A = (id, name, tags, lat, lon, extra = {}) => ({
-  id, name, category: 'activity', tags,
+  id, name, category: 'activity', tags, interests: tags,
   pricePerPerson: 10, latitude: lat, longitude: lon,
   openingHours: [{ open: '09:00', close: '18:00' }], ...extra,
 })
