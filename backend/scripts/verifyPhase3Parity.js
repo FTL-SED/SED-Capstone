@@ -17,4 +17,9 @@ async function main() {
   console.log('sample:', shortlist.slice(0, 5).map((p) => `${p.name} [${p.category}]`))
 }
 
-main().catch((e) => { console.error(e); process.exit(1) }).finally(() => process.exit(0))
+main()
+  .then(() => process.exit(0))
+  .catch((e) => {
+    console.error(e)
+    process.exit(1)
+  })
