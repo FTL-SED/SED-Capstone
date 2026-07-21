@@ -23,12 +23,31 @@ function shareTag(pinTags, groupTagsSet) {
   return pinTags.some((tag) => groupTagsSet.has(tag))
 }
 
+// A member's interest/food-pref values as a Set, memoized on the member object
+// under a non-enumerable key. The scoring pass calls memberLikes for every
+// (pin × member) pair, so without this each call rebuilt an identical Set from
+// the same array — O(pins × members) throwaway allocations. Building it once
+// per member and caching it makes the hot path O(members) instead. The cache
+// key is non-enumerable so it never leaks into JSON responses or `...pin` spreads.
+function cachedSet(obj, cacheKey, sourceKey) {
+  let set = obj[cacheKey]
+  if (set === undefined) {
+    set = new Set(obj[sourceKey] ?? [])
+    Object.defineProperty(obj, cacheKey, { value: set, enumerable: false, configurable: true })
+  }
+  return set
+}
+
+const memberInterestSet = (member) => cachedSet(member, '__interestSet', 'interestTags')
+const memberFoodSet = (member) => cachedSet(member, '__foodSet', 'foodPrefs')
+
 // True if the pin's cuisine overlaps a member's food preferences. Drives the
 // restaurant side of the soft score (a sushi-loving group floats sushi up).
-function overlap(pinCuisine, memberFoodPrefs) {
+// Takes the member (not a raw array) so it can reuse the memoized food-pref Set.
+function overlap(pinCuisine, member) {
   if (!pinCuisine || pinCuisine.length === 0) return false
-  if (!memberFoodPrefs || memberFoodPrefs.length === 0) return false
-  const prefs = new Set(memberFoodPrefs)
+  const prefs = memberFoodSet(member)
+  if (prefs.size === 0) return false
   return pinCuisine.some((c) => prefs.has(c))
 }
 
@@ -136,6 +155,8 @@ function isClosedThisDay(pin) {
 export {
   shareTag,
   overlap,
+  memberInterestSet,
+  memberFoodSet,
   passesDiet,
   memberCanEat,
   estPricePerPerson,
