@@ -18,8 +18,14 @@
 //     diet         = list of diets the pin can serve, e.g. ['vegetarian']
 //   member = { name, interestTags[], foodPrefs[], diet[]? }
 
-import { PRICE_LEVEL_USD } from '../../../config/recommendation.js'
+import { PRICE_LEVEL_USD, CATEGORY } from '../../../config/recommendation.js'
 import { haversineMiles } from '../../../utils/geo.js'
+
+// A pin is a restaurant (the meal pool) vs. an activity. Shared so the category
+// literal lives in one place (config) and every module agrees on the check.
+function isRestaurant(pin) {
+  return pin.category === CATEGORY.restaurant
+}
 
 // True if the pin carries at least one of the group's interest tags. Used to
 // keep activities relevant to what the group actually likes.
@@ -158,6 +164,7 @@ function isClosedThisDay(pin) {
 }
 
 export {
+  isRestaurant,
   shareTag,
   overlap,
   memberInterestSet,

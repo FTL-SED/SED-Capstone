@@ -1,15 +1,8 @@
 import * as pins from '../models/pins.js'
 import * as itineraryStops from '../models/itineraryStops.js'
 import * as itineraries from '../models/itineraries.js'
-import { classifyTags } from '../services/recommendation/pinsRepository/classify.js'
 import { addStop } from '../services/itinerary/addStop.js'
-import { parseIdParam } from './helpers.js'
-
-// Parses a value into a valid Date, or returns null if it isn't a usable date.
-function parseDate(value) {
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? null : date
-}
+import { parseIdParam, parseDate } from './helpers.js'
 
 // GET /pins/:id
 // Returns an itinerary stop with its venue. Readable when the parent itinerary
@@ -43,7 +36,10 @@ async function createPin(req, res) {
     pinId,
     name,
     description,
-    tags,
+    category,
+    interests,
+    cuisines,
+    diets,
     rating,
     pricePerPerson,
     latitude,
@@ -127,8 +123,16 @@ async function createPin(req, res) {
     if (address !== undefined && address !== null && typeof address !== 'string') {
       return res.status(400).json({ error: 'address must be a string or null' })
     }
-    if (tags !== undefined && (!Array.isArray(tags) || tags.some((t) => typeof t !== 'string'))) {
-      return res.status(400).json({ error: 'tags must be an array of strings' })
+    // Structured venue classification: the client sends category + the
+    // interests/cuisines/diets arrays directly (mirroring how member prefs are
+    // sent), so the backend stores them verbatim — no tag derivation.
+    if (typeof category !== 'string' || category.trim() === '') {
+      return res.status(400).json({ error: 'category is required and must be a non-empty string' })
+    }
+    for (const [field, value] of [['interests', interests], ['cuisines', cuisines], ['diets', diets]]) {
+      if (value !== undefined && (!Array.isArray(value) || value.some((v) => typeof v !== 'string'))) {
+        return res.status(400).json({ error: `${field} must be an array of strings` })
+      }
     }
     if (rating !== undefined && rating !== null && (typeof rating !== 'number' || !Number.isFinite(rating))) {
       return res.status(400).json({ error: 'rating must be a number or null' })
@@ -142,16 +146,14 @@ async function createPin(req, res) {
     }
 
     // A venue holds only place facts — the per-visit fields (order/times/travel)
-    // live on the ItineraryStop, not the Pin. Derive the explicit tag columns
-    // from the supplied tags via the same classifier the seed/engine use.
-    const { category, interests, cuisines, diets } = classifyTags(tags ?? [])
+    // live on the ItineraryStop, not the Pin.
     venue = {
       name: name.trim(),
       description: description ?? null,
-      category,
-      interests,
-      cuisines,
-      diets,
+      category: category.trim(),
+      interests: interests ?? [],
+      cuisines: cuisines ?? [],
+      diets: diets ?? [],
       rating: rating ?? null,
       pricePerPerson,
       latitude,

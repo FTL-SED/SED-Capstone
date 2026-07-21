@@ -1,7 +1,7 @@
 import * as itineraries from '../models/itineraries.js'
 import * as likes from '../models/likes.js'
 import * as bookmarks from '../models/bookmarks.js'
-import { parseIdParam, loadOrNotFound, loadOwned } from './helpers.js'
+import { parseIdParam, parseDate, loadOrNotFound, loadOwned } from './helpers.js'
 
 // POST /itineraries
 // Creates an itinerary owned by the caller, with its stops referencing venue pins.
@@ -21,7 +21,9 @@ async function createItinerary(req, res) {
 
   const pinData = Array.isArray(pins) ? pins : []
 
-  // Validate that all stops carry pinId + required visit fields
+  // Validate each stop and build its ItineraryStop.create shape in one pass —
+  // parse the dates once (shared parseDate) rather than validating then re-parsing.
+  const stops = []
   for (let i = 0; i < pinData.length; i++) {
     const stop = pinData[i]
     if (!Number.isInteger(stop.pinId)) {
@@ -34,31 +36,29 @@ async function createItinerary(req, res) {
         error: `pins[${i}]: orderInItinerary is required and must be a non-negative integer`,
       })
     }
-    const parsedStart = stop.startTime ? new Date(stop.startTime) : null
-    if (!parsedStart || Number.isNaN(parsedStart.getTime())) {
+    const startTime = parseDate(stop.startTime)
+    if (!startTime) {
       return res.status(400).json({
         error: `pins[${i}]: startTime is required and must be a valid date`,
       })
     }
-    const parsedEnd = stop.endTime ? new Date(stop.endTime) : null
-    if (!parsedEnd || Number.isNaN(parsedEnd.getTime())) {
+    const endTime = parseDate(stop.endTime)
+    if (!endTime) {
       return res.status(400).json({
         error: `pins[${i}]: endTime is required and must be a valid date`,
       })
     }
+    stops.push({
+      pinId: stop.pinId,
+      orderInItinerary: stop.orderInItinerary,
+      startTime,
+      endTime,
+      mealType: stop.mealType ?? null,
+      note: stop.note ?? null,
+      travelTimeToNextMinutes: stop.travelTimeToNextMinutes ?? null,
+      distanceToNextMeters: stop.distanceToNextMeters ?? null,
+    })
   }
-
-  // Map to ItineraryStop.create shape
-  const stops = pinData.map((stop) => ({
-    pinId: stop.pinId,
-    orderInItinerary: stop.orderInItinerary,
-    startTime: new Date(stop.startTime),
-    endTime: new Date(stop.endTime),
-    mealType: stop.mealType ?? null,
-    note: stop.note ?? null,
-    travelTimeToNextMinutes: stop.travelTimeToNextMinutes ?? null,
-    distanceToNextMeters: stop.distanceToNextMeters ?? null,
-  }))
 
   const itinerary = await itineraries.create({
     userId: req.user.id,

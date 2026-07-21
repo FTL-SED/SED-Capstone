@@ -16,10 +16,9 @@ import {
   hasUsableHours,
   withinRadius,
   isClosedThisDay,
+  isRestaurant,
 } from '../helpers/helpers.js'
-import { geometricMedian } from '../../../utils/geo.js'
-
-const isRestaurant = (pin) => pin.category === 'restaurant'
+import { geometricMedian, nearestPoint } from '../../../utils/geo.js'
 
 // A member's start location is usable for the meeting point only when it carries
 // numeric coordinates. The frontend resolves each address via its map/autocomplete
@@ -53,8 +52,19 @@ function hardFilter(pins, members, trip, groupTags = new Set(members.flatMap((m)
   // travel-radius drop is measured from it. Both are no-ops (radius skipped)
   // when we lack coordinates or the trip sets no radius — so callers that omit
   // coordinates behave exactly as before.
+  //
+  // Snap the raw geometric median onto the nearest catalog pin: the median of
+  // members on opposite shores of a bay can land IN THE WATER, which is a
+  // useless anchor (nothing to stand on, distances to it are meaningless). Every
+  // pin is a real land venue, so the nearest one is guaranteed on land and near
+  // the group. We anchor on the snapped point for both the radius filter and the
+  // returned meetingPoint.
   const memberCoords = members.filter(hasCoords).map((m) => m.startLocation)
-  const meetingPoint = memberCoords.length > 0 ? geometricMedian(memberCoords) : null
+  const rawMeetingPoint = memberCoords.length > 0 ? geometricMedian(memberCoords) : null
+  const snapped = rawMeetingPoint ? nearestPoint(rawMeetingPoint, pins) : null
+  const meetingPoint = snapped
+    ? { latitude: snapped.latitude, longitude: snapped.longitude }
+    : rawMeetingPoint
   const applyRadius = meetingPoint !== null && typeof trip.travelRadius === 'number'
 
   for (const pin of pins) {

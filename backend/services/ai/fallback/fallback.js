@@ -11,11 +11,12 @@ import {
   AVG_STOP_DURATION_MIN,
   MEAL_TIME_WINDOWS,
   travelMinutesFor,
+  CATEGORY,
 } from '../../../config/ai.js'
 import { haversineMiles, milesToMeters } from '../../../utils/geo.js'
 import { toMinutes, toHHMM } from '../../../utils/time.js'
 
-const isRestaurant = (pin) => pin.category === 'restaurant'
+const isRestaurant = (pin) => pin.category === CATEGORY.restaurant
 
 // Estimated travel minutes between two pins, scaled to the group's transport
 // mode (walking/biking/transit/driving). Undefined ⇒ the default urban speed.

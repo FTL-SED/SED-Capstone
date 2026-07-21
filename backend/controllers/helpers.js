@@ -14,6 +14,13 @@ function parseIdParam(req, res, label = 'id') {
   return id
 }
 
+// Parse a value into a valid Date, or return null if it isn't a usable date.
+// Shared by the pin/itinerary stop-creation paths that accept startTime/endTime.
+function parseDate(value) {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
 // Load a row by id and enforce existence (404). Returns the row, or null after
 // sending a 404 — callers do: `const row = await loadOrNotFound(...); if (!row) return`.
 // `find` is a model function (id) => Promise<row|null>; `label` names the resource.
@@ -41,4 +48,4 @@ async function loadOwned(res, find, id, userId, { label = 'Resource', action = '
   return row
 }
 
-export { parseIdParam, loadOrNotFound, loadOwned }
+export { parseIdParam, parseDate, loadOrNotFound, loadOwned }

@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mapVenue } from './mapVenue.js'
+import { mapVenue, emptyToUndefined } from './mapVenue.js'
 
 // 2026-01-01 is a Thursday; 2026-01-04 is a Sunday. Used to pick the weekday.
 const THU = '2026-01-01'
@@ -10,7 +10,6 @@ const base = {
   id: 1,
   name: 'Test Place',
   category: 'restaurant',
-  tags: ['food', 'mexican'],
   interests: [],
   cuisines: ['mexican'],
   diets: [],
@@ -84,6 +83,22 @@ test('passes through id/name/category/price/coords unchanged', () => {
 test('does not expose legacy tags field', () => {
   const r = mapVenue(base, THU)
   assert.equal(r.tags, undefined)
+})
+
+// --- emptyToUndefined (the missing-data rule, unit-tested directly) ---
+
+test('emptyToUndefined: a non-empty array passes through unchanged', () => {
+  const arr = ['vegan', 'vegetarian']
+  assert.equal(emptyToUndefined(arr), arr)
+})
+
+test('emptyToUndefined: an empty array becomes undefined (unknown, not "none")', () => {
+  assert.equal(emptyToUndefined([]), undefined)
+})
+
+test('emptyToUndefined: null/undefined input becomes undefined', () => {
+  assert.equal(emptyToUndefined(null), undefined)
+  assert.equal(emptyToUndefined(undefined), undefined)
 })
 
 test('exposes split fields (interests, cuisine, diet)', () => {

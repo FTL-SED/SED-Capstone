@@ -146,6 +146,23 @@ test('meetingPoint is null when no member has coordinates', () => {
   assert.equal(meetingPoint, null)
 })
 
+test('meetingPoint snaps to the nearest catalog pin (never lands in water)', () => {
+  // The members' geometric median sits near the Ferry Building shoreline. With
+  // one real land venue in the catalog, the anchor should snap exactly onto it,
+  // never floating off in the bay.
+  const landVenue = { name: 'Downtown Gallery', category: 'museum', interests: ['art'], latitude: 37.7845, longitude: -122.4079 }
+  const { meetingPoint } = hardFilter([landVenue], geoMembers, { ...trip, travelRadius: 3 })
+  assert.equal(meetingPoint.latitude, landVenue.latitude)
+  assert.equal(meetingPoint.longitude, landVenue.longitude)
+})
+
+test('meetingPoint falls back to the raw median when the catalog is empty', () => {
+  // Nothing to snap to (no pins) => keep the computed median rather than null.
+  const { meetingPoint } = hardFilter([], geoMembers, { ...trip, travelRadius: 3 })
+  assert.equal(typeof meetingPoint.latitude, 'number')
+  assert.equal(typeof meetingPoint.longitude, 'number')
+})
+
 test('drops a pin outside travelRadius of the meeting point', () => {
   const nearPin = { name: 'Downtown Gallery', category: 'museum', interests: ['art'], latitude: 37.7845, longitude: -122.4079 }
   const farPin = { name: 'Ocean Beach Art', category: 'museum', interests: ['art'], latitude: 37.7594, longitude: -122.5107 } // ~5+ mi west

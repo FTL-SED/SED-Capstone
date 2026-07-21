@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { haversineMiles, centroid, geometricMedian, maxDistanceFrom, milesToMeters } from './geo.js'
+import { haversineMiles, centroid, geometricMedian, maxDistanceFrom, nearestPoint, milesToMeters } from './geo.js'
 
 // Real SF landmarks, for distances with a known ballpark.
 const FERRY_BUILDING = { latitude: 37.7955, longitude: -122.3937 }
@@ -96,4 +96,24 @@ test('maxDistanceFrom: zero when every point is the center', () => {
 test('milesToMeters: converts miles to meters', () => {
   assert.equal(milesToMeters(1), 1609.344)
   assert.equal(milesToMeters(0), 0)
+})
+
+test('nearestPoint: returns the closest candidate to the target', () => {
+  const target = FERRY_BUILDING
+  const candidates = [GOLDEN_GATE_PARK, { latitude: 37.7956, longitude: -122.3938 }]
+  // The second candidate is a stone's throw from the Ferry Building.
+  assert.deepEqual(nearestPoint(target, candidates), candidates[1])
+})
+
+test('nearestPoint: snaps an in-water midpoint onto the nearest land venue', () => {
+  // A point out in the bay, between two shore venues — the exact "median landed
+  // in water" case. It should snap to whichever real venue is closer.
+  const inBay = { latitude: 37.8200, longitude: -122.3700 }
+  const eastShore = { latitude: 37.8100, longitude: -122.3500 }
+  const westShore = { latitude: 37.8000, longitude: -122.4200 }
+  assert.deepEqual(nearestPoint(inBay, [westShore, eastShore]), eastShore)
+})
+
+test('nearestPoint: returns null for no candidates', () => {
+  assert.equal(nearestPoint(FERRY_BUILDING, []), null)
 })
