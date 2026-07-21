@@ -27,8 +27,10 @@ function emptyToUndefined(arr) {
 //   - [{ open, close }]  a real range for the trip's weekday
 //   - null               the pin is explicitly closed that weekday (caller drops)
 //   - undefined          hours unknown for this pin (caller keeps + flags)
-function mapVenue(pin, tripDate) {
-  const dayKey = dayKeyFromDate(tripDate)
+// `dayKey` is derived from tripDate by default; callers mapping a whole catalog
+// (getAllPins) resolve it ONCE and pass it in, so the same date isn't re-parsed
+// for every pin.
+function mapVenue(pin, tripDate, dayKey = dayKeyFromDate(tripDate)) {
   return {
     id: pin.id,
     name: pin.name,

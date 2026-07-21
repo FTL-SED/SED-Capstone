@@ -15,10 +15,12 @@ import { maxDistanceFrom } from '../../../utils/geo.js'
 
 // Attach a fresh .score to each pin and sort best-first. Re-run whenever the
 // underlying data changes (e.g. after enrichment) since scores can shift.
+// Assigns in place: `pins` here is always hardFilter's own fresh copies
+// (never the caller's input), so there's no need to spread every survivor a
+// second time just to attach the score.
 function scoreAndSort(pins, members, groupTags, groupFood) {
-  return pins
-    .map((pin) => ({ ...pin, score: softScore(pin, members, groupTags, groupFood) }))
-    .sort((a, b) => b.score - a.score)
+  for (const pin of pins) pin.score = softScore(pin, members, groupTags, groupFood)
+  return pins.sort((a, b) => b.score - a.score)
 }
 
 // trip    = { startTime, endTime, maxBudgetPerPerson, ... }

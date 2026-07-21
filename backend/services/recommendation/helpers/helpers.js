@@ -69,8 +69,9 @@ function memberCanEat(pin, member) {
   const needs = member.diet ?? []
   if (needs.length === 0) return true
   if (!pin.diet) return true // unknown ⇒ assume it can serve them
-  const offered = new Set(pin.diet)
-  return needs.every((d) => offered.has(d))
+  // pin.diet is a short list (1-3 strings), so .includes beats allocating a Set
+  // on every (restaurant × member) check in the scoring/filter/fairness passes.
+  return needs.every((d) => pin.diet.includes(d))
 }
 
 // Diet filter for food pins. Keep a restaurant if it can serve AT LEAST ONE
@@ -168,7 +169,6 @@ export {
   shareTag,
   overlap,
   memberInterestSet,
-  memberFoodSet,
   passesDiet,
   memberCanEat,
   estPricePerPerson,
