@@ -29,9 +29,9 @@ function toDateTime(dayISO, hhmm, offset) {
   return new Date(`${dayISO}T${hhmm}:00${offset}`)
 }
 
-// Build the Pin.create rows from the itinerary's stops. Array index becomes
-// orderInItinerary; the shortlist supplies the display fields by pinId.
-function stopsToPins(stops, shortlist, dayISO) {
+// Build ItineraryStop.create rows from the itinerary's stops. Array index becomes
+// orderInItinerary; each stop references its catalog venue pin by pinId.
+function stopsToStops(stops, shortlist, dayISO) {
   const byId = new Map(shortlist.map((p) => [p.id, p]))
   const offset = pacificOffset(dayISO)
 
@@ -43,41 +43,29 @@ function stopsToPins(stops, shortlist, dayISO) {
       throw new Error(`stop references pinId ${stop.pinId} not in the shortlist`)
     }
 
-    // mealType has no Pin column; fold it into tags so it survives to the
-    // frontend (which can badge "lunch") without a schema migration.
-    const tags = stop.mealType ? [...(pin.tags ?? []), stop.mealType] : pin.tags ?? []
-
     return {
+      pinId: stop.pinId, // reference the catalog venue pin
       orderInItinerary: i,
-      name: pin.name,
-      description: stop.note ?? pin.description ?? null,
-      tags,
-      rating: pin.rating ?? null,
-      // Cost is a fact about the place, taken from the shortlist pin — the stop
-      // only sequences, it never carries a price (see config/ai.js STOP_SCHEMA).
-      pricePerPerson: pin.pricePerPerson ?? 0,
-      latitude: pin.latitude,
-      longitude: pin.longitude,
-      address: pin.address ?? null,
       startTime: toDateTime(dayISO, stop.arriveTime, offset),
       endTime: toDateTime(dayISO, stop.departTime, offset),
+      mealType: stop.mealType ?? null,
+      note: stop.note ?? null,
       travelTimeToNextMinutes: stop.travelTimeToNextMinutes ?? null,
       distanceToNextMeters: stop.distanceToNextMeters ?? null,
-      locationImageUrl: pin.locationImageUrl,
     }
   })
 }
 
 // Persist a generated itinerary for a user.
 //   itinerary = { title, location, description, stops[] } (feasible AI/fallback output)
-//   shortlist = the pins it was built from (for pinId -> display re-hydration)
+//   shortlist = the pins it was built from (catalog venue pins with real ids)
 //   opts      = { userId, tripDate?: 'YYYY-MM-DD', isPublic? }
-// Returns the created Itinerary with its creator + ordered pins (itineraryInclude).
+// Returns the created Itinerary with its creator + ordered stops (itineraryInclude).
 async function persistItinerary(itinerary, shortlist, { userId, tripDate, isPublic = false, title, description }) {
   // Default to the trip date; fall back to a fixed date if none supplied (the
   // clock times are what matter — the calendar day is cosmetic for a one-day trip).
   const dayISO = tripDate ?? '2026-01-01'
-  const pins = stopsToPins(itinerary.stops, shortlist, dayISO)
+  const stops = stopsToStops(itinerary.stops, shortlist, dayISO)
 
   // Prefer a user-supplied title/description (from the wizard's finish step)
   // over the AI-generated one; fall back to the AI's when the user leaves them blank.
@@ -85,15 +73,20 @@ async function persistItinerary(itinerary, shortlist, { userId, tripDate, isPubl
   const finalDescription =
     typeof description === 'string' && description.trim() ? description.trim() : itinerary.description ?? null
 
+  // Cover image derives from the first stop's venue pin
+  const byId = new Map(shortlist.map((p) => [p.id, p]))
+  const firstVenue = itinerary.stops.length > 0 ? byId.get(itinerary.stops[0].pinId) : null
+  const coverImageUrl = firstVenue?.locationImageUrl ?? null
+
   return itineraries.create({
     userId,
     title: finalTitle,
     location: itinerary.location,
     description: finalDescription,
-    coverImageUrl: pins.length > 0 ? pins[0].locationImageUrl : null,
+    coverImageUrl,
     isPublic,
-    pins: { create: pins },
+    stops: { create: stops },
   })
 }
 
-export { persistItinerary, stopsToPins, toDateTime, pacificOffset }
+export { persistItinerary, stopsToStops, toDateTime, pacificOffset }
