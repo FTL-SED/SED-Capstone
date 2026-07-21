@@ -162,12 +162,13 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 
 ## Data Model
 
-> **As built:** the reference below matches the live Prisma schema
+> **As built (July 2026):** the reference below matches the live Prisma schema
 > (`backend/prisma/schema.prisma`). Notable evolutions from the original plan:
-> `Itinerary.likeCount` was **removed** (the count is computed live from `Like`
-> rows), `Pin.itineraryId` and `Pin.locationImageUrl` are now **nullable** (to
-> support the seeded place catalog and photoless catalog entries), `Pin.rating`
-> was **added**, and `Itinerary` gained an **`@@index([isPublic])`**.
+> `Itinerary.likeCount` was **removed** (computed live from `Like` rows),
+> `Pin.locationImageUrl` made **nullable**, `Pin.rating` **added**, `Itinerary`
+> gained an **`@@index([isPublic])`**, and the **Pin/ItineraryStop split**
+> completed (Phases 1–5, July 2026) — `Pin` is now venue-only, `ItineraryStop`
+> holds scheduled visits.
 
 ### User
 | Attribute | Type | Additional Info |
@@ -177,7 +178,7 @@ List all the pages and screens in the app. Include wireframes for at least 3 of 
 | email | String | @unique — mirrored from Supabase Auth for display/lookup; the source of truth for login is Supabase |
 | username | String | @unique |
 | createdAt | DateTime | @default(now()) |
-| createdItineraries | Itinerary[] | @relation("CreatedItineraries") |
+| itineraries | Itinerary[] | @relation("CreatedItineraries") |
 | likes | Like[] | Join rows for the itineraries this user has liked (US #6) |
 | bookmarks | Bookmark[] | Join rows for the itineraries this user has bookmarked (US #5) |
 
@@ -200,42 +201,62 @@ references: [id], onDelete: Cascade) |
 | likes | Like[] | Join rows for the users who have liked this itinerary. The like count is computed live from these via Prisma `_count` (exposed as `likeCount` in API responses) — there is no stored counter column |
 | bookmarks | Bookmark[] | Join rows for the users who have bookmarked this itinerary |
 | sourceItinerary |	Itinerary? |	@relation("ForkedItinerary", fields: [sourceItineraryId], references: [id], onDelete: SetNull) |
-| savedCopies |	Itinerary[] |	@relation("ForkedItinerary") |
-| pins | Pin[] | |
+| forkedFrom |	Itinerary[] |	@relation("ForkedItinerary") |
+| stops | ItineraryStop[] | Ordered visits to venues |
 
 **Model Constraints**
 - `@@index([isPublic])` — the Discover feed and recommendation engine both filter on `isPublic`; the index keeps those queries fast as the table grows.
 
 ### Pin
 
-> **As built:** `Pin` doubles as both the **seeded place catalog** (rows with
-> `itineraryId = null`, loaded by `scripts/seedSfPlaces.js`) and the **stops of an
-> itinerary** (`itineraryId` set). See the AI Feature Decisions Log and
-> `.claude/docs/database-schema.md` for the reasoning and the future
-> `Place`/`ItineraryStop` split.
+> **As built (July 2026):** `Pin` is now the **venue catalog** — one row per real SF
+> place (restaurant, museum, park, etc.). Itineraries reference these venues via
+> `ItineraryStop` rows. The split from the original dual-purpose Pin table was
+> completed in Phases 1–5 (July 2026).
 
 | Attribute | Type | Additional Info |
 | --- | --- | --- |
 | id | Int | @default(autoincrement()) |
-| itineraryId | Int? | Foreign key → Itinerary.id. **Nullable** — null for catalog places (exist independent of any trip); set for a stop on a specific itinerary |
-| orderInItinerary | Int | Position within the itinerary; `0` for catalog pins (no meaningful order) |
 | name | String | |
 | description | String? | |
-| tags | String[] | Interest + cuisine + diet tags (see `config/tagVocab.js`); the recommendation engine derives category/cuisine/diet from these |
+| category | String | Either `'restaurant'` or `'activity'` |
+| interests | String[] | Interest tags (e.g. `hiking`, `art`, `scenic_views`) |
+| cuisines | String[] | Cuisine tags (e.g. `mexican`, `italian`); empty for activities |
+| diets | String[] | Diet tags (e.g. `vegetarian`, `vegan`); empty unless explicitly supported |
 | rating | Float? | Star rating (0–5) when known; null otherwise |
-| pricePerPerson | Float | |
+| pricePerPerson | Float | Estimated per-person cost |
 | latitude | Float | |
 | longitude | Float | |
 | address | String? | |
-| startTime | DateTime | Pacific wall-clock. For a stop: scheduled arrival. For a catalog pin: a neutral all-day window used as a weak open-hours proxy |
-| endTime | DateTime | Pacific wall-clock. For a stop: scheduled departure |
-| travelTimeToNextMinutes | Int? | Estimated travel time (in minutes) from this activity to the next pin in order (US #3). Null for the last pin / catalog pins |
-| distanceToNextMeters | Float? | Estimated distance (in meters) from this activity to the next pin in order (US #3). Null for the last pin / catalog pins |
-| locationImageUrl | String? | **Nullable** — catalog pins have no real photo, so the UI falls back to a placeholder |
-| itinerary | Itinerary? | @relation( fields: [itineraryId], references: [id], onDelete: Cascade ) | 
+| hoursOpen | Json? | Per-day hours (e.g. `{"mon":"08:00-22:00", "tue":"08:00-22:00", ...}`); null when unknown |
+| locationImageUrl | String? | Photo URL; null if unavailable |
+| stops | ItineraryStop[] | All itinerary visits to this venue |
 
 **Model Constraints**
-- `@@unique([itineraryId, orderInItinerary])` — Ensures that each pin has a unique position within an itinerary. Catalog pins (`itineraryId = null`, `orderInItinerary = 0`) never collide because Postgres treats NULLs as distinct.
+- None currently. Venues are seeded once and reused across itineraries.
+
+### ItineraryStop
+
+> **Added July 2026 (Phases 1–5).** Represents one scheduled visit to a venue
+> within an itinerary. Holds timing, travel, and user notes.
+
+| Attribute | Type | Additional Info |
+| --- | --- | --- |
+| id | Int | @default(autoincrement()) |
+| pinId | Int | Foreign key → Pin.id. The venue being visited |
+| itineraryId | Int | Foreign key → Itinerary.id |
+| orderInItinerary | Int | Position within the itinerary (1-based) |
+| startTime | DateTime | Scheduled arrival time (Pacific wall-clock) |
+| endTime | DateTime | Scheduled departure time (Pacific wall-clock) |
+| travelTimeToNextMinutes | Int? | Estimated travel time (in minutes) to the next stop (US #3). Null for the last stop |
+| distanceToNextMeters | Float? | Estimated distance (in meters) to the next stop (US #3). Null for the last stop |
+| mealType | String? | `'breakfast'`, `'lunch'`, or `'dinner'` when applicable |
+| note | String? | User-editable free-text note for this stop |
+| pin | Pin | @relation(fields: [pinId], references: [id], onDelete: Cascade) |
+| itinerary | Itinerary | @relation(fields: [itineraryId], references: [id], onDelete: Cascade) |
+
+**Model Constraints**
+- `@@unique([itineraryId, orderInItinerary])` — Ensures that each stop has a unique position within an itinerary.
 
 ### Like
 | Attribute | Type | Additional Info |
