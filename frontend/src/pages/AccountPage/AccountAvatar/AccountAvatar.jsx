@@ -1,10 +1,8 @@
 import AvatarUploadButton from './AvatarUploadButton/AvatarUploadButton.jsx'
 import { useState } from 'react'
-import axios from 'axios'
+import { uploadAvatar } from '../../../api/users.js'
 import accountIcon from '../../../assets/account_icon.png'
 import './AccountAvatar.css'
-
-const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 function AccountAvatar({ currentUser, setCurrentUser }) {
   const [uploading, setUploading] = useState(false);
@@ -23,16 +21,8 @@ function AccountAvatar({ currentUser, setCurrentUser }) {
 
     setUploading(true);
     try {
-      const response = await axios.post(
-        `${BASE_URL}/users/${currentUser.id}/avatar`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        }
-      );
-      setCurrentUser({ ...currentUser, avatarUrl: response.data.avatarUrl });
+      const data = await uploadAvatar(currentUser.id, formData);
+      setCurrentUser({ ...currentUser, avatarUrl: data.avatarUrl });
     } catch (err) {
       console.error("Avatar upload failed:", err);
     } finally {

@@ -32,7 +32,7 @@ function RegisterForm() {
 
     setLoading(true);
     try {
-      const response = await axios.post(`${BASE_URL}/users/register`, userData);
+      await axios.post(`${BASE_URL}/users/register`, userData);
       setError("");
       setSuccess("Account created! You can now log in.");
     } catch (err) {

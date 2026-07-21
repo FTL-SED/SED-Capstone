@@ -92,9 +92,10 @@ const fallbackSequence = (shortlist, constraints) => {
 
   for (const pin of ordered) {
     // Travel from the previous stop eats clock time before we can arrive.
-    if (prev) clock += travelMinutes(prev, pin, transport)
-
-    const arrive = clock
+    // Compute the candidate arrival locally — do NOT mutate `clock`/`prev`
+    // until we actually keep this stop, or a pin skipped for budget below
+    // would leave the clock inflated by travel to a place we never visited.
+    const arrive = prev ? clock + travelMinutes(prev, pin, transport) : clock
     const depart = arrive + AVG_STOP_DURATION_MIN
     // Out of daylight — stop packing the day.
     if (depart > endMins) break
