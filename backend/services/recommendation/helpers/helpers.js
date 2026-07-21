@@ -1,7 +1,12 @@
-// Pure primitives for the recommendation engine. Every function here is
-// side-effect free and operates only on plain objects passed in — no DB, no
-// Express — so each is independently unit-testable (see helpers.test.js).
-// Composed by the hard filters (Step 3) and soft score (Step 4).
+// Pure primitives for the recommendation engine. No DB, no Express, so each is
+// independently unit-testable (see helpers.test.js). Composed by the hard
+// filters (Step 3) and soft score (Step 4).
+//
+// One deliberate exception to "purely functional": memberInterestSet/
+// memberFoodSet memoize a Set onto the member under a NON-ENUMERABLE key
+// (idempotent, invisible to JSON/spreads, output-neutral). It's a caching
+// optimization for the (pins × members) scoring hot path, not observable
+// behavior — members arrive fresh per request and aren't mutated mid-run.
 //
 // Assumed normalized shapes (mapVenue produces these from a Pin row):
 //   pin  = { name, category, tags[], cuisine[]?, diet[]?, priceLevel?,
