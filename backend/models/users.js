@@ -16,10 +16,6 @@ function findByAuthUserId(authUserId) {
   return prisma.user.findUnique({ where: { authUserId } })
 }
 
-function findById(id) {
-  return prisma.user.findUnique({ where: { id } })
-}
-
 // Owner dashboard: the user plus their created itineraries and the
 // itineraries they've bookmarked/liked.
 function findDashboardById(id) {
@@ -48,4 +44,4 @@ function update(id, data) {
   })
 }
 
-export { findByAuthUserId, findById, findDashboardById, create, update }
+export { findByAuthUserId, findDashboardById, create, update }

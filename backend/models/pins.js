@@ -1,11 +1,8 @@
 // Data-access wrapper for the Pin table. Thin — no business logic, no
-// req/res (see .claude/rules/backend.md → Models).
+// req/res (see .claude/rules/backend.md → Models). Post the Pin/ItineraryStop
+// split, Pin is a venue catalog: the recommendation engine reads it, and
+// pinController creates a venue when a stop references a brand-new place.
 import prisma from '../lib/prisma.js'
-
-// Pin plus its parent itinerary, for read/ownership checks.
-function findByIdWithItinerary(id) {
-  return prisma.pin.findUnique({ where: { id }, include: { itinerary: true } })
-}
 
 function findById(id) {
   return prisma.pin.findUnique({ where: { id } })
@@ -15,18 +12,4 @@ function create(data) {
   return prisma.pin.create({ data })
 }
 
-// The caller passes only the fields being changed; the returned `select`
-// mirrors those keys (plus id) so the response echoes exactly what changed.
-function update(id, data) {
-  return prisma.pin.update({
-    where: { id },
-    data,
-    select: { id: true, ...Object.fromEntries(Object.keys(data).map((k) => [k, true])) },
-  })
-}
-
-function remove(id) {
-  return prisma.pin.delete({ where: { id } })
-}
-
-export { findByIdWithItinerary, findById, create, update, remove }
+export { findById, create }
