@@ -4,6 +4,8 @@ import Step1_TripBasics from '../Step1_TripBasics/Step1_TripBasics.jsx'
 import Step2_Members from '../Step2_Members/Step2_Members.jsx'
 import Step3_Finish from '../Step3_Finish/Step3_Finish.jsx'
 import { newMember } from '../memberModel.js'
+import { useLocation } from 'react-router-dom'
+
 
 // The single source of truth for everything the wizard collects. Trip-level
 // fields live at the top; per-member fields live in `members` (name, one
@@ -23,9 +25,10 @@ const INITIAL_FORM = {
 };
 
 function ItineraryWizard({setActiveStep}) {
+  const location = useLocation();
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState(INITIAL_FORM);
-  
+  const [form, setForm] = useState(location.state?.form ?? INITIAL_FORM);
+
   // Keep the parent's activeStep in sync with our step. Call both setters
   // directly from the handler (not inside the setStep updater) so we never
   // update CreateItineraryPage during ItineraryWizard's render.
