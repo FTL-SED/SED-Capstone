@@ -1,6 +1,7 @@
 import * as itineraries from '../models/itineraries.js'
 import * as likes from '../models/likes.js'
 import * as bookmarks from '../models/bookmarks.js'
+import { parseIdParam, loadOrNotFound, loadOwned } from './helpers.js'
 
 // POST /itineraries
 // Creates an itinerary owned by the caller, with its stops referencing venue pins.
@@ -145,10 +146,8 @@ async function listItineraries(req, res) {
 // GET /itineraries/:id
 // Returns a single itinerary. Private itineraries are only visible to their owner.
 async function getItinerary(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid itinerary id' })
-  }
+  const id = parseIdParam(req, res, 'itinerary id')
+  if (id === null) return
 
   const itinerary = await itineraries.findById(id)
 
@@ -167,18 +166,14 @@ async function getItinerary(req, res) {
 // Updates the caller's own itinerary. Only scalar fields are editable here; pins
 // are managed through the /pins endpoints, and likes via the like/unlike routes.
 async function updateItinerary(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid itinerary id' })
-  }
+  const id = parseIdParam(req, res, 'itinerary id')
+  if (id === null) return
 
-  const itinerary = await itineraries.findByIdBasic(id)
-  if (!itinerary) {
-    return res.status(404).json({ error: 'Itinerary not found' })
-  }
-  if (itinerary.userId !== req.user.id) {
-    return res.status(403).json({ error: 'You can only edit your own itineraries' })
-  }
+  const itinerary = await loadOwned(res, itineraries.findByIdBasic, id, req.user.id, {
+    label: 'Itinerary',
+    action: 'edit',
+  })
+  if (!itinerary) return
 
   const { title, location, description, coverImageUrl, isPublic } = req.body
 
@@ -222,18 +217,14 @@ async function updateItinerary(req, res) {
 // DELETE /itineraries/:id
 // Deletes the caller's own itinerary. Pins, likes, and bookmarks cascade.
 async function deleteItinerary(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid itinerary id' })
-  }
+  const id = parseIdParam(req, res, 'itinerary id')
+  if (id === null) return
 
-  const itinerary = await itineraries.findByIdBasic(id)
-  if (!itinerary) {
-    return res.status(404).json({ error: 'Itinerary not found' })
-  }
-  if (itinerary.userId !== req.user.id) {
-    return res.status(403).json({ error: 'You can only delete your own itineraries' })
-  }
+  const itinerary = await loadOwned(res, itineraries.findByIdBasic, id, req.user.id, {
+    label: 'Itinerary',
+    action: 'delete',
+  })
+  if (!itinerary) return
 
   await itineraries.remove(id)
 
@@ -243,15 +234,10 @@ async function deleteItinerary(req, res) {
 // POST /itineraries/:id/like
 // Likes an itinerary (safe to call repeatedly) and returns the current like count.
 async function likeItinerary(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid itinerary id' })
-  }
+  const id = parseIdParam(req, res, 'itinerary id')
+  if (id === null) return
 
-  const itinerary = await itineraries.findByIdBasic(id)
-  if (!itinerary) {
-    return res.status(404).json({ error: 'Itinerary not found' })
-  }
+  if (!(await loadOrNotFound(res, itineraries.findByIdBasic, id, 'Itinerary'))) return
 
   await likes.upsert(req.user.id, id)
 
@@ -262,15 +248,10 @@ async function likeItinerary(req, res) {
 // DELETE /itineraries/:id/like
 // Unlikes an itinerary (safe to call repeatedly) and returns the current like count.
 async function unlikeItinerary(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid itinerary id' })
-  }
+  const id = parseIdParam(req, res, 'itinerary id')
+  if (id === null) return
 
-  const itinerary = await itineraries.findByIdBasic(id)
-  if (!itinerary) {
-    return res.status(404).json({ error: 'Itinerary not found' })
-  }
+  if (!(await loadOrNotFound(res, itineraries.findByIdBasic, id, 'Itinerary'))) return
 
   await likes.remove(req.user.id, id)
 
@@ -281,15 +262,11 @@ async function unlikeItinerary(req, res) {
 // POST /itineraries/:id/bookmark
 // Bookmarks a public itinerary (safe to call repeatedly) as a read-only reference.
 async function bookmarkItinerary(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid itinerary id' })
-  }
+  const id = parseIdParam(req, res, 'itinerary id')
+  if (id === null) return
 
-  const itinerary = await itineraries.findByIdBasic(id)
-  if (!itinerary) {
-    return res.status(404).json({ error: 'Itinerary not found' })
-  }
+  const itinerary = await loadOrNotFound(res, itineraries.findByIdBasic, id, 'Itinerary')
+  if (!itinerary) return
   if (!itinerary.isPublic) {
     return res.status(403).json({ error: 'Only public itineraries can be bookmarked' })
   }
@@ -302,15 +279,10 @@ async function bookmarkItinerary(req, res) {
 // DELETE /itineraries/:id/bookmark
 // Removes a bookmark (safe to call repeatedly).
 async function removeBookmark(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid itinerary id' })
-  }
+  const id = parseIdParam(req, res, 'itinerary id')
+  if (id === null) return
 
-  const itinerary = await itineraries.findByIdBasic(id)
-  if (!itinerary) {
-    return res.status(404).json({ error: 'Itinerary not found' })
-  }
+  if (!(await loadOrNotFound(res, itineraries.findByIdBasic, id, 'Itinerary'))) return
 
   await bookmarks.remove(req.user.id, id)
 
@@ -321,10 +293,8 @@ async function removeBookmark(req, res) {
 // Deep-duplicates a public (or owned) itinerary and its pins into a new editable
 // itinerary owned by the caller, linked back via sourceItineraryId.
 async function copyItinerary(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid itinerary id' })
-  }
+  const id = parseIdParam(req, res, 'itinerary id')
+  if (id === null) return
 
   const source = await itineraries.findByIdWithStops(id)
 

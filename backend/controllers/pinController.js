@@ -2,6 +2,8 @@ import * as pins from '../models/pins.js'
 import * as itineraryStops from '../models/itineraryStops.js'
 import * as itineraries from '../models/itineraries.js'
 import { classifyTags } from '../services/recommendation/pinsRepository/classify.js'
+import { addStop } from '../services/itinerary/addStop.js'
+import { parseIdParam } from './helpers.js'
 
 // Parses a value into a valid Date, or returns null if it isn't a usable date.
 function parseDate(value) {
@@ -13,10 +15,8 @@ function parseDate(value) {
 // Returns an itinerary stop with its venue. Readable when the parent itinerary
 // is public or owned by the caller. Auth is handled by requireAuth.
 async function getPin(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid pin id' })
-  }
+  const id = parseIdParam(req, res, 'pin id')
+  if (id === null) return
 
   const stop = await itineraryStops.findByIdWithItinerary(id)
 
@@ -104,10 +104,9 @@ async function createPin(req, res) {
     return res.status(403).json({ error: 'You can only add pins to your own itineraries' })
   }
 
-  let venuePinId = pinId
-
-  // If no pinId provided, create a new catalog venue pin from inline fields
-  if (!venuePinId) {
+  // Build the venue payload (a NEW catalog venue) only when no pinId is given.
+  let venue // undefined ⇒ reference the existing pin
+  if (!pinId) {
     if (!name || typeof name !== 'string' || name.trim() === '') {
       return res.status(400).json({ error: 'name is required when creating a new venue' })
     }
@@ -142,12 +141,11 @@ async function createPin(req, res) {
       return res.status(400).json({ error: 'locationImageUrl must be a non-empty string or null' })
     }
 
-    // Create catalog venue pin (itineraryId = null). A venue holds only place
-    // facts — the per-visit fields (order/times/travel) live on the ItineraryStop
-    // created below, not on the Pin. Derive the explicit tag columns from the
-    // supplied tags via the same classifier the seed/engine use.
+    // A venue holds only place facts — the per-visit fields (order/times/travel)
+    // live on the ItineraryStop, not the Pin. Derive the explicit tag columns
+    // from the supplied tags via the same classifier the seed/engine use.
     const { category, interests, cuisines, diets } = classifyTags(tags ?? [])
-    const venue = await pins.create({
+    venue = {
       name: name.trim(),
       description: description ?? null,
       category,
@@ -161,32 +159,33 @@ async function createPin(req, res) {
       address: address ?? null,
       hoursOpen: null,
       locationImageUrl: locationImageUrl ? locationImageUrl.trim() : null,
-    })
-    venuePinId = venue.id
+    }
   } else {
-    // Validate pinId when provided
-    if (!Number.isInteger(venuePinId)) {
+    if (!Number.isInteger(pinId)) {
       return res.status(400).json({ error: 'pinId must be an integer' })
     }
-    // Check the pin exists before creating the stop
-    const venue = await pins.findById(venuePinId)
-    if (!venue) {
+    // Existing-venue path: confirm it exists before creating the stop.
+    if (!(await pins.findById(pinId))) {
       return res.status(404).json({ error: 'Pin not found' })
     }
   }
 
-  // Create the itinerary stop referencing the venue
-  const stop = await itineraryStops.create({
-    pinId: venuePinId,
-    itineraryId,
-    orderInItinerary,
-    startTime: parsedStart,
-    endTime: parsedEnd,
-    travelTimeToNextMinutes: travelTimeToNextMinutes ?? null,
-    distanceToNextMeters: distanceToNextMeters ?? null,
-    mealType: mealType ?? null,
-    note: note ?? null,
-  })
+  // Delegate the write to the service: it creates the stop (referencing pinId),
+  // or — for a new venue — the venue + stop atomically in one transaction.
+  const stop = await addStop(
+    {
+      ...(pinId ? { pinId } : {}),
+      itineraryId,
+      orderInItinerary,
+      startTime: parsedStart,
+      endTime: parsedEnd,
+      travelTimeToNextMinutes: travelTimeToNextMinutes ?? null,
+      distanceToNextMeters: distanceToNextMeters ?? null,
+      mealType: mealType ?? null,
+      note: note ?? null,
+    },
+    venue,
+  )
 
   return res.status(201).json(stop)
 }
@@ -196,10 +195,8 @@ async function createPin(req, res) {
 // Venue fields are NOT editable via this endpoint (they live on the Pin).
 // The caller must own the itinerary.
 async function updatePin(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid pin id' })
-  }
+  const id = parseIdParam(req, res, 'pin id')
+  if (id === null) return
 
   const stop = await itineraryStops.findByIdWithItinerary(id)
 
@@ -278,10 +275,8 @@ async function updatePin(req, res) {
 // DELETE /pins/:id
 // Deletes an itinerary stop from an itinerary the caller owns.
 async function deletePin(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid pin id' })
-  }
+  const id = parseIdParam(req, res, 'pin id')
+  if (id === null) return
 
   const stop = await itineraryStops.findByIdWithItinerary(id)
 
