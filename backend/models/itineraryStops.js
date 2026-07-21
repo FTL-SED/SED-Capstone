@@ -5,6 +5,10 @@ function createMany(stops) {
   return prisma.itineraryStop.createMany({ data: stops })
 }
 
+function create(data) {
+  return prisma.itineraryStop.create({ data, include: { pin: true } })
+}
+
 function findByItinerary(itineraryId) {
   return prisma.itineraryStop.findMany({
     where: { itineraryId },
@@ -13,8 +17,27 @@ function findByItinerary(itineraryId) {
   })
 }
 
+function findByIdWithItinerary(id) {
+  return prisma.itineraryStop.findUnique({
+    where: { id },
+    include: { pin: true, itinerary: true },
+  })
+}
+
+function update(id, data) {
+  return prisma.itineraryStop.update({
+    where: { id },
+    data,
+    include: { pin: true },
+  })
+}
+
+function remove(id) {
+  return prisma.itineraryStop.delete({ where: { id } })
+}
+
 function deleteByItinerary(itineraryId) {
   return prisma.itineraryStop.deleteMany({ where: { itineraryId } })
 }
 
-export { createMany, findByItinerary, deleteByItinerary }
+export { createMany, create, findByItinerary, findByIdWithItinerary, update, remove, deleteByItinerary }

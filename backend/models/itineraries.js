@@ -2,26 +2,51 @@
 // req/res (see .claude/rules/backend.md → Models).
 import prisma from '../lib/prisma.js'
 
-// Shared shape for itinerary responses: the creator summary, pins in order, and
-// a live count of likes (the Like rows are the single source of truth — there is
-// no stored likeCount column).
+// Shared shape for itinerary responses: the creator summary, stops (with their
+// venue pins) in order, and a live count of likes (the Like rows are the single
+// source of truth — there is no stored likeCount column).
 const itineraryInclude = {
   creator: { select: { id: true, username: true } },
-  pins: { orderBy: { orderInItinerary: 'asc' } },
+  stops: { orderBy: { orderInItinerary: 'asc' }, include: { pin: true } },
   _count: { select: { likes: true } },
 }
 
-// Reshape Prisma's `{ _count: { likes } }` into the flat `likeCount` the API
-// returns, so callers and the frontend see the same field name as before.
-function withLikeCount(itinerary) {
+// Reshape Prisma's `{ _count: { likes }, stops: [{ stop, pin }] }` into the
+// flat legacy shape: `likeCount` and `pins[]` (flattened stop+pin combos).
+// Reconstructs `tags` from pin's interests/cuisines/diets + mealType so the
+// frontend meal badge and tag display keep working.
+function reshapeItinerary(itinerary) {
   if (!itinerary) return itinerary
-  const { _count, ...rest } = itinerary
-  return { ...rest, likeCount: _count?.likes ?? 0 }
+  const { _count, stops, ...rest } = itinerary
+  const pins = (stops ?? []).map((s) => {
+    const p = s.pin
+    const tags = [...(p.interests ?? []), ...(p.cuisines ?? []), ...(p.diets ?? [])]
+    if (s.mealType) tags.push(s.mealType)
+    return {
+      id: p.id,
+      name: p.name,
+      description: s.note ?? p.description ?? null,
+      tags,
+      rating: p.rating,
+      pricePerPerson: p.pricePerPerson,
+      latitude: p.latitude,
+      longitude: p.longitude,
+      address: p.address,
+      locationImageUrl: p.locationImageUrl,
+      orderInItinerary: s.orderInItinerary,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      travelTimeToNextMinutes: s.travelTimeToNextMinutes,
+      distanceToNextMeters: s.distanceToNextMeters,
+      mealType: s.mealType ?? null,
+    }
+  })
+  return { ...rest, likeCount: _count?.likes ?? 0, pins }
 }
 
 async function create(data) {
   const itinerary = await prisma.itinerary.create({ data, include: itineraryInclude })
-  return withLikeCount(itinerary)
+  return reshapeItinerary(itinerary)
 }
 
 async function findMany({ where, orderBy, take, skip }) {
@@ -32,13 +57,13 @@ async function findMany({ where, orderBy, take, skip }) {
     skip,
     include: itineraryInclude,
   })
-  return rows.map(withLikeCount)
+  return rows.map(reshapeItinerary)
 }
 
 // Full record with creator + ordered pins, for detail views.
 async function findById(id) {
   const itinerary = await prisma.itinerary.findUnique({ where: { id }, include: itineraryInclude })
-  return withLikeCount(itinerary)
+  return reshapeItinerary(itinerary)
 }
 
 // Bare record, for ownership/existence checks that don't need relations.
@@ -46,11 +71,11 @@ function findByIdBasic(id) {
   return prisma.itinerary.findUnique({ where: { id } })
 }
 
-// Record plus its pins in order, for deep-copying.
-function findByIdWithPins(id) {
+// Record plus its stops in order, for deep-copying.
+function findByIdWithStops(id) {
   return prisma.itinerary.findUnique({
     where: { id },
-    include: { pins: { orderBy: { orderInItinerary: 'asc' } } },
+    include: { stops: { orderBy: { orderInItinerary: 'asc' } } },
   })
 }
 
@@ -70,11 +95,12 @@ function remove(id) {
 
 export {
   itineraryInclude,
+  reshapeItinerary,
   create,
   findMany,
   findById,
   findByIdBasic,
-  findByIdWithPins,
+  findByIdWithStops,
   update,
   remove,
 }

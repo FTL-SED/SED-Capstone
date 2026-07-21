@@ -43,10 +43,12 @@ after(async () => {
   await prisma.$disconnect()
 })
 
+// Use real catalog pins from the DB so persist + read-back can reference them.
+// These IDs match seeded catalog venues (itineraryId = null).
 const shortlist = [
-  { id: 101, name: 'Ferry Building', category: 'activity', tags: ['food'], latitude: 37.7955, longitude: -122.3937, pricePerPerson: 0, address: 'SF', locationImageUrl: 'ferry.jpg', openingHours: [{ open: '10:00', close: '18:00' }] },
-  { id: 102, name: 'Tartine', category: 'restaurant', tags: ['bakery'], latitude: 37.7614, longitude: -122.4241, pricePerPerson: 25, address: 'SF', locationImageUrl: 'tartine.jpg', openingHours: [{ open: '08:00', close: '17:00' }] },
-  { id: 103, name: 'Golden Gate Park', category: 'activity', tags: ['nature'], latitude: 37.7694, longitude: -122.4862, pricePerPerson: 0, address: 'SF', locationImageUrl: 'park.jpg', openingHours: [{ open: '06:00', close: '22:00' }] },
+  { id: 89, name: 'Nopalito', category: 'restaurant', tags: ['mexican'], latitude: 37.7745, longitude: -122.4515, pricePerPerson: 28, address: '306 Broderick St, San Francisco, CA 94117', locationImageUrl: 'https://images.navquest.dev/places/nopalito.jpg', openingHours: [{ open: '11:00', close: '22:00' }] },
+  { id: 90, name: 'Tacolicious', category: 'restaurant', tags: ['mexican'], latitude: 37.7597, longitude: -122.4213, pricePerPerson: 25, address: '741 Valencia St, San Francisco, CA 94110', locationImageUrl: 'https://images.navquest.dev/places/tacolicious.jpg', openingHours: [{ open: '11:00', close: '22:00' }] },
+  { id: 231, name: 'Golden Gate Park', category: 'activity', tags: ['nature'], latitude: 37.7694, longitude: -122.4862, pricePerPerson: 0, address: '501 Stanyan St, San Francisco, CA 94117', locationImageUrl: 'https://images.navquest.dev/places/golden-gate-park.jpg', openingHours: [{ open: '06:00', close: '22:00' }] },
 ]
 const constraints = {
   timeWindow: { startTime: '09:00', endTime: '21:00' },

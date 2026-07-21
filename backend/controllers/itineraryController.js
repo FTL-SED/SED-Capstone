@@ -3,11 +3,10 @@ import * as likes from '../models/likes.js'
 import * as bookmarks from '../models/bookmarks.js'
 
 // POST /itineraries
-// Creates an itinerary owned by the caller, with its pins created in the same
-// transaction. title/location/description are AI-generated upstream and passed
-// through here; constraint fields (budget, interests, etc.) are intentionally
-// not persisted (see Decision Log). Pins are assumed to already be validated,
-// ready-to-insert Pin objects (generation is handled by the pin route).
+// Creates an itinerary owned by the caller, with its stops referencing venue pins.
+// title/location/description are AI-generated upstream and passed through here;
+// constraint fields (budget, interests, etc.) are intentionally not persisted
+// (see Decision Log). Each stop must reference an existing catalog venue via pinId.
 // Auth is handled by requireAuth.
 async function createItinerary(req, res) {
   const { title, location, description, coverImageUrl, isPublic, pins } = req.body
@@ -21,18 +20,53 @@ async function createItinerary(req, res) {
 
   const pinData = Array.isArray(pins) ? pins : []
 
-  // Cover image defaults to the first pin's image when not explicitly provided.
-  const resolvedCover =
-    coverImageUrl ?? (pinData.length > 0 ? pinData[0].locationImageUrl : null)
+  // Validate that all stops carry pinId + required visit fields
+  for (let i = 0; i < pinData.length; i++) {
+    const stop = pinData[i]
+    if (!Number.isInteger(stop.pinId)) {
+      return res.status(400).json({
+        error: `pins[${i}]: pinId is required and must reference an existing venue pin`,
+      })
+    }
+    if (!Number.isInteger(stop.orderInItinerary) || stop.orderInItinerary < 0) {
+      return res.status(400).json({
+        error: `pins[${i}]: orderInItinerary is required and must be a non-negative integer`,
+      })
+    }
+    const parsedStart = stop.startTime ? new Date(stop.startTime) : null
+    if (!parsedStart || Number.isNaN(parsedStart.getTime())) {
+      return res.status(400).json({
+        error: `pins[${i}]: startTime is required and must be a valid date`,
+      })
+    }
+    const parsedEnd = stop.endTime ? new Date(stop.endTime) : null
+    if (!parsedEnd || Number.isNaN(parsedEnd.getTime())) {
+      return res.status(400).json({
+        error: `pins[${i}]: endTime is required and must be a valid date`,
+      })
+    }
+  }
+
+  // Map to ItineraryStop.create shape
+  const stops = pinData.map((stop) => ({
+    pinId: stop.pinId,
+    orderInItinerary: stop.orderInItinerary,
+    startTime: new Date(stop.startTime),
+    endTime: new Date(stop.endTime),
+    mealType: stop.mealType ?? null,
+    note: stop.note ?? null,
+    travelTimeToNextMinutes: stop.travelTimeToNextMinutes ?? null,
+    distanceToNextMeters: stop.distanceToNextMeters ?? null,
+  }))
 
   const itinerary = await itineraries.create({
     userId: req.user.id,
     title: title.trim(),
     location: location.trim(),
     description: description ?? null,
-    coverImageUrl: resolvedCover,
+    coverImageUrl: coverImageUrl ?? null,
     isPublic: isPublic === true,
-    ...(pinData.length > 0 ? { pins: { create: pinData } } : {}),
+    ...(stops.length > 0 ? { stops: { create: stops } } : {}),
   })
 
   return res.status(201).json(itinerary)
@@ -85,16 +119,16 @@ async function listItineraries(req, res) {
   // Interest filter (?interests=): parse the comma-separated string into a clean
   // tag array — split on commas, trim whitespace, and drop empties so a stray
   // comma (e.g. "food,,museums") can't add a bogus "" tag. Then match any
-  // itinerary that has a pin sharing at least one of those tags.
+  // itinerary that has a stop whose venue is tagged with at least one of those interests.
   if (typeof interests === 'string' && interests.trim() !== '') {
     const tags = interests
       .split(',')
       .map((t) => t.trim())
       .filter(Boolean)
     if (tags.length > 0) {
-      // Keep only itineraries that have at least one pin tagged with at least
-      // one of the requested interests.
-      where.pins = { some: { tags: { hasSome: tags } } }
+      // Keep only itineraries that have at least one stop whose venue pin
+      // carries at least one of the requested interest tags.
+      where.stops = { some: { pin: { tags: { hasSome: tags } } } }
     }
   }
 
@@ -292,7 +326,7 @@ async function copyItinerary(req, res) {
     return res.status(400).json({ error: 'Invalid itinerary id' })
   }
 
-  const source = await itineraries.findByIdWithPins(id)
+  const source = await itineraries.findByIdWithStops(id)
 
   if (!source) {
     return res.status(404).json({ error: 'Itinerary not found' })
@@ -309,21 +343,16 @@ async function copyItinerary(req, res) {
     description: source.description,
     coverImageUrl: source.coverImageUrl,
     isPublic: false,
-    pins: {
-      create: source.pins.map((pin) => ({
-        orderInItinerary: pin.orderInItinerary,
-        name: pin.name,
-        description: pin.description,
-        tags: pin.tags,
-        pricePerPerson: pin.pricePerPerson,
-        latitude: pin.latitude,
-        longitude: pin.longitude,
-        address: pin.address,
-        startTime: pin.startTime,
-        endTime: pin.endTime,
-        travelTimeToNextMinutes: pin.travelTimeToNextMinutes,
-        distanceToNextMeters: pin.distanceToNextMeters,
-        locationImageUrl: pin.locationImageUrl,
+    stops: {
+      create: source.stops.map((s) => ({
+        pinId: s.pinId,
+        orderInItinerary: s.orderInItinerary,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        travelTimeToNextMinutes: s.travelTimeToNextMinutes,
+        distanceToNextMeters: s.distanceToNextMeters,
+        mealType: s.mealType,
+        note: s.note,
       })),
     },
   })
