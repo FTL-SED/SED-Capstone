@@ -3,10 +3,8 @@ import PasswordInput from '../../../components/Inputs/PasswordInput/PasswordInpu
 import UpdatePasswordButton from './UpdatePasswordButton/UpdatePasswordButton.jsx'
 import ErrorMessage from '../../../components/ErrorMessage/ErrorMessage.jsx'
 import { useState } from 'react'
-import axios from 'axios'
+import { changePassword } from '../../../api/users.js'
 import './ChangePasswordSection.css'
-
-const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 function ChangePasswordSection({ currentUser }) {
   const [oldPassword, setOldPassword] = useState("");
@@ -38,15 +36,7 @@ function ChangePasswordSection({ currentUser }) {
 
     setLoading(true);
     try {
-      await axios.post(
-        `${BASE_URL}/users/${currentUser.id}/password`,
-        { currentPassword: oldPassword, newPassword },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        }
-      );
+      await changePassword(currentUser.id, oldPassword, newPassword);
       setMessage("Password updated.");
       setOldPassword("");
       setNewPassword("");

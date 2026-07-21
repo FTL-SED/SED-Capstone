@@ -2,10 +2,8 @@ import SectionHeader from '../../../../components/SectionHeader/SectionHeader.js
 import TextInput from '../../../../components/Inputs/TextInput/TextInput.jsx'
 import ErrorMessage from '../../../../components/ErrorMessage/ErrorMessage.jsx'
 import { useState } from 'react'
-import axios from 'axios'
+import { updateUsername } from '../../../../api/users.js'
 import './UsernameField.css'
-
-const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 // Change-username section: shows the current username (read-only) and takes a
 // new one. Saving PUTs to the backend (which owns the uniqueness check) and
@@ -33,16 +31,8 @@ function UsernameField({ currentUser, setCurrentUser }) {
 
     setSaving(true);
     try {
-      const response = await axios.put(
-        `${BASE_URL}/users/${currentUser.id}`,
-        { username: trimmed },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        }
-      );
-      setCurrentUser({ ...currentUser, username: response.data.username });
+      const updated = await updateUsername(currentUser.id, trimmed);
+      setCurrentUser({ ...currentUser, username: updated.username });
       setMessage("Username updated.");
       setNewUsername("");
     } catch (err) {
