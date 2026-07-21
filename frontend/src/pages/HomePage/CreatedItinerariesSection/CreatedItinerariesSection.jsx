@@ -17,6 +17,7 @@ function CreatedItinerariesSection({
         headerAction={<NewItineraryButton />} 
         itineraries={itineraries}
         loading={loading}
+        emptyMessage="You haven't created any itineraries yet. Start a New Trip!"
         likedIds={likedIds}
         bookmarkedIds={bookmarkedIds}
         onToggleLike={onToggleLike}

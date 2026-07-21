@@ -18,6 +18,7 @@ function ExploreSection({
         title="Explore"
         itineraries={itineraries}
         loading={loading}
+        emptyMessage="No itineraries to explore yet. Check back soon!"
         likedIds={likedIds}
         bookmarkedIds={bookmarkedIds}
         onToggleLike={onToggleLike}
