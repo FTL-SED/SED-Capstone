@@ -74,6 +74,23 @@ function maxDistanceFrom(center, points) {
   return points.reduce((max, p) => Math.max(max, haversineMiles(center, p)), 0)
 }
 
+// The point in `candidates` closest to `target`, or null when candidates is
+// empty. Used to snap a computed meeting point (which can land in water — the
+// geometric median of members on opposite shores of a bay) onto a real venue,
+// which is always on land. Candidates must carry { latitude, longitude }.
+function nearestPoint(target, candidates) {
+  let best = null
+  let bestDist = Infinity
+  for (const c of candidates) {
+    const d = haversineMiles(target, c)
+    if (d < bestDist) {
+      bestDist = d
+      best = c
+    }
+  }
+  return best
+}
+
 // Convert miles to meters — used by the AI sequencing step to report per-stop
 // travel distances in metric units.
 const MILES_TO_METERS = 1609.344
@@ -81,4 +98,4 @@ function milesToMeters(miles) {
   return miles * MILES_TO_METERS
 }
 
-export { haversineMiles, centroid, geometricMedian, maxDistanceFrom, milesToMeters }
+export { haversineMiles, centroid, geometricMedian, maxDistanceFrom, nearestPoint, milesToMeters }
