@@ -1,7 +1,7 @@
 import * as itineraries from '../models/itineraries.js'
 import * as likes from '../models/likes.js'
 import * as bookmarks from '../models/bookmarks.js'
-import { parseIdParam } from './helpers.js'
+import { parseIdParam, loadOrNotFound, loadOwned } from './helpers.js'
 
 // POST /itineraries
 // Creates an itinerary owned by the caller, with its stops referencing venue pins.
@@ -169,13 +169,11 @@ async function updateItinerary(req, res) {
   const id = parseIdParam(req, res, 'itinerary id')
   if (id === null) return
 
-  const itinerary = await itineraries.findByIdBasic(id)
-  if (!itinerary) {
-    return res.status(404).json({ error: 'Itinerary not found' })
-  }
-  if (itinerary.userId !== req.user.id) {
-    return res.status(403).json({ error: 'You can only edit your own itineraries' })
-  }
+  const itinerary = await loadOwned(res, itineraries.findByIdBasic, id, req.user.id, {
+    label: 'Itinerary',
+    action: 'edit',
+  })
+  if (!itinerary) return
 
   const { title, location, description, coverImageUrl, isPublic } = req.body
 
@@ -222,13 +220,11 @@ async function deleteItinerary(req, res) {
   const id = parseIdParam(req, res, 'itinerary id')
   if (id === null) return
 
-  const itinerary = await itineraries.findByIdBasic(id)
-  if (!itinerary) {
-    return res.status(404).json({ error: 'Itinerary not found' })
-  }
-  if (itinerary.userId !== req.user.id) {
-    return res.status(403).json({ error: 'You can only delete your own itineraries' })
-  }
+  const itinerary = await loadOwned(res, itineraries.findByIdBasic, id, req.user.id, {
+    label: 'Itinerary',
+    action: 'delete',
+  })
+  if (!itinerary) return
 
   await itineraries.remove(id)
 
@@ -241,10 +237,7 @@ async function likeItinerary(req, res) {
   const id = parseIdParam(req, res, 'itinerary id')
   if (id === null) return
 
-  const itinerary = await itineraries.findByIdBasic(id)
-  if (!itinerary) {
-    return res.status(404).json({ error: 'Itinerary not found' })
-  }
+  if (!(await loadOrNotFound(res, itineraries.findByIdBasic, id, 'Itinerary'))) return
 
   await likes.upsert(req.user.id, id)
 
@@ -258,10 +251,7 @@ async function unlikeItinerary(req, res) {
   const id = parseIdParam(req, res, 'itinerary id')
   if (id === null) return
 
-  const itinerary = await itineraries.findByIdBasic(id)
-  if (!itinerary) {
-    return res.status(404).json({ error: 'Itinerary not found' })
-  }
+  if (!(await loadOrNotFound(res, itineraries.findByIdBasic, id, 'Itinerary'))) return
 
   await likes.remove(req.user.id, id)
 
@@ -275,10 +265,8 @@ async function bookmarkItinerary(req, res) {
   const id = parseIdParam(req, res, 'itinerary id')
   if (id === null) return
 
-  const itinerary = await itineraries.findByIdBasic(id)
-  if (!itinerary) {
-    return res.status(404).json({ error: 'Itinerary not found' })
-  }
+  const itinerary = await loadOrNotFound(res, itineraries.findByIdBasic, id, 'Itinerary')
+  if (!itinerary) return
   if (!itinerary.isPublic) {
     return res.status(403).json({ error: 'Only public itineraries can be bookmarked' })
   }
@@ -294,10 +282,7 @@ async function removeBookmark(req, res) {
   const id = parseIdParam(req, res, 'itinerary id')
   if (id === null) return
 
-  const itinerary = await itineraries.findByIdBasic(id)
-  if (!itinerary) {
-    return res.status(404).json({ error: 'Itinerary not found' })
-  }
+  if (!(await loadOrNotFound(res, itineraries.findByIdBasic, id, 'Itinerary'))) return
 
   await bookmarks.remove(req.user.id, id)
 
