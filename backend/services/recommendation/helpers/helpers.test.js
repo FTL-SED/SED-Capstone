@@ -28,17 +28,19 @@ test('shareTag: false/empty when pin has no tags (missing data)', () => {
   assert.equal(shareTag(undefined, new Set(['art'])), false)
 })
 
+// overlap now takes the member (so it can reuse the memoized food-pref Set),
+// not a raw prefs array.
 test('overlap: true when cuisine matches a food pref', () => {
-  assert.equal(overlap(['sushi', 'ramen'], ['sushi']), true)
+  assert.equal(overlap(['sushi', 'ramen'], { foodPrefs: ['sushi'] }), true)
 })
 
 test('overlap: false with no match', () => {
-  assert.equal(overlap(['pizza'], ['sushi']), false)
+  assert.equal(overlap(['pizza'], { foodPrefs: ['sushi'] }), false)
 })
 
 test('overlap: false when cuisine or prefs missing (missing data)', () => {
-  assert.equal(overlap(undefined, ['sushi']), false)
-  assert.equal(overlap(['sushi'], []), false)
+  assert.equal(overlap(undefined, { foodPrefs: ['sushi'] }), false)
+  assert.equal(overlap(['sushi'], { foodPrefs: [] }), false)
 })
 
 test('passesDiet: true when no dietary needs in the group', () => {

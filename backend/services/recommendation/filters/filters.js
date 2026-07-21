@@ -39,8 +39,7 @@ const hasCoords = (m) =>
 // meetingPoint is the fair group anchor (or null when it can't be computed);
 // memberCoords is the list of usable member coordinates (reused downstream for
 // the fairness metric, so recommend() doesn't re-derive it).
-function hardFilter(pins, members, trip) {
-  const groupTags = new Set(members.flatMap((m) => m.interestTags ?? []))
+function hardFilter(pins, members, trip, groupTags = new Set(members.flatMap((m) => m.interestTags ?? []))) {
   const candidates = []
   const flags = { priceUnknown: [], hoursUnknown: [] }
 

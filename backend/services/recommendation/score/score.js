@@ -7,7 +7,7 @@
 // rank together in a single list. Pure: no DB, no Express.
 
 import { WEIGHTS, INTENSITY_SATURATION, QUALITY_DEFAULT } from '../../../config/recommendation.js'
-import { shareTag, overlap, memberCanEat } from '../helpers/helpers.js'
+import { shareTag, overlap, memberCanEat, memberInterestSet } from '../helpers/helpers.js'
 
 const isRestaurant = (pin) => pin.category === 'restaurant'
 
@@ -19,9 +19,11 @@ const isRestaurant = (pin) => pin.category === 'restaurant'
 // the fairness guarantee (Step 5) reuses the exact same notion of "liked".
 function memberLikes(pin, member) {
   if (isRestaurant(pin)) {
-    return memberCanEat(pin, member) && overlap(pin.cuisine, member.foodPrefs)
+    return memberCanEat(pin, member) && overlap(pin.cuisine, member)
   }
-  return shareTag(pin.interests ?? [], new Set(member.interestTags))
+  // memberInterestSet is memoized on the member, so this Set is built once per
+  // member per run, not rebuilt for every pin.
+  return shareTag(pin.interests ?? [], memberInterestSet(member))
 }
 
 // Members who'd "like" this pin — cuisine match for restaurants, interest-tag
