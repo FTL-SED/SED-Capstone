@@ -83,6 +83,32 @@ test('respects the per-person budget cap', () => {
   assert.ok(total <= 30, `total ${total} exceeds cap 30`)
 })
 
+test('a budget-skipped stop does not consume clock time from later stops', () => {
+  // Three cheap pins the day would keep, with one expensive pin wedged in the
+  // middle of the route that budget forces us to skip. The kept stops' arrival
+  // times must match a run where the expensive pin isn't in the list at all —
+  // i.e. skipping it must not advance the clock by phantom travel to a place we
+  // never visit. (Regression for the fallback clock-inflation bug.)
+  const cheap = [
+    { id: 1, name: 'A', category: 'activity', latitude: 37.795, longitude: -122.394, pricePerPerson: 0, address: 'SF' },
+    { id: 2, name: 'B (pricey)', category: 'activity', latitude: 37.802, longitude: -122.406, pricePerPerson: 500, address: 'SF' },
+    { id: 3, name: 'C', category: 'activity', latitude: 37.769, longitude: -122.486, pricePerPerson: 0, address: 'SF' },
+  ]
+  const cons = { timeWindow: { startTime: '09:00', endTime: '21:00' }, maxBudgetPerPerson: 50, groupSize: 1 }
+
+  const withPricey = fallbackSequence(cheap, cons)
+  // The pricey pin must be skipped (over the 50 cap).
+  assert.ok(!withPricey.stops.some((s) => s.pinId === 2), 'pricey pin should be skipped for budget')
+
+  // Same run with the pricey pin absent entirely.
+  const withoutPricey = fallbackSequence(cheap.filter((p) => p.id !== 2), cons)
+
+  // The kept stops (ids 1 and 3, same nearest-neighbor order) must have
+  // identical arrive/depart times in both runs — the skip cost no time.
+  const times = (r) => r.stops.map((s) => [s.pinId, s.arriveTime, s.departTime])
+  assert.deepEqual(times(withPricey), times(withoutPricey))
+})
+
 test('returns { feasible: false } for an empty shortlist', () => {
   const result = fallbackSequence([], constraints)
   assert.equal(result.feasible, false)
