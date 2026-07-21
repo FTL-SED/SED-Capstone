@@ -165,6 +165,11 @@ async function createPin(req, res) {
     if (!Number.isInteger(venuePinId)) {
       return res.status(400).json({ error: 'pinId must be an integer' })
     }
+    // Check the pin exists before creating the stop
+    const venue = await pins.findById(venuePinId)
+    if (!venue) {
+      return res.status(404).json({ error: 'Pin not found' })
+    }
   }
 
   // Create the itinerary stop referencing the venue

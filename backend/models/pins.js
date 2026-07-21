@@ -7,6 +7,10 @@ function findByIdWithItinerary(id) {
   return prisma.pin.findUnique({ where: { id }, include: { itinerary: true } })
 }
 
+function findById(id) {
+  return prisma.pin.findUnique({ where: { id } })
+}
+
 function create(data) {
   return prisma.pin.create({ data })
 }
@@ -25,4 +29,4 @@ function remove(id) {
   return prisma.pin.delete({ where: { id } })
 }
 
-export { findByIdWithItinerary, create, update, remove }
+export { findByIdWithItinerary, findById, create, update, remove }
