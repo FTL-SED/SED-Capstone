@@ -71,11 +71,11 @@ function findByIdBasic(id) {
   return prisma.itinerary.findUnique({ where: { id } })
 }
 
-// Record plus its pins in order, for deep-copying.
-function findByIdWithPins(id) {
+// Record plus its stops in order, for deep-copying.
+function findByIdWithStops(id) {
   return prisma.itinerary.findUnique({
     where: { id },
-    include: { pins: { orderBy: { orderInItinerary: 'asc' } } },
+    include: { stops: { orderBy: { orderInItinerary: 'asc' } } },
   })
 }
 
@@ -100,7 +100,7 @@ export {
   findMany,
   findById,
   findByIdBasic,
-  findByIdWithPins,
+  findByIdWithStops,
   update,
   remove,
 }

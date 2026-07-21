@@ -292,7 +292,7 @@ async function copyItinerary(req, res) {
     return res.status(400).json({ error: 'Invalid itinerary id' })
   }
 
-  const source = await itineraries.findByIdWithPins(id)
+  const source = await itineraries.findByIdWithStops(id)
 
   if (!source) {
     return res.status(404).json({ error: 'Itinerary not found' })
@@ -309,21 +309,16 @@ async function copyItinerary(req, res) {
     description: source.description,
     coverImageUrl: source.coverImageUrl,
     isPublic: false,
-    pins: {
-      create: source.pins.map((pin) => ({
-        orderInItinerary: pin.orderInItinerary,
-        name: pin.name,
-        description: pin.description,
-        tags: pin.tags,
-        pricePerPerson: pin.pricePerPerson,
-        latitude: pin.latitude,
-        longitude: pin.longitude,
-        address: pin.address,
-        startTime: pin.startTime,
-        endTime: pin.endTime,
-        travelTimeToNextMinutes: pin.travelTimeToNextMinutes,
-        distanceToNextMeters: pin.distanceToNextMeters,
-        locationImageUrl: pin.locationImageUrl,
+    stops: {
+      create: source.stops.map((s) => ({
+        pinId: s.pinId,
+        orderInItinerary: s.orderInItinerary,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        travelTimeToNextMinutes: s.travelTimeToNextMinutes,
+        distanceToNextMeters: s.distanceToNextMeters,
+        mealType: s.mealType,
+        note: s.note,
       })),
     },
   })
