@@ -2,6 +2,11 @@
 // Every weight, quota, and threshold the engine uses lives here so behavior is
 // changed by editing config, not code. See ../.claude/docs/recommendation-engine.md.
 
+// A pin's category. Restaurants are the meal pool (diet/cuisine-matched);
+// everything else is an activity. Centralized so the literal isn't scattered
+// across the engine + AI services.
+export const CATEGORY = { restaurant: 'restaurant', activity: 'activity' }
+
 // priceLevel (0–4) → estimated cost per person in USD. Used for the budget
 // sanity filter and to attach pricePerPerson to each pin.
 export const PRICE_LEVEL_USD = { 0: 0, 1: 10, 2: 22, 3: 45, 4: 80 }

@@ -9,6 +9,7 @@ import { softScore } from '../score/score.js'
 import { enrichMissing } from '../enrich/enrich.js'
 import { computeShortlistSize, assembleWithFoodQuota } from '../assemble/assemble.js'
 import { ensureEveryMemberCovered, ensureEveryDietCovered } from '../fairness/fairness.js'
+import { isRestaurant } from '../helpers/helpers.js'
 import { ENRICHMENT_POOL_SIZE, FOOD_MIN } from '../../../config/recommendation.js'
 import { maxDistanceFrom } from '../../../utils/geo.js'
 
@@ -63,7 +64,7 @@ function recommend(trip, members, pins) {
   // tight travel radius or thin catalog leaves a "food desert" in range. The
   // AI / frontend can then tell the group meal choices are limited, rather than
   // the shortfall passing silently.
-  const restaurantCount = shortlist.filter((p) => p.category === 'restaurant').length
+  const restaurantCount = shortlist.filter(isRestaurant).length
   const foodBelowMin = restaurantCount < FOOD_MIN
 
   return {

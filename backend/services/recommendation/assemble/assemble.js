@@ -10,12 +10,11 @@ import {
   AVG_STOP_DURATION_MIN,
   SHORTLIST_MULTIPLIER,
 } from '../../../config/recommendation.js'
-import { toMinutes, pinIdentity } from '../helpers/helpers.js'
+import { toMinutes, pinIdentity, isRestaurant } from '../helpers/helpers.js'
 
 // Only category === "restaurant" counts against the food quota. Treats
 // (coffee/dessert/boba) live under other categories (e.g. "cafe") and are
 // treated as ordinary activities the user explicitly picked.
-const isRestaurant = (pin) => pin.category === 'restaurant'
 
 // Estimate how many stops fit the trip's time window, then give the AI a
 // multiple of that many options to choose from (see AVG_STOP_DURATION_MIN /

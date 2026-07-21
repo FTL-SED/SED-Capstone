@@ -7,9 +7,7 @@
 // rank together in a single list. Pure: no DB, no Express.
 
 import { WEIGHTS, INTENSITY_SATURATION, QUALITY_DEFAULT } from '../../../config/recommendation.js'
-import { shareTag, overlap, memberCanEat, memberInterestSet } from '../helpers/helpers.js'
-
-const isRestaurant = (pin) => pin.category === 'restaurant'
+import { shareTag, overlap, memberCanEat, memberInterestSet, isRestaurant } from '../helpers/helpers.js'
 
 // True if this one member would "like" the pin — cuisine match for
 // restaurants, interest-tag match for everything else. A member can only "like"

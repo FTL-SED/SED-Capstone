@@ -2,9 +2,9 @@
 // (services/ai/). Like config/recommendation.js, all AI knobs live here so
 // behavior changes by editing config, not code. See ../.claude/docs/ai-design.md.
 
-// Shared with the recommendation engine's shortlist-sizing — re-exported, not
-// redefined, so the fallback's dwell-time can't drift from it.
-export { AVG_STOP_DURATION_MIN } from './recommendation.js'
+// Shared with the recommendation engine — re-exported, not redefined, so the
+// fallback's dwell-time and the pin-category vocabulary can't drift from it.
+export { AVG_STOP_DURATION_MIN, CATEGORY } from './recommendation.js'
 
 // AI gateway client tunables. AI_MODEL is the Salesforce model-gateway model
 // id; timeout/retries bound how long we try before giving up to the

@@ -16,10 +16,9 @@ import {
   hasUsableHours,
   withinRadius,
   isClosedThisDay,
+  isRestaurant,
 } from '../helpers/helpers.js'
 import { geometricMedian } from '../../../utils/geo.js'
-
-const isRestaurant = (pin) => pin.category === 'restaurant'
 
 // A member's start location is usable for the meeting point only when it carries
 // numeric coordinates. The frontend resolves each address via its map/autocomplete

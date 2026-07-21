@@ -6,9 +6,7 @@
 // returns a new array, never mutates `shortlist` or `candidates`.
 
 import { memberLikes } from '../score/score.js'
-import { memberCanEat, pinIdentity } from '../helpers/helpers.js'
-
-const isRestaurant = (pin) => pin.category === 'restaurant'
+import { memberCanEat, pinIdentity, isRestaurant } from '../helpers/helpers.js'
 
 // Single-pass best-scoring candidate satisfying `matches`, skipping any already
 // in `coveredIds`. Replaces a `.filter().sort()[0]` (which sorts the whole match

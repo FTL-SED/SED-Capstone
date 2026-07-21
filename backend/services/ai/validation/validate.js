@@ -6,7 +6,7 @@
 // Returns { valid, errors } — errors is a list of plain-English problems, handy
 // for debugging. Note: a well-formed { feasible: false, reason } is a valid
 // answer (the AI correctly saying "no itinerary fits"), not a failure.
-import { MEAL_TIME_WINDOWS } from '../../../config/ai.js'
+import { MEAL_TIME_WINDOWS, CATEGORY } from '../../../config/ai.js'
 import { toMinutes } from '../../../utils/time.js'
 
 const HHMM_RE = /^([01][0-9]|2[0-3]):[0-5][0-9]$/
@@ -86,7 +86,7 @@ const checkBusinessRules = (stops, shortlist, constraints, errors) => {
   // that merely happens to start at 1pm is not a second lunch. A declared
   // mealType is attributed to that block; otherwise a restaurant is attributed
   // to whichever block its arriveTime falls in.
-  const isMeal = (s) => s.mealType !== undefined || byId.get(s.pinId)?.category === 'restaurant'
+  const isMeal = (s) => s.mealType !== undefined || byId.get(s.pinId)?.category === CATEGORY.restaurant
   for (const [name, block] of Object.entries(MEAL_TIME_WINDOWS)) {
     const inBlock = stops.filter(
       (s) => isMeal(s) && (s.mealType === name || (s.mealType === undefined && inMealBlock(s.arriveTime, block)))
