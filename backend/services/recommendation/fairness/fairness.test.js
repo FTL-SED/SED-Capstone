@@ -8,10 +8,10 @@ test('injects a member\'s best match when their niche interest ranked too low to
     { name: 'A', interestTags: ['art'] },
     { name: 'B', interestTags: ['stamps'] }, // niche — nothing in the shortlist matches
   ]
-  const shortlist = [{ name: 'MoMA', category: 'museum', tags: ['art'], score: 0.9 }]
+  const shortlist = [{ name: 'MoMA', category: 'museum', interests: ['art'], score: 0.9 }]
   const candidates = [
     ...shortlist,
-    { name: 'Stamp Museum', category: 'museum', tags: ['stamps'], score: 0.1 }, // ranked low, didn't make the cut
+    { name: 'Stamp Museum', category: 'museum', interests: ['stamps'], score: 0.1 }, // ranked low, didn't make the cut
   ]
 
   const result = ensureEveryMemberCovered(shortlist, members, candidates)
@@ -22,7 +22,7 @@ test('injects a member\'s best match when their niche interest ranked too low to
 
 test('does not inject anything when every member is already covered', () => {
   const members = [{ name: 'A', interestTags: ['art'] }]
-  const shortlist = [{ name: 'MoMA', category: 'museum', tags: ['art'], score: 0.9 }]
+  const shortlist = [{ name: 'MoMA', category: 'museum', interests: ['art'], score: 0.9 }]
   const candidates = shortlist
 
   const result = ensureEveryMemberCovered(shortlist, members, candidates)
@@ -34,8 +34,8 @@ test('picks the highest-scoring matching candidate, not just the first one', () 
   const members = [{ name: 'B', interestTags: ['stamps'] }]
   const shortlist = []
   const candidates = [
-    { name: 'Dusty Stamp Shop', category: 'shop', tags: ['stamps'], score: 0.2 },
-    { name: 'Grand Stamp Museum', category: 'museum', tags: ['stamps'], score: 0.5 },
+    { name: 'Dusty Stamp Shop', category: 'shop', interests: ['stamps'], score: 0.2 },
+    { name: 'Grand Stamp Museum', category: 'museum', interests: ['stamps'], score: 0.5 },
   ]
 
   const result = ensureEveryMemberCovered(shortlist, members, candidates)
@@ -46,7 +46,7 @@ test('picks the highest-scoring matching candidate, not just the first one', () 
 
 test('leaves a member uncovered without crashing when no candidate matches at all', () => {
   const members = [{ name: 'B', interestTags: ['underwater basket weaving'] }]
-  const shortlist = [{ name: 'MoMA', category: 'museum', tags: ['art'], score: 0.9 }]
+  const shortlist = [{ name: 'MoMA', category: 'museum', interests: ['art'], score: 0.9 }]
   const candidates = shortlist
 
   const result = ensureEveryMemberCovered(shortlist, members, candidates)
@@ -60,7 +60,7 @@ test('injects only once when multiple members share the same unrepresented inter
     { name: 'B', interestTags: ['stamps'] },
   ]
   const shortlist = []
-  const candidates = [{ name: 'Stamp Museum', category: 'museum', tags: ['stamps'], score: 0.5 }]
+  const candidates = [{ name: 'Stamp Museum', category: 'museum', interests: ['stamps'], score: 0.5 }]
 
   const result = ensureEveryMemberCovered(shortlist, members, candidates)
 
@@ -69,20 +69,20 @@ test('injects only once when multiple members share the same unrepresented inter
 
 test('does not mutate the input shortlist array', () => {
   const members = [{ name: 'B', interestTags: ['stamps'] }]
-  const shortlist = [{ name: 'MoMA', category: 'museum', tags: ['art'], score: 0.9 }]
+  const shortlist = [{ name: 'MoMA', category: 'museum', interests: ['art'], score: 0.9 }]
   const originalLength = shortlist.length
-  const candidates = [...shortlist, { name: 'Stamp Museum', category: 'museum', tags: ['stamps'], score: 0.5 }]
+  const candidates = [...shortlist, { name: 'Stamp Museum', category: 'museum', interests: ['stamps'], score: 0.5 }]
 
   ensureEveryMemberCovered(shortlist, members, candidates)
 
   assert.equal(shortlist.length, originalLength)
 })
 
-test('restaurants are covered via cuisine/foodPrefs, not tags', () => {
+test('restaurants are covered via cuisine/foodPrefs, not interests', () => {
   const members = [{ name: 'A', interestTags: [], foodPrefs: ['ramen'] }]
   const shortlist = []
   const candidates = [
-    { name: 'Ramen Bar', category: 'restaurant', tags: [], cuisine: ['ramen'], score: 0.4 },
+    { name: 'Ramen Bar', category: 'restaurant', cuisine: ['ramen'], score: 0.4 },
   ]
 
   const result = ensureEveryMemberCovered(shortlist, members, candidates)

@@ -21,7 +21,7 @@ function memberLikes(pin, member) {
   if (isRestaurant(pin)) {
     return memberCanEat(pin, member) && overlap(pin.cuisine, member.foodPrefs)
   }
-  return shareTag(pin.tags, new Set(member.interestTags))
+  return shareTag(pin.interests ?? [], new Set(member.interestTags))
 }
 
 // Members who'd "like" this pin — cuisine match for restaurants, interest-tag
@@ -36,7 +36,7 @@ function matchCount(pin, groupTags, groupFood) {
   if (isRestaurant(pin)) {
     return (pin.cuisine ?? []).filter((c) => groupFood.has(c)).length
   }
-  return (pin.tags ?? []).filter((t) => groupTags.has(t)).length
+  return (pin.interests ?? []).filter((t) => groupTags.has(t)).length
 }
 
 // score(pin) = 0.5*coverage + 0.3*intensity + 0.2*quality (weights configurable).
