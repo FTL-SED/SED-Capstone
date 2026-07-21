@@ -2,6 +2,7 @@ import * as pins from '../models/pins.js'
 import * as itineraryStops from '../models/itineraryStops.js'
 import * as itineraries from '../models/itineraries.js'
 import { classifyTags } from '../services/recommendation/pinsRepository/classify.js'
+import { parseIdParam } from './helpers.js'
 
 // Parses a value into a valid Date, or returns null if it isn't a usable date.
 function parseDate(value) {
@@ -13,10 +14,8 @@ function parseDate(value) {
 // Returns an itinerary stop with its venue. Readable when the parent itinerary
 // is public or owned by the caller. Auth is handled by requireAuth.
 async function getPin(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid pin id' })
-  }
+  const id = parseIdParam(req, res, 'pin id')
+  if (id === null) return
 
   const stop = await itineraryStops.findByIdWithItinerary(id)
 
@@ -196,10 +195,8 @@ async function createPin(req, res) {
 // Venue fields are NOT editable via this endpoint (they live on the Pin).
 // The caller must own the itinerary.
 async function updatePin(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid pin id' })
-  }
+  const id = parseIdParam(req, res, 'pin id')
+  if (id === null) return
 
   const stop = await itineraryStops.findByIdWithItinerary(id)
 
@@ -278,10 +275,8 @@ async function updatePin(req, res) {
 // DELETE /pins/:id
 // Deletes an itinerary stop from an itinerary the caller owns.
 async function deletePin(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid pin id' })
-  }
+  const id = parseIdParam(req, res, 'pin id')
+  if (id === null) return
 
   const stop = await itineraryStops.findByIdWithItinerary(id)
 

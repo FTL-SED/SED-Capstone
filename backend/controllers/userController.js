@@ -1,5 +1,6 @@
 import supabase, { uploadAvatar, updateUserPassword } from '../lib/supabase.js'
 import * as users from '../models/users.js'
+import { parseIdParam } from './helpers.js'
 
 // POST /users/register
 // Creates the Supabase Auth account, then the matching app-side profile row.
@@ -139,10 +140,8 @@ async function loginUser(req, res) {
 // Updates the caller's own profile. Only `username` is editable here; email and
 // password are managed by Supabase Auth. Auth is handled by requireAuth.
 async function updateUser(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid user id' })
-  }
+  const id = parseIdParam(req, res, 'user id')
+  if (id === null) return
 
   if (req.user.id !== id) {
     return res.status(403).json({ error: 'You can only edit your own profile' })
@@ -176,10 +175,8 @@ async function updateUser(req, res) {
 // URL on the profile. Multipart body; the file is on `req.file` (multer). A
 // user may only change their own avatar. Auth is handled by requireAuth.
 async function uploadUserAvatar(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid user id' })
-  }
+  const id = parseIdParam(req, res, 'user id')
+  if (id === null) return
 
   if (req.user.id !== id) {
     return res.status(403).json({ error: 'You can only edit your own profile' })
@@ -221,10 +218,8 @@ async function uploadUserAvatar(req, res) {
 // record, so email and the saved/liked lists are never exposed for another id.
 // Auth is handled by requireAuth.
 async function getUser(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid user id' })
-  }
+  const id = parseIdParam(req, res, 'user id')
+  if (id === null) return
 
   if (req.user.id !== id) {
     return res
@@ -254,10 +249,8 @@ async function getUser(req, res) {
 // re-verifies it (via Supabase sign-in) before updating, so a hijacked session
 // can't silently reset the password. Auth is handled by requireAuth.
 async function changeUserPassword(req, res) {
-  const id = Number(req.params.id)
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'Invalid user id' })
-  }
+  const id = parseIdParam(req, res, 'user id')
+  if (id === null) return
 
   if (req.user.id !== id) {
     return res.status(403).json({ error: 'You can only change your own password' })
