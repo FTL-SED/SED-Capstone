@@ -7,7 +7,10 @@ function LoginPage({setCurrentUser}) {
   return (
     <div className="login-page">
       <AuthCard>
-        <h1 className="auth-title">Log into NavQuest</h1>
+        <header className="auth-card__head">
+          <h1 className="auth-title">Welcome back</h1>
+          <p className="auth-subtitle">Log in to pick up planning your next great day.</p>
+        </header>
         <LoginForm setCurrentUser={setCurrentUser}/>
         <SignUpSection />
       </AuthCard>

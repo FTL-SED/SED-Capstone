@@ -93,106 +93,6 @@
   outline: none;
 }
 
-/* ---- Floating navigation ------------------------------------------------ */
-.hero__nav {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 26px 40px;
-}
-
-.hero__brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-family: "Fraunces", Georgia, serif;
-  font-weight: 600;
-  font-size: 1.4rem;
-  letter-spacing: -0.01em;
-  color: var(--moss-deep);
-}
-
-.hero__brand-mark {
-  width: 14px;
-  height: 14px;
-  border-radius: 50% 50% 50% 2px;
-  background: var(--sunset);
-  transform: rotate(45deg);
-  box-shadow: 0 0 0 4px rgba(225, 120, 60, 0.16);
-}
-
-.hero__links {
-  display: flex;
-  gap: 30px;
-  margin-left: 8px;
-}
-
-.hero__links a {
-  position: relative;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--moss-deep);
-  opacity: 0.82;
-  transition: opacity 0.18s ease;
-}
-
-.hero__links a::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 100%;
-  bottom: -6px;
-  height: 2px;
-  background: var(--sunset);
-  transition: right 0.24s ease;
-}
-
-.hero__links a:hover {
-  opacity: 1;
-}
-
-.hero__links a:hover::after {
-  right: 0;
-}
-
-.hero__actions {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  margin-left: auto;
-}
-
-.hero__login {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--moss-deep);
-  opacity: 0.85;
-  transition: opacity 0.18s ease;
-}
-
-.hero__login:hover {
-  opacity: 1;
-}
-
-.hero__cta-nav {
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--cream);
-  background: var(--moss);
-  padding: 10px 20px;
-  border-radius: 999px;
-  transition: background 0.18s ease, transform 0.18s ease;
-}
-
-.hero__cta-nav:hover {
-  background: var(--moss-deep);
-  transform: translateY(-1px);
-}
-
 /* ---- Minimal overlay: headline + CTA, seated low over the scene --------- */
 .hero__overlay {
   position: absolute;
@@ -252,18 +152,21 @@
    prefers-reduced-motion below.
    ========================================================================== */
 
-/* Clouds drift slowly across the sky */
-.hero__cloud--1 { animation: hero-drift 68s linear infinite; }
-.hero__cloud--2 { animation: hero-drift 92s linear infinite; }
-.hero__cloud--3 { animation: hero-drift 80s linear infinite; }
+/* Clouds drift slowly across the sky. One shared left-to-right traversal: each
+   begins just off the left edge and exits fully off the right before the loop
+   resets, so the wrap is always off-screen. Equal negative delays keep the
+   three evenly spaced as they go. */
+.hero__cloud--1 { animation: hero-drift 96s linear infinite; }
+.hero__cloud--2 { animation: hero-drift 96s linear infinite; animation-delay: -32s; }
+.hero__cloud--3 { animation: hero-drift 96s linear infinite; animation-delay: -64s; }
 
 @keyframes hero-drift {
-  from { transform: translateX(-120px); }
-  to   { transform: translateX(1560px); }
+  from { transform: translateX(0); }
+  to   { transform: translateX(1780px); }
 }
 
 /* A small plane crosses the sky every so often (long pause between passes) */
-.hero__plane { animation: none; opacity: 0.75; transform: translate(760px, 0); }
+.hero__plane { animation: hero-plane 34s linear infinite; }
 
 @keyframes hero-plane {
   0%      { transform: translate(0, 0); opacity: 0; }
@@ -275,16 +178,6 @@
 
 /* ---- Responsive --------------------------------------------------------- */
 @media (max-width: 860px) {
-  .hero__nav {
-    padding: 20px 22px;
-    gap: 18px;
-  }
-
-  /* Fold the marketing links away on small screens; brand + auth remain */
-  .hero__links {
-    display: none;
-  }
-
   .hero__overlay {
     bottom: clamp(8vh, 12vh, 140px);
     gap: 24px;
@@ -292,19 +185,6 @@
 }
 
 @media (max-width: 600px) {
-  .hero__nav {
-    padding: 18px 16px;
-    gap: 12px;
-  }
-
-  .hero__actions {
-    gap: 10px;
-  }
-
-  .hero__cta-nav {
-    padding: 9px 15px;
-  }
-
   /* Keep the headline within the viewport on narrow phones */
   .hero .hero-heading {
     font-size: clamp(2rem, 8vw, 2.6rem);

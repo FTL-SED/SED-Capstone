@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import Heading from '../Heading/Heading.jsx'
 import StartPlanningButton from '../StartPlanningButton/StartPlanningButton.jsx'
 import './HeroSection.css'
@@ -20,24 +19,7 @@ import './HeroSection.css'
 function HeroSection() {
   return (
     <section className="hero" aria-label="NavQuest">
-      {/* --- Floating marketing navigation ------------------------------- */}
-      <header className="hero__nav">
-        <Link to="/" className="hero__brand">
-          <span className="hero__brand-mark" aria-hidden="true" />
-          NavQuest
-        </Link>
-
-        <nav className="hero__links" aria-label="Primary">
-          <Link to="/home">Dashboard</Link>
-          <Link to="/discover">Explore</Link>
-          <Link to="/create">Create</Link>
-        </nav>
-
-        <div className="hero__actions">
-          <Link to="/login" className="hero__login">Log in</Link>
-          <Link to="/register" className="hero__cta-nav">Get started</Link>
-        </div>
-      </header>
+      {/* The shared, floating Navbar (hero variant) renders above this scene. */}
 
       {/* --- The scene --------------------------------------------------- */}
       <div className="hero__scene" aria-hidden="true">
@@ -117,20 +99,22 @@ function HeroSection() {
           {/* Sky — a thin warm band across the top */}
           <rect x="0" y="0" width="1440" height="900" fill="url(#hqSky)" />
 
-          {/* Drifting clouds (soft, low-contrast) */}
-          <g className="hero__clouds" fill="#FBF1DC">
+          {/* Drifting clouds (soft, low-contrast). Each starts just off the left
+              edge and drifts fully across before wrapping back around from the
+              left (see hero-drift), so a cloud never pops into view mid-screen. */}
+          <g className="hero__clouds" fill="#FFFCF3">
             <g className="hero__cloud hero__cloud--1" opacity="0.7">
-              <ellipse cx="260" cy="150" rx="90" ry="20" />
-              <ellipse cx="330" cy="140" rx="70" ry="17" />
-              <ellipse cx="200" cy="160" rx="55" ry="15" />
+              <ellipse cx="-180" cy="150" rx="90" ry="20" />
+              <ellipse cx="-110" cy="140" rx="70" ry="17" />
+              <ellipse cx="-240" cy="160" rx="55" ry="15" />
             </g>
             <g className="hero__cloud hero__cloud--2" opacity="0.55">
-              <ellipse cx="760" cy="110" rx="70" ry="15" />
-              <ellipse cx="820" cy="118" rx="50" ry="12" />
+              <ellipse cx="-150" cy="110" rx="70" ry="15" />
+              <ellipse cx="-90" cy="118" rx="50" ry="12" />
             </g>
             <g className="hero__cloud hero__cloud--3" opacity="0.6">
-              <ellipse cx="1180" cy="205" rx="80" ry="17" />
-              <ellipse cx="1120" cy="212" rx="55" ry="13" />
+              <ellipse cx="-120" cy="205" rx="80" ry="17" />
+              <ellipse cx="-180" cy="212" rx="55" ry="13" />
             </g>
           </g>
 

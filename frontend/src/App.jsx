@@ -20,9 +20,9 @@ function App() {
   // The itinerary page is a full-bleed split (map + panel) that fills the space
   // between the navbar and footer, so it opts out of the padded, max-width shell.
   const isFullBleed = pathname.startsWith('/itinerary/');
-  // The landing hero is a full-bleed cinematic scene that carries its own
-  // floating navigation, so it opts out of both the padded shell and the
-  // shared white navbar (which would otherwise stack a second nav on top).
+  // The landing hero is a full-bleed cinematic scene, so it opts out of the
+  // padded shell and uses the shared navbar's "hero" (warm, floating) variant —
+  // the same one the auth pages use.
   const isLanding = pathname === '/';
 
   // by using local storage, if the page references, but current user still stays same,
@@ -68,7 +68,11 @@ function App() {
 
   return (
     <div className="app">
-      {!isLanding && <Navbar isAuthenticated={isAuthenticated} currentUser={currentUser}/>}
+      <Navbar
+        isAuthenticated={isAuthenticated}
+        currentUser={currentUser}
+        variant={isLanding || isAuthPage ? 'hero' : undefined}
+      />
       <main className={`app__main${isAuthPage ? ' app__main--bare' : ''}${isFullBleed ? ' app__main--full' : ''}${isLanding ? ' app__main--bare' : ''}`}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
@@ -97,7 +101,7 @@ function App() {
             element={!isAuthenticated ? <Navigate to="/" replace/> : <AccountPage currentUser={currentUser} setCurrentUser={setCurrentUser} />} />
         </Routes>
       </main>
-      <Footer />
+      {!isAuthPage && <Footer variant={isLanding ? 'landing' : undefined} />}
     </div>
   );
 }

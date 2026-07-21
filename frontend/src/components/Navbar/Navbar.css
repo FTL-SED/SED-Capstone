@@ -28,3 +28,137 @@
     padding: 0 16px;
   }
 }
+
+/* ==========================================================================
+   Hero variant — used on the landing and auth (login / register) pages, which
+   share a warm, full-bleed scene. The bar floats transparently over the sky
+   (rather than being its own coloured band): an editorial serif wordmark with
+   the sunset diamond mark, warm moss links, a quiet "Login" text link and a
+   moss "Register" pill. Applied via the .navbar--hero modifier (see App.jsx),
+   so every other page keeps the standard white bar above.
+   ========================================================================== */
+.navbar--hero {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: transparent;
+  border-bottom: none;
+}
+
+/* Roomier placement to suit the scene: wider max-width, generous side/top
+   padding and gap instead of the app's fixed-height bar. */
+.navbar--hero .navbar__inner {
+  height: auto;
+  max-width: 1200px;
+  gap: 32px;
+  padding: 26px 40px;
+}
+
+/* Wordmark → editorial serif with the sunset diamond mark */
+.navbar--hero .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navbar--hero .logo::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border-radius: 50% 50% 50% 2px;
+  background: #e1783c;
+  transform: rotate(45deg);
+  box-shadow: 0 0 0 4px rgba(225, 120, 60, 0.16);
+}
+
+.navbar--hero .logo h3 {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 600;
+  font-size: 1.4rem;
+  letter-spacing: -0.01em;
+  color: #33402a;
+}
+
+/* Primary links (shown to signed-in visitors): warm moss with a sunset
+   underline that wipes in on hover / active. */
+.navbar--hero .nav-link {
+  color: #33402a;
+  opacity: 0.82;
+}
+
+.navbar--hero .nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: -2px;
+  height: 2px;
+  background: #e1783c;
+  transition: right 0.24s ease;
+}
+
+.navbar--hero .nav-link:hover,
+.navbar--hero .nav-link--active {
+  color: #33402a;
+  opacity: 1;
+}
+
+.navbar--hero .nav-link:hover::after,
+.navbar--hero .nav-link--active::after {
+  right: 0;
+}
+
+/* Signed-in avatar: warm hover ring */
+.navbar--hero .account-icon:hover {
+  box-shadow: 0 0 0 2px rgba(225, 120, 60, 0.35);
+}
+
+/* "Login" becomes a quiet text link */
+.navbar--hero .login-button {
+  border: none;
+  background: transparent;
+  color: #33402a;
+  font-size: 1rem;
+  padding: 10px 10px;
+  border-radius: 0;
+  opacity: 0.85;
+}
+
+.navbar--hero .login-button:hover {
+  background: transparent;
+  border-color: transparent;
+  opacity: 1;
+}
+
+/* "Register" becomes the moss pill CTA */
+.navbar--hero .register-button {
+  border: 1px solid #47583a;
+  background: #47583a;
+  color: #f6efe1;
+  font-size: 1rem;
+  border-radius: 999px;
+  padding: 12px 26px;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.navbar--hero .register-button:hover {
+  background: #33402a;
+  border-color: #33402a;
+  transform: translateY(-1px);
+}
+
+/* Tighten padding on smaller screens, like the old hero nav */
+@media (max-width: 860px) {
+  .navbar--hero .navbar__inner {
+    padding: 20px 22px;
+    gap: 18px;
+  }
+}
+
+@media (max-width: 600px) {
+  .navbar--hero .navbar__inner {
+    padding: 18px 16px;
+    gap: 12px;
+  }
+}
