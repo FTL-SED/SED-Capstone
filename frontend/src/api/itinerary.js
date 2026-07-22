@@ -85,3 +85,26 @@ export async function bookmarkItinerary(id) {
 export async function removeBookmark(id) {
   await api.delete(`/itineraries/${id}/bookmark`)
 }
+
+// GET /pins — browse/search the venue catalog to pick a place to add to an
+// itinerary. params: { q, category, limit, offset }. Returns catalog venues.
+export async function searchCatalog(params = {}) {
+  const { data } = await api.get('/pins', { params })
+  return data
+}
+
+// POST /pins — add a stop to an itinerary that references an existing catalog
+// venue. body: { itineraryId, pinId, orderInItinerary, startTime, endTime, ... }.
+// (The endpoint operates on ItineraryStop; "pin" in the path is legacy naming.)
+// Returns the created stop (with its venue included).
+export async function addStop(body) {
+  const { data } = await api.post('/pins', body)
+  return data
+}
+
+// DELETE /pins/:stopId — remove a stop from an itinerary (204 No Content). Takes
+// the ItineraryStop id (the `stopId` field on each pin in the detail response),
+// NOT the venue pin id. The catalog venue itself is untouched.
+export async function deleteStop(stopId) {
+  await api.delete(`/pins/${stopId}`)
+}

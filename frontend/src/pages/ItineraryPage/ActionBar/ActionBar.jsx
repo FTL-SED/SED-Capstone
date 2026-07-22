@@ -7,6 +7,7 @@ import LikeButton from '../LikeButton/LikeButton.jsx'
 
 function ActionBar({
   isOwner = true,
+  editing = false,
   liked,
   bookmarked,
   likeCount,
@@ -20,7 +21,7 @@ function ActionBar({
     <div className="action-bar">
       {isOwner ? (
         <>
-          <EditButton onClick={onEdit} />
+          <EditButton onClick={onEdit} active={editing} />
           <DeleteButton onClick={onDelete} />
           <BookmarkButton bookmarked={bookmarked} onClick={onToggleBookmark} />
           <LikeButton liked={liked} likeCount={likeCount} onClick={onToggleLike} />

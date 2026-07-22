@@ -11,6 +11,7 @@ function ItineraryPanel({
   isOwner, pins, title, description, author,
   liked, bookmarked, likeCount, onToggleLike, onToggleBookmark,
   onEdit, onDelete, onCopy,
+  editMode, onEditDetails, onRemoveStop, onAddStop,
 }) {
   return (
     <div className="itinerary-panel">
@@ -21,6 +22,7 @@ function ItineraryPanel({
       </header>
       <ActionBar
         isOwner={isOwner}
+        editing={editMode}
         liked={liked}
         bookmarked={bookmarked}
         likeCount={likeCount}
@@ -30,8 +32,21 @@ function ItineraryPanel({
         onDelete={onDelete}
         onCopy={onCopy}
       />
+      {editMode && (
+        <div className="itinerary-panel__edit-bar">
+          <span className="itinerary-panel__edit-hint">Editing stops — remove or add places below.</span>
+          <button type="button" className="action-btn" onClick={onEditDetails}>
+            Edit trip details
+          </button>
+        </div>
+      )}
       <div className="itinerary-panel__timeline">
-        <WrittenItinerary pins={pins} />
+        <WrittenItinerary
+          pins={pins}
+          editMode={editMode}
+          onRemoveStop={onRemoveStop}
+          onAddStop={onAddStop}
+        />
       </div>
     </div>
   );

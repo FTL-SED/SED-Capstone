@@ -3,3 +3,11 @@
   border-color: var(--accent);
   color: var(--accent-strong);
 }
+
+/* Active = in edit mode; the button reads as a filled teal "Done" toggle. */
+.edit-button--active,
+.edit-button--active:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}

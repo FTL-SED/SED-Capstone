@@ -1,0 +1,121 @@
+/* Collapsed "Add a stop" trigger — a dashed, full-width call-to-action that
+   sits below the timeline in edit mode. */
+.add-stop-panel__open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+  color: var(--accent-strong);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.add-stop-panel__open:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Expanded search panel — a surface card matching the app's form convention. */
+.add-stop-panel {
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.add-stop-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.add-stop-panel__head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+.add-stop-panel__close {
+  border: none;
+  background: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--slate-500);
+  cursor: pointer;
+}
+.add-stop-panel__close:hover {
+  color: var(--ink);
+}
+
+.add-stop-panel__results {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.add-stop-panel__hint {
+  padding: 12px 4px;
+  color: var(--slate-500);
+  font-size: 0.9rem;
+}
+
+.add-stop-panel__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--border);
+}
+.add-stop-panel__row:last-child {
+  border-bottom: none;
+}
+
+.add-stop-panel__info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.add-stop-panel__name {
+  color: var(--slate-800);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.add-stop-panel__meta {
+  color: var(--slate-500);
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.add-stop-panel__add {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.add-stop-panel__add:hover {
+  background: var(--accent-strong);
+}
+.add-stop-panel__add:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
