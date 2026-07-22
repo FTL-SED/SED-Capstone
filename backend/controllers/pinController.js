@@ -174,22 +174,29 @@ async function createPin(req, res) {
 
   // Delegate the write to the service: it creates the stop (referencing pinId),
   // or — for a new venue — the venue + stop atomically in one transaction.
-  const stop = await addStop(
-    {
-      ...(pinId ? { pinId } : {}),
-      itineraryId,
-      orderInItinerary,
-      startTime: parsedStart,
-      endTime: parsedEnd,
-      travelTimeToNextMinutes: travelTimeToNextMinutes ?? null,
-      distanceToNextMeters: distanceToNextMeters ?? null,
-      mealType: mealType ?? null,
-      note: note ?? null,
-    },
-    venue,
-  )
-
-  return res.status(201).json(stop)
+  try {
+    const stop = await addStop(
+      {
+        ...(pinId ? { pinId } : {}),
+        itineraryId,
+        orderInItinerary,
+        startTime: parsedStart,
+        endTime: parsedEnd,
+        travelTimeToNextMinutes: travelTimeToNextMinutes ?? null,
+        distanceToNextMeters: distanceToNextMeters ?? null,
+        mealType: mealType ?? null,
+        note: note ?? null,
+      },
+      venue,
+    )
+    return res.status(201).json(stop)
+  } catch (err) {
+    // A stop already occupies this order slot (@@unique([itineraryId, orderInItinerary])).
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'That order position is already taken in this itinerary' })
+    }
+    throw err
+  }
 }
 
 // PUT /pins/:id
@@ -269,9 +276,16 @@ async function updatePin(req, res) {
     data.note = note
   }
 
-  const updated = await itineraryStops.update(id, data)
-
-  return res.status(200).json(updated)
+  try {
+    const updated = await itineraryStops.update(id, data)
+    return res.status(200).json(updated)
+  } catch (err) {
+    // Moving a stop onto an order slot another stop already holds.
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'That order position is already taken in this itinerary' })
+    }
+    throw err
+  }
 }
 
 // DELETE /pins/:id

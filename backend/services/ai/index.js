@@ -30,9 +30,9 @@ const optimizeItinerary = (itinerary, shortlist, constraints) => {
   return { ...itinerary, stops }
 }
 
-const tryAi = async (shortlist, constraints) => {
+const tryAi = async (shortlist, constraints, callAiFn) => {
   const messages = buildMessages(shortlist, constraints)
-  const result = await callAI(messages)
+  const result = await callAiFn(messages)
 
   const { valid, errors } = validateItinerary(result, shortlist, constraints)
   if (!valid) {
@@ -52,12 +52,14 @@ const tryAi = async (shortlist, constraints) => {
 //   { itinerary, source: 'ai' | 'fallback' } on success
 //   { feasible: false, reason } when constraints are too tight for any day
 // `source` lets the caller log/measure how often the AI path is actually used.
-const generateItinerary = async (shortlist, constraints) => {
+// `callAiFn` is injectable so tests can drive the AI branch (good/malformed/
+// hallucinated output) without a live model; it defaults to the real client.
+const generateItinerary = async (shortlist, constraints, callAiFn = callAI) => {
   let result
   let source = 'ai'
 
   try {
-    result = await tryAi(shortlist, constraints)
+    result = await tryAi(shortlist, constraints, callAiFn)
   } catch (err) {
     console.error('AI sequencing failed, using deterministic fallback:', err.message)
     result = fallbackSequence(shortlist, constraints)
