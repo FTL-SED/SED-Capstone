@@ -12,6 +12,7 @@ import CreateItineraryPage from './pages/CreateItineraryPage/CreateItineraryPage
 import LoadingPage from './pages/LoadingPage/LoadingPage'
 import ItineraryPage from './pages/ItineraryPage/ItineraryPage'
 import AccountPage from './pages/AccountPage/AccountPage'
+import { getCurrentUser } from './lib/currentUser.js'
 
 function App() {
   const { pathname } = useLocation();
@@ -36,7 +37,7 @@ function App() {
   // by using local storage, if the page references, but current user still stays same,
   // the isAuthenticated details wont be forgotted
   const [currentUser, setCurrentUser] = useState(() => {
-    const user = JSON.parse(localStorage.getItem("currentUser"));
+    const user = getCurrentUser();
     const expiresAt = Number(localStorage.getItem("sessionExpiresAt"));
     // Signed out if there's no user, no expiry, or the session has lapsed.
     if (!user || !expiresAt || Date.now() > expiresAt) return null;
@@ -68,7 +69,12 @@ function App() {
       signOut();
       return;
     }
-    const timer = setTimeout(signOut, msLeft);
+    // setTimeout delays above ~24.8 days (2^31-1 ms) overflow a 32-bit int and
+    // fire immediately, which would sign the user straight out. Clamp so a
+    // far-future expiry just waits the max instead. (Supabase tokens are ~1h, so
+    // this only bites if sessionExpiresAt is ever set unusually far out.)
+    const MAX_TIMEOUT = 2 ** 31 - 1;
+    const timer = setTimeout(signOut, Math.min(msLeft, MAX_TIMEOUT));
     return () => clearTimeout(timer);
   }, [currentUser, navigate]);
 

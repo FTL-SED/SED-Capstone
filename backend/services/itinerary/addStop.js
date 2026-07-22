@@ -24,9 +24,22 @@ async function addStop(stop, venue) {
   // New venue + its stop: atomic. If either write throws, neither commits, so
   // there's no dangling catalog Pin without a stop.
   return prisma.$transaction(async (tx) => {
-    const created = await tx.pin.create({ data: { ...venue, itineraryId: null } })
+    // Find-or-create the venue: reuse an existing catalog Pin that matches by
+    // name + coords (rounded to 4dp, the same key the seed loader dedupes on) so
+    // repeatedly adding the same place doesn't bloat the shared catalog the
+    // recommendation engine reads. Coords are compared within a small epsilon
+    // because they're stored as full-precision floats.
+    const EPS = 0.00005 // ~half of 4dp (~5.5m)
+    const existing = await tx.pin.findFirst({
+      where: {
+        name: venue.name,
+        latitude: { gte: venue.latitude - EPS, lte: venue.latitude + EPS },
+        longitude: { gte: venue.longitude - EPS, lte: venue.longitude + EPS },
+      },
+    })
+    const pin = existing ?? (await tx.pin.create({ data: venue }))
     return tx.itineraryStop.create({
-      data: { ...stop, pinId: created.id },
+      data: { ...stop, pinId: pin.id },
       include: { pin: true },
     })
   })

@@ -12,20 +12,23 @@ function ActionBar({
   likeCount,
   onToggleLike,
   onToggleBookmark,
+  onEdit,
+  onDelete,
+  onCopy,
 }) {
   return (
     <div className="action-bar">
       {isOwner ? (
         <>
-          <EditButton />
-          <DeleteButton />
+          <EditButton onClick={onEdit} />
+          <DeleteButton onClick={onDelete} />
           <BookmarkButton bookmarked={bookmarked} onClick={onToggleBookmark} />
           <LikeButton liked={liked} likeCount={likeCount} onClick={onToggleLike} />
         </>
       ) : (
         <>
           <BookmarkButton bookmarked={bookmarked} onClick={onToggleBookmark} />
-          <SaveCopyButton />
+          <SaveCopyButton onClick={onCopy} />
           <LikeButton liked={liked} likeCount={likeCount} onClick={onToggleLike} />
         </>
       )}

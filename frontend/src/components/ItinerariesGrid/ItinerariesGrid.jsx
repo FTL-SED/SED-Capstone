@@ -5,7 +5,14 @@ import ItineraryCard from '../ItineraryCard/ItineraryCard.jsx'
 // the 4-column grid so the page has a full skeleton instead of a blank gap.
 const PLACEHOLDER_COUNT = 12;
 
-function ItinerariesGrid({ itineraries = [], loading = false }) {
+function ItinerariesGrid({
+  itineraries = [],
+  loading = false,
+  likedIds,
+  bookmarkedIds,
+  onToggleLike,
+  onToggleBookmark,
+}) {
   return (
     <div className="itineraries-grid">
       {loading
@@ -13,7 +20,14 @@ function ItinerariesGrid({ itineraries = [], loading = false }) {
             <div key={i} className="itinerary-card itinerary-card--placeholder" />
           ))
         : itineraries.map((itinerary) => (
-            <ItineraryCard key={itinerary.id} itinerary={itinerary} />
+            <ItineraryCard
+              key={itinerary.id}
+              itinerary={itinerary}
+              liked={likedIds?.has(itinerary.id)}
+              bookmarked={bookmarkedIds?.has(itinerary.id)}
+              onToggleLike={onToggleLike}
+              onToggleBookmark={onToggleBookmark}
+            />
           ))}
     </div>
   );

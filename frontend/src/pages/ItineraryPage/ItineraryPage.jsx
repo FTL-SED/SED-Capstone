@@ -1,6 +1,6 @@
 import './ItineraryPage.css'
-import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import ItineraryPanel from './ItineraryPanel/ItineraryPanel.jsx'
 import MapView from './MapView/MapView.jsx'
 import ErrorMessage from '../../components/ErrorMessage/ErrorMessage.jsx'
@@ -11,7 +11,11 @@ import {
   unlikeItinerary,
   bookmarkItinerary,
   removeBookmark,
+  updateItinerary,
+  deleteItinerary,
+  copyItinerary,
 } from '../../api/itinerary.js'
+import { getCurrentUser } from '../../lib/currentUser.js'
 
 // While the itinerary is being fetched (and if the fetch fails) the page shows
 // the same golden-hour city scene the traveller saw on the Create + Loading
@@ -161,9 +165,12 @@ function CreateScene() {
 // See .claude/roadmap/frontend-backend-integration.md (Step 9).
 function ItineraryPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [itinerary, setItinerary] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  // Guards against double-firing the delete/copy network calls on rapid clicks.
+  const [actionBusy, setActionBusy] = useState(false);
 
   // Like/bookmark UI state. likeCount comes from the itinerary; whether *I've*
   // liked/bookmarked it isn't in GET /itineraries/:id, so we hydrate it from my
@@ -172,8 +179,14 @@ function ItineraryPage() {
   const [bookmarked, setBookmarked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
 
-  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-  const currentUserId = currentUser?.id;
+  const currentUserId = getCurrentUser()?.id;
+
+  // Like/bookmark sync: firing one request per click lets concurrent toggles
+  // race at the DB, so the server's final state can disagree with the UI. Track
+  // the user's latest DESIRED state and keep at most one request in flight,
+  // re-sending until the server matches. { desired, running }.
+  const likeSync = useRef({ desired: false, running: false });
+  const bookmarkSync = useRef({ desired: false, running: false });
 
   useEffect(() => {
     let active = true;
@@ -214,33 +227,123 @@ function ItineraryPage() {
 
   // Optimistic toggle: flip the UI (and the count) immediately, call the
   // backend, and revert if it rejects so the button never lies.
-  const toggleLike = () => {
-    const wasLiked = liked;
-    setLiked(!wasLiked);
-    setLikeCount((c) => c + (wasLiked ? -1 : 1));
+  // Drain loop: send like/unlike until the server matches the user's latest
+  // desired state, with only ONE request in flight (so calls can't race at the
+  // DB). Once settled, reconcile the count with the authoritative value.
+  const syncLike = async () => {
+    const state = likeSync.current;
+    if (state.running) return;
+    state.running = true;
+    try {
+      let sent;
+      while (state.desired !== sent) {
+        sent = state.desired;
+        const res = sent ? await likeItinerary(id) : await unlikeItinerary(id);
+        if (state.desired === sent && res && typeof res.likeCount === 'number') {
+          setLikeCount(res.likeCount);
+        }
+      }
+    } catch (err) {
+      console.error('Like sync failed:', err);
+    } finally {
+      state.running = false;
+    }
+  };
 
-    const request = wasLiked ? unlikeItinerary(id) : likeItinerary(id);
-    request
-      .then((res) => {
-        // Backend returns the authoritative { likeCount } — trust it over our guess.
-        if (res && typeof res.likeCount === 'number') setLikeCount(res.likeCount);
-      })
-      .catch((err) => {
-        console.error('Like failed, reverting:', err);
-        setLiked(wasLiked);
-        setLikeCount((c) => c + (wasLiked ? 1 : -1));
-      });
+  // Optimistic toggle in click order (count stays self-consistent), then
+  // converge the server in the background.
+  const toggleLike = () => {
+    const desired = !liked;
+    setLiked(desired);
+    setLikeCount((c) => Math.max(0, c + (desired ? 1 : -1)));
+    likeSync.current.desired = desired;
+    syncLike();
+  };
+
+  // Drain loop mirroring syncLike: one request in flight, converge to desired.
+  // Bookmark returns 204 (no count), so on hard failure we just revert the flag.
+  const syncBookmark = async () => {
+    const state = bookmarkSync.current;
+    if (state.running) return;
+    state.running = true;
+    try {
+      let sent;
+      while (state.desired !== sent) {
+        sent = state.desired;
+        sent ? await bookmarkItinerary(id) : await removeBookmark(id);
+      }
+    } catch (err) {
+      console.error('Bookmark sync failed, reverting:', err);
+      setBookmarked(!state.desired);
+    } finally {
+      state.running = false;
+    }
   };
 
   const toggleBookmark = () => {
-    const wasBookmarked = bookmarked;
-    setBookmarked(!wasBookmarked);
+    const desired = !bookmarked;
+    setBookmarked(desired);
+    bookmarkSync.current.desired = desired;
+    syncBookmark();
+  };
 
-    const request = wasBookmarked ? removeBookmark(id) : bookmarkItinerary(id);
-    request.catch((err) => {
-      console.error('Bookmark failed, reverting:', err);
-      setBookmarked(wasBookmarked);
-    });
+  // Owner-only: delete this itinerary after confirming, then go home.
+  const handleDelete = async () => {
+    if (actionBusy) return;
+    if (!window.confirm('Delete this itinerary? This cannot be undone.')) return;
+    setActionBusy(true);
+    try {
+      await deleteItinerary(id);
+      navigate('/home');
+    } catch (err) {
+      console.error('Delete failed:', err);
+      setActionBusy(false);
+      window.alert('Could not delete this itinerary. Please try again.');
+    }
+  };
+
+  // Any viewer: save an editable copy owned by me, then open it.
+  const handleCopy = async () => {
+    if (actionBusy) return;
+    setActionBusy(true);
+    try {
+      const copy = await copyItinerary(id);
+      navigate(`/itinerary/${copy.id}`);
+    } catch (err) {
+      console.error('Copy failed:', err);
+      setActionBusy(false);
+      window.alert('Could not save a copy. Please try again.');
+    }
+  };
+
+  // Owner-only: edit the itinerary's title/description via a simple prompt, then
+  // reflect the saved values (only the scalar fields are editable server-side).
+  const handleEdit = async () => {
+    if (actionBusy) return;
+    const nextTitle = window.prompt('Itinerary title:', itinerary.title);
+    if (nextTitle === null) return;
+    if (nextTitle.trim() === '') {
+      window.alert('Title cannot be empty.');
+      return;
+    }
+    const nextDescription = window.prompt(
+      'Description (leave blank to clear):',
+      itinerary.description ?? '',
+    );
+    if (nextDescription === null) return;
+    setActionBusy(true);
+    try {
+      const updated = await updateItinerary(id, {
+        title: nextTitle.trim(),
+        description: nextDescription.trim() === '' ? null : nextDescription.trim(),
+      });
+      setItinerary((prev) => ({ ...prev, title: updated.title, description: updated.description }));
+    } catch (err) {
+      console.error('Edit failed:', err);
+      window.alert('Could not save changes. Please try again.');
+    } finally {
+      setActionBusy(false);
+    }
   };
 
   if (loading) return (
@@ -274,6 +377,9 @@ function ItineraryPage() {
         likeCount={likeCount}
         onToggleLike={toggleLike}
         onToggleBookmark={toggleBookmark}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onCopy={handleCopy}
       />
       <MapView pins={itinerary.pins} />
     </div>

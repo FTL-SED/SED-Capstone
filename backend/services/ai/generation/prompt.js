@@ -4,16 +4,29 @@
 // sends to the model.
 import { MEAL_TIME_WINDOWS } from '../../../config/ai.js'
 
+// Caps on the user-controllable text that reaches the model. Pins can be
+// user-created (POST /pins), so name/tags are untrusted input; length-capping
+// bounds any prompt-injection payload (the system prompt + pinId-only output
+// validation already contain the blast radius to "rejected → fallback").
+const MAX_NAME_LEN = 120
+const MAX_TAGS = 12
+const MAX_TAG_LEN = 40
+
+const cap = (value, max) => (typeof value === 'string' ? value.slice(0, max) : value)
+
 // Only the fields the model needs to sequence — trims the pin so the prompt
 // stays small and the model can't be distracted by internals (scores, flags).
 // openingHours is passed but flagged as a soft hint (see the system prompt).
 const toPromptPin = (pin) => ({
   id: pin.id,
-  name: pin.name,
+  name: cap(pin.name, MAX_NAME_LEN),
   category: pin.category,
   // The venue's descriptive tags for the model's context. mapVenue exposes the
   // split fields (not a combined `tags`), so reconstruct a tag list from them.
-  tags: [...(pin.interests ?? []), ...(pin.cuisine ?? []), ...(pin.diet ?? [])],
+  // Capped in count and length since pins can be user-authored.
+  tags: [...(pin.interests ?? []), ...(pin.cuisine ?? []), ...(pin.diet ?? [])]
+    .slice(0, MAX_TAGS)
+    .map((t) => cap(t, MAX_TAG_LEN)),
   latitude: pin.latitude,
   longitude: pin.longitude,
   pricePerPerson: pin.pricePerPerson,
@@ -86,4 +99,4 @@ const buildMessages = (shortlist, constraints) => [
   { role: 'user', content: buildUserMessage(shortlist, constraints) },
 ]
 
-export { buildMessages, SYSTEM_PROMPT }
+export { buildMessages, SYSTEM_PROMPT, toPromptPin }

@@ -25,3 +25,29 @@ test('reshapeItinerary flattens stops+pin into the legacy pins[] shape', () => {
   assert.ok(p.tags.includes('lunch'))
   assert.equal(p.description, 'grab tacos') // stop.note overrides pin.description (matches persist behavior)
 })
+
+test('reshapeItinerary strips owner-only fields (members, meeting point) for non-owners', () => {
+  const row = {
+    id: 7, title: 'Day', location: 'SF', _count: { likes: 0 }, stops: [],
+    meetingPointLat: 37.77, meetingPointLng: -122.41,
+    maxBudgetPerPerson: 80, dayStart: '09:00', // non-sensitive trip constraints stay
+    members: [
+      { id: 1, name: 'Ana', startLabel: '123 Real St, SF', startLat: 37.78, startLng: -122.4, interestTags: ['art'], foodPrefs: [], diets: [] },
+    ],
+  }
+
+  // Owner sees the full picture.
+  const owner = reshapeItinerary(row, { forOwner: true })
+  assert.ok(Array.isArray(owner.members) && owner.members.length === 1)
+  assert.equal(owner.meetingPointLat, 37.77)
+
+  // A stranger viewing a PUBLIC itinerary must NOT get members' names/addresses
+  // or the home-derived meeting point.
+  const stranger = reshapeItinerary(row, { forOwner: false })
+  assert.equal(stranger.members, undefined)
+  assert.equal(stranger.meetingPointLat, undefined)
+  assert.equal(stranger.meetingPointLng, undefined)
+  // Non-sensitive trip constraints are still visible (e.g. budget for US #1).
+  assert.equal(stranger.maxBudgetPerPerson, 80)
+  assert.equal(stranger.dayStart, '09:00')
+})

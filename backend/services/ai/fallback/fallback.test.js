@@ -115,12 +115,25 @@ test('returns { feasible: false } for an empty shortlist', () => {
   assert.match(result.reason, /No places/)
 })
 
-test('returns { feasible: false } for an inverted time window', () => {
+test('returns { feasible: false } for a zero-length time window', () => {
   const result = fallbackSequence(shortlist, {
     ...constraints,
-    timeWindow: { startTime: '20:00', endTime: '09:00' },
+    timeWindow: { startTime: '09:00', endTime: '09:00' },
   })
   assert.equal(result.feasible, false)
+})
+
+test('sequences an overnight window (endTime < startTime crosses midnight)', () => {
+  // 20:00 → 02:00 is a valid 6-hour late-night window, not inverted.
+  const result = fallbackSequence(shortlist, {
+    ...constraints,
+    timeWindow: { startTime: '20:00', endTime: '02:00' },
+  })
+  assert.equal(result.feasible, true)
+  assert.ok(result.stops.length > 0)
+  // The first stop starts at the window start; a later stop may legitimately
+  // show an after-midnight wall-clock time (e.g. "00:30").
+  assert.equal(result.stops[0].arriveTime, '20:00')
 })
 
 test('works without a timeWindow (falls back to a default day)', () => {

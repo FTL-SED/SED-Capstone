@@ -56,6 +56,11 @@ export const TRAVEL_MPH_BY_MODE = {
   driving: 18,
 }
 
+// The canonical set of transport modes, derived from the speed table above so
+// the two can't drift. Shared by the input validators (recommendation + edit)
+// and available to the frontend's transport picker.
+export const TRANSPORT_MODES = Object.keys(TRAVEL_MPH_BY_MODE)
+
 // Straight-line miles → effective travel minutes for a given transport mode.
 // Scales crow-flies distance up by ROAD_CIRCUITY (real streets aren't straight)
 // then divides by the mode's speed. Shared by the fallback + scheduler so the

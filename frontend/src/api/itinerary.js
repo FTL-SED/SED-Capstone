@@ -40,6 +40,25 @@ export async function listItineraries(params = {}) {
   return data
 }
 
+// PUT /itineraries/:id — update an itinerary the caller owns. Body carries only
+// the fields being changed (e.g. { title, description, isPublic }).
+export async function updateItinerary(id, changes) {
+  const { data } = await api.put(`/itineraries/${id}`, changes)
+  return data
+}
+
+// DELETE /itineraries/:id — delete an itinerary the caller owns (204 No Content).
+export async function deleteItinerary(id) {
+  await api.delete(`/itineraries/${id}`)
+}
+
+// POST /itineraries/:id/copy — deep-copy a public (or owned) itinerary into a
+// new editable one owned by the caller. Returns the new itinerary.
+export async function copyItinerary(id) {
+  const { data } = await api.post(`/itineraries/${id}/copy`)
+  return data
+}
+
 // GET /users/:id — the owner's dashboard, including createdItineraries plus
 // likedItineraries / bookmarkedItineraries (owner-only; the backend 403s for
 // another user's id). Used to hydrate the home page's liked/bookmarked state.

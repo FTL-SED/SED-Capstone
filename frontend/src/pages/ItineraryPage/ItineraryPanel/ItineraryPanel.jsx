@@ -10,6 +10,7 @@ import WrittenItinerary from '../WrittenItinerary/WrittenItinerary.jsx'
 function ItineraryPanel({
   isOwner, pins, title, description, author,
   liked, bookmarked, likeCount, onToggleLike, onToggleBookmark,
+  onEdit, onDelete, onCopy,
 }) {
   return (
     <div className="itinerary-panel">
@@ -25,6 +26,9 @@ function ItineraryPanel({
         likeCount={likeCount}
         onToggleLike={onToggleLike}
         onToggleBookmark={onToggleBookmark}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onCopy={onCopy}
       />
       <div className="itinerary-panel__timeline">
         <WrittenItinerary pins={pins} />

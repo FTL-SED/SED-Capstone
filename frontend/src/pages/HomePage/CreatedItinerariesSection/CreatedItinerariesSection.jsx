@@ -12,16 +12,16 @@ function CreatedItinerariesSection({
 }) {
   return (
     <section className="created-section">
-      <CardCarousel 
-        title="Created" 
-        headerAction={<NewItineraryButton />} 
+      <CardCarousel
+        title="Created"
+        headerAction={<NewItineraryButton />}
         itineraries={itineraries}
         loading={loading}
         emptyMessage="You haven't created any itineraries yet. Start a New Trip!"
         likedIds={likedIds}
         bookmarkedIds={bookmarkedIds}
         onToggleLike={onToggleLike}
-        onToggleBookmark={onToggleBookmark} 
+        onToggleBookmark={onToggleBookmark}
       />
     </section>
   );

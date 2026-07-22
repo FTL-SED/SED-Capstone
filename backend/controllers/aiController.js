@@ -19,7 +19,7 @@ function isValidTripDate(value) {
 }
 
 async function postAiAgent(req, res) {
-  const { shortlist, constraints, tripDate, isPublic, title, description } = req.body ?? {}
+  const { shortlist, constraints, tripDate, isPublic, title, description, members } = req.body ?? {}
 
   if (!Array.isArray(shortlist) || shortlist.length === 0) {
     return res.status(400).json({ error: 'shortlist is required and must be a non-empty array' })
@@ -30,6 +30,12 @@ async function postAiAgent(req, res) {
   // Optional, but if present it must be a real YYYY-MM-DD (see isValidTripDate).
   if (tripDate !== undefined && !isValidTripDate(tripDate)) {
     return res.status(400).json({ error: 'tripDate must be a valid "YYYY-MM-DD" date' })
+  }
+  // Optional: the group the plan was built for, persisted so a saved itinerary
+  // can show/edit its members. Only validated loosely here (the recommendation
+  // step already validated the same members); absent ⇒ no member rows.
+  if (members !== undefined && !Array.isArray(members)) {
+    return res.status(400).json({ error: 'members must be an array when provided' })
   }
 
   try {
@@ -46,6 +52,8 @@ async function postAiAgent(req, res) {
       isPublic: isPublic === true,
       title: typeof title === 'string' ? title : undefined,
       description: typeof description === 'string' ? description : undefined,
+      constraints,
+      members,
     })
 
     // Return the persisted itinerary (with id + ordered pins) so the frontend

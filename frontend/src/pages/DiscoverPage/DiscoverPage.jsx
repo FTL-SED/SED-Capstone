@@ -5,7 +5,9 @@ import FilterControls from './FilterControls/FilterControls.jsx'
 import SearchResultsSection from './SearchResultsSection/SearchResultsSection.jsx'
 import RecentItinerariesSection from './RecentItinerariesSection/RecentItinerariesSection.jsx'
 import { buildDiscoverParams } from './buildDiscoverParams.js'
-import { listItineraries } from '../../api/itinerary.js'
+import { listItineraries, getUserDashboard } from '../../api/itinerary.js'
+import { useLikeBookmark } from '../../hooks/useLikeBookmark.js'
+import { getCurrentUser } from '../../lib/currentUser.js'
 
 const PAGE_LIMIT = 20
 const DEBOUNCE_MS = 300
@@ -20,6 +22,24 @@ function DiscoverPage() {
   const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  const currentUserId = getCurrentUser()?.id
+
+  // Which itineraries I've liked/bookmarked + race-safe toggling, shared with
+  // HomePage. The like count lives in `results`, so the hook bumps it via these
+  // callbacks (optimistic delta, then the server's authoritative value).
+  const bumpLikeCount = (id, delta) =>
+    setResults((prev) =>
+      prev.map((it) =>
+        it.id === id ? { ...it, likeCount: Math.max(0, (it.likeCount ?? 0) + delta) } : it,
+      ),
+    )
+  const setLikeCount = (id, likeCount) =>
+    setResults((prev) => prev.map((it) => (it.id === id ? { ...it, likeCount } : it)))
+  const { likedIds, bookmarkedIds, toggleLike, toggleBookmark, hydrate } = useLikeBookmark({
+    onLikeDelta: bumpLikeCount,
+    onLikeCount: setLikeCount,
+  })
 
   // Add/remove a single interest tag (chips are toggles).
   const toggleInterest = useCallback((tag) => {
@@ -92,6 +112,24 @@ function DiscoverPage() {
     }
   }, [query, interests, sort, offset])
 
+  // Hydrate my liked/bookmarked ids once so Discover cards show the right state.
+  useEffect(() => {
+    if (!currentUserId) return
+    let ignore = false
+    getUserDashboard(currentUserId)
+      .then((me) => {
+        if (ignore) return
+        hydrate({
+          liked: (me.likedItineraries ?? []).map((it) => it.id),
+          bookmarked: (me.bookmarkedItineraries ?? []).map((it) => it.id),
+        })
+      })
+      .catch((err) => console.error('Failed to hydrate Discover like/bookmark state:', err))
+    return () => {
+      ignore = true
+    }
+  }, [currentUserId, hydrate])
+
   const hasFilter = query.trim() !== '' || interests.length > 0
 
   return (
@@ -111,6 +149,10 @@ function DiscoverPage() {
           error={error}
           hasMore={hasMore}
           onLoadMore={loadMore}
+          likedIds={likedIds}
+          bookmarkedIds={bookmarkedIds}
+          onToggleLike={toggleLike}
+          onToggleBookmark={toggleBookmark}
         />
       ) : (
         <RecentItinerariesSection
@@ -119,6 +161,10 @@ function DiscoverPage() {
           error={error}
           hasMore={hasMore}
           onLoadMore={loadMore}
+          likedIds={likedIds}
+          bookmarkedIds={bookmarkedIds}
+          onToggleLike={toggleLike}
+          onToggleBookmark={toggleBookmark}
         />
       )}
     </div>

@@ -106,8 +106,8 @@ async function createPin(req, res) {
     if (!name || typeof name !== 'string' || name.trim() === '') {
       return res.status(400).json({ error: 'name is required when creating a new venue' })
     }
-    if (typeof pricePerPerson !== 'number' || !Number.isFinite(pricePerPerson)) {
-      return res.status(400).json({ error: 'pricePerPerson is required and must be a number' })
+    if (typeof pricePerPerson !== 'number' || !Number.isFinite(pricePerPerson) || pricePerPerson < 0) {
+      return res.status(400).json({ error: 'pricePerPerson is required and must be a non-negative number' })
     }
     if (typeof latitude !== 'number' || !Number.isFinite(latitude)) {
       return res.status(400).json({ error: 'latitude is required and must be a number' })
@@ -134,8 +134,12 @@ async function createPin(req, res) {
         return res.status(400).json({ error: `${field} must be an array of strings` })
       }
     }
-    if (rating !== undefined && rating !== null && (typeof rating !== 'number' || !Number.isFinite(rating))) {
-      return res.status(400).json({ error: 'rating must be a number or null' })
+    if (
+      rating !== undefined &&
+      rating !== null &&
+      (typeof rating !== 'number' || !Number.isFinite(rating) || rating < 0 || rating > 5)
+    ) {
+      return res.status(400).json({ error: 'rating must be a number between 0 and 5, or null' })
     }
     if (
       locationImageUrl !== undefined &&
@@ -174,22 +178,29 @@ async function createPin(req, res) {
 
   // Delegate the write to the service: it creates the stop (referencing pinId),
   // or — for a new venue — the venue + stop atomically in one transaction.
-  const stop = await addStop(
-    {
-      ...(pinId ? { pinId } : {}),
-      itineraryId,
-      orderInItinerary,
-      startTime: parsedStart,
-      endTime: parsedEnd,
-      travelTimeToNextMinutes: travelTimeToNextMinutes ?? null,
-      distanceToNextMeters: distanceToNextMeters ?? null,
-      mealType: mealType ?? null,
-      note: note ?? null,
-    },
-    venue,
-  )
-
-  return res.status(201).json(stop)
+  try {
+    const stop = await addStop(
+      {
+        ...(pinId ? { pinId } : {}),
+        itineraryId,
+        orderInItinerary,
+        startTime: parsedStart,
+        endTime: parsedEnd,
+        travelTimeToNextMinutes: travelTimeToNextMinutes ?? null,
+        distanceToNextMeters: distanceToNextMeters ?? null,
+        mealType: mealType ?? null,
+        note: note ?? null,
+      },
+      venue,
+    )
+    return res.status(201).json(stop)
+  } catch (err) {
+    // A stop already occupies this order slot (@@unique([itineraryId, orderInItinerary])).
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'That order position is already taken in this itinerary' })
+    }
+    throw err
+  }
 }
 
 // PUT /pins/:id
@@ -269,9 +280,16 @@ async function updatePin(req, res) {
     data.note = note
   }
 
-  const updated = await itineraryStops.update(id, data)
-
-  return res.status(200).json(updated)
+  try {
+    const updated = await itineraryStops.update(id, data)
+    return res.status(200).json(updated)
+  } catch (err) {
+    // Moving a stop onto an order slot another stop already holds.
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'That order position is already taken in this itinerary' })
+    }
+    throw err
+  }
 }
 
 // DELETE /pins/:id

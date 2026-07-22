@@ -41,6 +41,49 @@ test('accepts a well-formed, in-budget, in-window itinerary', () => {
   assert.equal(valid, true)
 })
 
+test('accepts an OVERNIGHT itinerary that crosses midnight', () => {
+  // A late-night plan on a 22:00 → 02:00 window, with a stop after midnight.
+  // A naive same-day validator would reject 00:30 as "before" 23:00 and as
+  // outside the window; the elapsed-from-start model accepts it.
+  const overnight = {
+    feasible: true,
+    title: 'Late Night Out',
+    location: 'San Francisco',
+    description: 'Bars and a late bite.',
+    stops: [
+      { pinId: 1, arriveTime: '22:00', departTime: '23:15' },
+      { pinId: 2, arriveTime: '23:30', departTime: '00:30' }, // crosses midnight
+      { pinId: 3, arriveTime: '00:45', departTime: '01:45' },
+    ],
+  }
+  const { valid, errors } = validateItinerary(overnight, shortlist, {
+    timeWindow: { startTime: '22:00', endTime: '02:00' },
+    maxBudgetPerPerson: 100,
+  })
+  assert.deepEqual(errors, [])
+  assert.equal(valid, true)
+})
+
+test('rejects an overnight itinerary whose stop spills past the window end', () => {
+  // Window 22:00 → 02:00; a stop departing 02:30 is past the end.
+  const spill = {
+    feasible: true,
+    title: 'Too Late',
+    location: 'SF',
+    description: 'Runs past the window.',
+    stops: [
+      { pinId: 1, arriveTime: '22:00', departTime: '23:00' },
+      { pinId: 2, arriveTime: '01:30', departTime: '02:30' }, // past 02:00 end
+    ],
+  }
+  const { valid, errors } = validateItinerary(spill, shortlist, {
+    timeWindow: { startTime: '22:00', endTime: '02:00' },
+    maxBudgetPerPerson: 100,
+  })
+  assert.equal(valid, false)
+  assert.ok(errors.some((e) => /outside the trip window/.test(e)))
+})
+
 test('accepts a { feasible: false, reason } result as a legitimate answer', () => {
   const result = { feasible: false, reason: 'Budget too low for any restaurant.' }
   const { valid } = validateItinerary(result, shortlist, constraints)

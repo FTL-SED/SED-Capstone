@@ -3,14 +3,9 @@ import ExploreSection from './ExploreSection/ExploreSection.jsx'
 import CreatedItinerariesSection from './CreatedItinerariesSection/CreatedItinerariesSection.jsx'
 import LikedItinerariesSection from './LikedItinerariesSection/LikedItinerariesSection.jsx'
 import BookmarkedItinerariesSection from './BookmarkedItinerariesSection/BookmarkedItinerariesSection.jsx'
-import {
-  listItineraries,
-  getUserDashboard,
-  likeItinerary,
-  unlikeItinerary,
-  bookmarkItinerary,
-  removeBookmark,
-} from '../../api/itinerary.js'
+import { listItineraries, getUserDashboard } from '../../api/itinerary.js'
+import { useLikeBookmark } from '../../hooks/useLikeBookmark.js'
+import { getCurrentUser } from '../../lib/currentUser.js'
 import './HomePage.css'
 
 // HomePage is the single owner of "what have I liked / bookmarked". Keeping it
@@ -20,28 +15,48 @@ import './HomePage.css'
 function HomePage() {
   // Explore's list, kept separate because Explore only shows these top-10.
   const [exploreItineraries, setExploreItineraries] = useState([]);
+  // The current user's own itineraries, shown in the "Created" carousel.
+  const [createdItineraries, setCreatedItineraries] = useState([]);
   // A pool of every itinerary we know about (explore + liked + bookmarked),
   // deduped by id. The Liked/Bookmarked bars filter THIS, so a like that isn't
   // in the Explore top-10 still shows up after a refresh.
   const [pool, setPool] = useState([]);
-  // Itineraries the current user created, straight from their dashboard.
-  const [createdItineraries, setCreatedItineraries] = useState([]);
   const [loading, setLoading] = useState(true);
-  // Just the ids I've liked / bookmarked, held in Sets for instant has()/add()/delete().
-  const [likedIds, setLikedIds] = useState(() => new Set());
-  const [bookmarkedIds, setBookmarkedIds] = useState(() => new Set());
 
-  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-  const currentUserId = currentUser?.id;
+  const currentUserId = getCurrentUser()?.id;
+
+  // Like/bookmark state (which ids I've liked/bookmarked) + race-safe toggling
+  // lives in the shared hook. The like COUNT lives in our own itinerary arrays,
+  // so we hand the hook callbacks to bump it optimistically (delta) and overwrite
+  // it with the server's authoritative value — across both Explore and the pool.
+  const bumpLikeCount = (id, delta) => {
+    const bump = (it) =>
+      it.id === id ? { ...it, likeCount: Math.max(0, (it.likeCount ?? 0) + delta) } : it;
+    setExploreItineraries((prev) => prev.map(bump));
+    setPool((prev) => prev.map(bump));
+  };
+  const setLikeCount = (id, likeCount) => {
+    const apply = (it) => (it.id === id ? { ...it, likeCount } : it);
+    setExploreItineraries((prev) => prev.map(apply));
+    setPool((prev) => prev.map(apply));
+  };
+  const { likedIds, bookmarkedIds, toggleLike, toggleBookmark, hydrate } = useLikeBookmark({
+    onLikeDelta: bumpLikeCount,
+    onLikeCount: setLikeCount,
+  });
 
   // On load: fetch the Explore list AND ask the backend which itineraries I've
   // already liked/bookmarked. That second call is what makes the button state
   // survive a refresh.
   useEffect(() => {
     const load = async () => {
-      // Signed-out visitors have no liked/bookmarked state to hydrate; just
-      // drop the loading flag (done in finally) without any fetch.
-      if (!currentUserId) return;
+      // Signed-out visitors have no liked/bookmarked state to hydrate; drop the
+      // loading flag and skip the fetch. (Must set it here, not in the try's
+      // finally, since the early return would otherwise leave loading stuck on.)
+      if (!currentUserId) {
+        setLoading(false);
+        return;
+      }
 
       try {
         const explore = await listItineraries({ scope: 'public', limit: 10 });
@@ -54,11 +69,10 @@ function HomePage() {
         const liked = me.likedItineraries ?? [];
         const bookmarked = me.bookmarkedItineraries ?? [];
         setCreatedItineraries(created);
-        setLikedIds(new Set(liked.map((it) => it.id)));
-        setBookmarkedIds(new Set(bookmarked.map((it) => it.id)));
+        hydrate({ liked: liked.map((it) => it.id), bookmarked: bookmarked.map((it) => it.id) });
 
-        // Merge all three sources into one deduped pool (by id) so the bars can
-        // show liked/bookmarked items even if they're not in the Explore top-10.
+        // Merge all sources into one deduped pool (by id) so the bars can show
+        // liked/bookmarked items even if they're not in the Explore top-10.
         const byId = new Map();
         [...explore, ...created, ...liked, ...bookmarked].forEach((it) => byId.set(it.id, it));
         setPool([...byId.values()]);
@@ -70,47 +84,7 @@ function HomePage() {
     };
 
     load();
-  }, [currentUserId]);
-
-  // Flip the id in the Set FIRST (screen updates instantly), then tell the
-  // backend. If the backend rejects it, we put the Set back so the UI doesn't lie.
-  const toggleLike = (id) => {
-    const wasLiked = likedIds.has(id);
-    setLikedIds((prev) => {
-      const next = new Set(prev);
-      wasLiked ? next.delete(id) : next.add(id);
-      return next;
-    });
-
-    const request = wasLiked ? unlikeItinerary(id) : likeItinerary(id);
-    request.catch((err) => {
-      console.error('Like failed, reverting:', err);
-      setLikedIds((prev) => {
-        const next = new Set(prev);
-        wasLiked ? next.add(id) : next.delete(id);
-        return next;
-      });
-    });
-  };
-
-  const toggleBookmark = (id) => {
-    const wasBookmarked = bookmarkedIds.has(id);
-    setBookmarkedIds((prev) => {
-      const next = new Set(prev);
-      wasBookmarked ? next.delete(id) : next.add(id);
-      return next;
-    });
-
-    const request = wasBookmarked ? removeBookmark(id) : bookmarkItinerary(id);
-    request.catch((err) => {
-      console.error('Bookmark failed, reverting:', err);
-      setBookmarkedIds((prev) => {
-        const next = new Set(prev);
-        wasBookmarked ? next.add(id) : next.delete(id);
-        return next;
-      });
-    });
-  };
+  }, [currentUserId, hydrate]);
 
   return (
     <div className="home-page">
@@ -123,14 +97,16 @@ function HomePage() {
         onToggleBookmark={toggleBookmark}
       />
       <CreatedItinerariesSection
-        itineraries={createdItineraries}
+        itineraries={pool.filter((it) => createdItineraries.some((c) => c.id === it.id))}
         loading={loading}
         likedIds={likedIds}
         bookmarkedIds={bookmarkedIds}
         onToggleLike={toggleLike}
         onToggleBookmark={toggleBookmark}
       />
-    
+      {/* The Liked/Bookmarked bars are just the pool filtered by the Sets.
+          They read the same state a click just changed, so they update live with
+          no refetch. */}
       <LikedItinerariesSection
         itineraries={pool.filter((it) => likedIds.has(it.id))}
         loading={loading}

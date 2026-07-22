@@ -33,6 +33,7 @@ function scoreAndSort(pins, members, groupTags, groupFood) {
 function recommend(trip, members, pins) {
   const groupTags = new Set(members.flatMap((m) => m.interestTags ?? []))
   const groupFood = new Set(members.flatMap((m) => m.foodPrefs ?? []))
+  const groupDiet = new Set(members.flatMap((m) => m.diet ?? []))
 
   // Stage 1: hard filters (relevance, diet, budget sanity, hours) + Stage 0's
   // meeting point / travel-radius drop. Pass the already-computed groupTags so
@@ -83,6 +84,11 @@ function recommend(trip, members, pins) {
       transport: trip.transport ?? null,
       meetingPoint,
       travelRadius: trip.travelRadius ?? null,
+      // The group's aggregated preference tags, carried so a saved itinerary can
+      // record and later edit what it was generated for (US #4/#7/#10).
+      interests: [...groupTags],
+      foodPreferences: [...groupFood],
+      diets: [...groupDiet],
       maxMemberDistance,
       foodBelowMin,
     },

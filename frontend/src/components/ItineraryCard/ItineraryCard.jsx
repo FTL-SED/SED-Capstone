@@ -3,18 +3,9 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import LikeButton from '../../pages/ItineraryPage/LikeButton/LikeButton.jsx'
 import BookmarkButton from '../../pages/ItineraryPage/BookmarkButton/BookmarkButton.jsx'
+import { getCurrentUser } from '../../lib/currentUser.js'
 
 const DEFAULT_COVER_IMAGE = "https://placehold.net/default.png";
-
-// The signed-in user (or null). Read from localStorage the same way App.jsx does,
-// so we can hide the bookmark on the current user's own itineraries.
-function getCurrentUser() {
-  try {
-    return JSON.parse(localStorage.getItem("currentUser"));
-  } catch {
-    return null;
-  }
-}
 
 function ItineraryCard({
   itinerary = {},

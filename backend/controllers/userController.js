@@ -1,5 +1,6 @@
 import supabase, { uploadAvatar, updateUserPassword } from '../lib/supabase.js'
 import * as users from '../models/users.js'
+import { reshapeItinerary } from '../models/itineraries.js'
 import { parseIdParam } from './helpers.js'
 
 // POST /users/register
@@ -16,25 +17,13 @@ async function registerUser(req, res) {
 
   try {
     // Username lives in our User table (not in Supabase Auth), so check it here.
-    const { data: existingUsername } = await supabase
-      .from('User')
-      .select('id')
-      .eq('username', username.trim())
-      .maybeSingle()
-
-    if (existingUsername) {
+    if (await users.findByUsername(username.trim())) {
       return res
         .status(409)
         .json({ error: 'That username is already taken. Please pick another.' })
     }
 
-    const { data: existingEmail } = await supabase
-      .from('User')
-      .select('id')
-      .eq('email', email)
-      .maybeSingle()
-
-    if (existingEmail) {
+    if (await users.findByEmail(email)) {
       return res
         .status(409)
         .json({ error: 'That email is already registered. Try logging in.' })
@@ -238,9 +227,12 @@ async function getUser(req, res) {
     username: user.username,
     email: user.email,
     createdAt: user.createdAt,
-    createdItineraries: user.createdItineraries,
-    bookmarkedItineraries: user.bookmarks.map((b) => b.itinerary),
-    likedItineraries: user.likes.map((l) => l.itinerary),
+    // Created itineraries are the user's own → owner view. Bookmarked/liked are
+    // OTHER people's public itineraries → strip owner-only fields (members,
+    // meeting point) so the dashboard never exposes another group's data.
+    createdItineraries: user.createdItineraries.map((it) => reshapeItinerary(it, { forOwner: true })),
+    bookmarkedItineraries: user.bookmarks.map((b) => reshapeItinerary(b.itinerary, { forOwner: false })),
+    likedItineraries: user.likes.map((l) => reshapeItinerary(l.itinerary, { forOwner: false })),
   })
 }
 

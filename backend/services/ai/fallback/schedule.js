@@ -5,7 +5,7 @@
 // their meal window opens (we wait rather than show up early).
 import { MEAL_TIME_WINDOWS, travelMinutesFor } from '../../../config/ai.js'
 import { haversineMiles, milesToMeters } from '../../../utils/geo.js'
-import { toMinutes, toHHMM } from '../../../utils/time.js'
+import { toMinutes, toHHMM, minutesFromStart, MINUTES_PER_DAY } from '../../../utils/time.js'
 
 // stops   = ordered stops, each with arriveTime/departTime (for dwell) + pinId
 // coordOf = (stop) => { latitude, longitude }
@@ -14,12 +14,22 @@ import { toMinutes, toHHMM } from '../../../utils/time.js'
 //             travel-time estimates. Undefined ⇒ the default urban speed.
 const rescheduleStops = (stops, coordOf, startTime, transport) => {
   const travelMinutes = (miles) => travelMinutesFor(miles, transport)
-  let clock = toMinutes(startTime)
+  // Walk the clock in ELAPSED minutes from the day's start (0-based) so an
+  // overnight schedule crosses midnight cleanly; recover wall-clock only for
+  // meal-window holds and HH:MM output.
+  const startWall = toMinutes(startTime)
+  const wallAt = (elapsed) => (startWall + elapsed) % MINUTES_PER_DAY
+  let clock = 0
   const out = []
 
   for (let i = 0; i < stops.length; i++) {
     const stop = stops[i]
-    const dwell = Math.max(0, toMinutes(stop.departTime) - toMinutes(stop.arriveTime))
+    // Dwell measured in elapsed space so a stop straddling midnight (arrive
+    // 23:40, depart 00:10) reads as a positive 30-min dwell, not negative.
+    const dwell = Math.max(
+      0,
+      minutesFromStart(stop.arriveTime, stop.departTime),
+    )
 
     if (i > 0) {
       const a = coordOf(stops[i - 1])
@@ -30,10 +40,16 @@ const rescheduleStops = (stops, coordOf, startTime, transport) => {
     // Hold a meal inside its window: if we'd arrive before it opens, wait so
     // the stop lands in its block (validation rejects a "dinner" stamped at
     // 17:01 when dinner starts 17:30). We only ever delay — arriving late is
-    // the caller's/route's problem, not something padding can fix.
+    // the caller's/route's problem, not something padding can fix. Meal windows
+    // are absolute daytime, so compute the wait in wall-clock then re-anchor.
     const mealBlock = stop.mealType ? MEAL_TIME_WINDOWS[stop.mealType] : null
     if (mealBlock) {
-      clock = Math.max(clock, toMinutes(mealBlock.start))
+      // Meal windows are absolute daytime, so compare in wall-clock: if we'd
+      // arrive before the block opens today, wait the difference. Adding the
+      // wait to the elapsed clock keeps the overnight walk consistent.
+      const nowWall = wallAt(clock)
+      const openWall = toMinutes(mealBlock.start)
+      if (nowWall < openWall) clock += openWall - nowWall
     }
 
     const arrive = clock
@@ -44,8 +60,8 @@ const rescheduleStops = (stops, coordOf, startTime, transport) => {
     // the fields the new order changes.
     out.push({
       ...stop,
-      arriveTime: toHHMM(arrive),
-      departTime: toHHMM(depart),
+      arriveTime: toHHMM(wallAt(arrive)),
+      departTime: toHHMM(wallAt(depart)),
     })
   }
 
