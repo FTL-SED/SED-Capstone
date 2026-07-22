@@ -1,5 +1,7 @@
 import './ItineraryWizard.css'
 import { useState } from 'react'
+import PageHeading from '../PageHeading/PageHeading.jsx'
+import WizardStepper from '../WizardStepper/WizardStepper.jsx'
 import Step1_TripBasics from '../Step1_TripBasics/Step1_TripBasics.jsx'
 import Step2_Members from '../Step2_Members/Step2_Members.jsx'
 import Step3_Finish from '../Step3_Finish/Step3_Finish.jsx'
@@ -24,29 +26,23 @@ const INITIAL_FORM = {
   description: '',
 };
 
-function ItineraryWizard({setActiveStep}) {
+function ItineraryWizard() {
   const location = useLocation();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(location.state?.form ?? INITIAL_FORM);
 
-  // Keep the parent's activeStep in sync with our step. Call both setters
-  // directly from the handler (not inside the setStep updater) so we never
-  // update CreateItineraryPage during ItineraryWizard's render.
-  const next = () => {
-    setStep((s) => Math.min(3, s + 1));
-    setActiveStep((s) => Math.min(3, s + 1));
-  };
-
-  const back = () => {
-    setStep((s) => Math.max(1, s - 1));
-    setActiveStep((s) => Math.max(1, s - 1));
-  };
+  const next = () => setStep((s) => Math.min(3, s + 1));
+  const back = () => setStep((s) => Math.max(1, s - 1));
 
   const goTo = (n) => setStep(n);
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }));
 
   return (
     <div className="itinerary-wizard">
+      {/* Heading + progress stepper now live inside the card, above the form */}
+      <PageHeading />
+      <WizardStepper activeStep={step} />
+
       {step === 1 && <Step1_TripBasics form={form} update={update} onNext={next} />}
       {step === 2 && <Step2_Members form={form} update={update} onNext={next} onBack={back} />}
       {step === 3 && <Step3_Finish form={form} update={update} onBack={back} goTo={goTo} />}

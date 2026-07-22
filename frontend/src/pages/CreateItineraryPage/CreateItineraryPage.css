@@ -1,7 +1,208 @@
+/* ==========================================================================
+   NavQuest — Create Itinerary scene
+
+   The Create page keeps the same golden-hour sky the traveller rose into on
+   the Login page (a warm gradient + low sun glow, carried over from AuthCard.css)
+   and sets a very simple city beneath it: a full-width row of flat grey
+   buildings — the same shape as src/assets/City.svg — standing on a straight
+   sidewalk rectangle, with a street below where one small car drives the block.
+   The form card floats above it all and stays the focus.
+
+   The warm palette is retinted onto the shared design tokens, scoped to
+   .create-itinerary-page, so the reused inputs, buttons and steps adopt the
+   golden identity here without their own component files changing — exactly
+   the approach the auth scene uses.
+   ========================================================================== */
+
+/* Editorial display face for the title, matching the Login + landing headings */
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600&display=swap");
+
 .create-itinerary-page {
-  max-width: 720px;
+  /* Golden-hour palette, shared with the auth scene + the brief's values */
+  --cream: #fff7e8;
+  --panel: #fffdf8;
+  --moss: #4e6540;
+  --moss-deep: #3b4d31;
+  --stone: #6e6656;
+  --sunset: #e67e34;
+  --road: #f3e3c1;
+
+  /* Retint the shared tokens for descendants only, so reused inputs/buttons/
+     steps pick up the warm identity in this context. */
+  --ink: var(--moss-deep);
+  --slate-800: #46402f;
+  --slate-600: #5c5646;
+  --slate-500: var(--stone);
+  --slate-400: #b0a58c;
+  --border: #ece1c8;
+  --border-strong: #ddcca6;
+  --surface: #fffaf0;
+  --surface-muted: #f7efdd;
+  --accent: var(--sunset);
+  --accent-strong: #cf6a2f;
+  --accent-soft: #f7dcc7;
+
+  /* The page draws its own full-bleed sky, so it lifts out of the app shell's
+     slate background. It fills exactly the space left between the sticky navbar
+     and the footer (minus the app__main padding) and centres the card within
+     it — rather than forcing a full 100vh, which, stacked below the navbar and
+     above the footer, would always overflow the viewport and force a scroll. */
+  position: relative;
+  z-index: 0;
+  max-width: 960px;
+  min-height: calc(100vh - var(--nav-h) - 96px - 62px);
   margin: 0 auto;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  justify-content: center;
+  align-items: center;
+  gap: 22px;
+  color: var(--slate-600);
+}
+
+/* ---- The sky + road scene (fixed behind the whole viewport) ------------- */
+/* A gentle blur pushes the whole cityscape back so the form card is the clear
+   focus. The scene is scaled up a touch so the blur doesn't reveal soft edges
+   at the viewport borders. */
+.create-scene {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--cream);
+  filter: blur(4px);
+  transform: scale(1.03);
+}
+
+.create-scene__sky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The city (buildings + sidewalk + street) fills the whole viewport, bleeding
+   off both sides. The SVG is anchored to the bottom (xMidYMax slice) so the
+   sidewalk + street stay pinned there while the tall buildings rise the full
+   height of the screen behind the card. */
+.create-scene__city {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Simple grey skyline in the City-marker style. Building fill is set per-shade
+   inline; a thin darker edge gives each block a little definition. */
+.create-building__body {
+  stroke: #4f4f4f;
+  stroke-width: 1;
+}
+
+/* Warm lit windows — the same #F4D03F used in src/assets/City.svg */
+.create-building__window {
+  fill: #f4d03f;
+}
+
+/* A scattering of unlit windows — a cool dark slate that reads clearly against
+   the grey buildings without competing with the warm lit ones. */
+.create-building__window--dark {
+  fill: #3f4550;
+}
+
+/* The sidewalk: a straight pale-stone rectangle the buildings stand on */
+.create-city__sidewalk {
+  fill: #d9d2c4;
+}
+
+/* The street below the sidewalk + its dashed centre lane */
+.create-city__street {
+  fill: #5b5750;
+}
+
+.create-city__lane {
+  stroke: #e9d79f;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 30 34;
+}
+
+/* Small flat car — orange body, dark-green wheels + windows, matching the
+   landing illustration style. No shadow. */
+.create-car__body   { fill: var(--sunset); }
+.create-car__cabin  { fill: var(--sunset); }
+.create-car__window { fill: var(--moss); }
+.create-car__pillar { fill: var(--sunset); }
+.create-car__wheel  { fill: var(--moss-deep); }
+
+/* ---- The floating form card -------------------------------------------- */
+/* The heading, progress stepper and form now all live inside this one card, so
+   it stacks them as a column with consistent spacing between each block. */
+.create-itinerary-page .itinerary-wizard {
+  width: 100%;
+  max-width: 960px;
+  padding: 32px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--panel);
+  border: 1px solid rgba(120, 104, 74, 0.14);
+  border-radius: 24px;
+  box-shadow:
+    0 2px 6px rgba(74, 64, 40, 0.05),
+    0 30px 64px -26px rgba(74, 64, 40, 0.32);
+}
+
+/* Keep the stepper snug under the intro block inside the card */
+.create-itinerary-page .itinerary-wizard .page-heading + .wizard-stepper {
+  margin-top: -8px;
+}
+
+/* ---- Reused controls, warmed ------------------------------------------- */
+.create-itinerary-page .text-input input,
+.create-itinerary-page .time-input input {
+  background: var(--surface);
+}
+
+.create-itinerary-page .finish-button {
+  border-radius: var(--radius-pill);
+  border-color: var(--moss);
+  background: var(--moss);
+}
+
+.create-itinerary-page .finish-button:hover {
+  background: var(--moss-deep);
+}
+
+/* ==========================================================================
+   Motion — the car drives the length of the street, then wraps back around to
+   the left. It starts just off-screen left (-160) and exits just off-screen
+   right (past 1440). Stilled for reduced-motion users.
+   ========================================================================== */
+.create-city__car-track { animation: create-car-drive 14s linear infinite; }
+
+@keyframes create-car-drive {
+  from { transform: translateX(-160px); }
+  to   { transform: translateX(1520px); }
+}
+
+/* ---- Responsive --------------------------------------------------------- */
+@media (max-width: 640px) {
+  .create-itinerary-page {
+    padding-bottom: 170px;
+    gap: 18px;
+  }
+
+  .create-itinerary-page .itinerary-wizard {
+    padding: 28px 20px;
+    border-radius: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .create-city__car-track {
+    animation: none;
+  }
 }

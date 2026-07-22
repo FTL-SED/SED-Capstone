@@ -157,7 +157,7 @@ function HeroSection() {
           <g className="hero__paths">
             {/* Left route → along the lakeshore. The road hugs the water's edge
                 as it winds down the valley toward the meeting point. */}
-            <g className="hero__route" role="button" tabIndex={0} aria-label="Explore the lakeshore route">
+            <g className="hero__route" role="img" aria-label="The lakeshore route">
               <path className="hero__route-fill"
                     d="M725 478 L332 362 L328 374 L715 506 Z"
                     fill="url(#hqRoad)" />
@@ -225,7 +225,7 @@ function HeroSection() {
             {/* Right route → the town's main street. The road climbs the
                 right-hand hillside and becomes the street the town is built
                 along, then meanders back down to the meeting point. */}
-            <g className="hero__route" role="button" tabIndex={0} aria-label="Explore the hillside town route">
+            <g className="hero__route" role="img" aria-label="The hillside town route">
               <path className="hero__route-fill"
                     d="M715 478 L1108 375 L1125 385 L725 506 Z"
                     fill="url(#hqRoad)" />
@@ -293,7 +293,7 @@ function HeroSection() {
             {/* Centre route → up through the forest park toward the pass. Drawn
                 last of the three so it layers on top of the left and right
                 routes (but still beneath the meeting-point trunk below). */}
-            <g className="hero__route" role="button" tabIndex={0} aria-label="Explore the forest trail toward the pass">
+            <g className="hero__route" role="img" aria-label="The forest trail toward the pass">
               <path className="hero__route-fill"
                     d="M700 494 L710 358 L726 358 L734 494 Z"
                     fill="url(#hqRoad)" />
@@ -307,9 +307,7 @@ function HeroSection() {
                   hiker, and the trail switchbacking up toward the pass. This is
                   a region OF the mountain range above it, not a separate icon. */}
               {/* Outer group positions/sizes the destination; the inner
-                  .hero__dest is what the CSS hover animates, so its transform
-                  composes with this one instead of overriding it (which used to
-                  snap it back to the origin on click/focus). */}
+                  .hero__dest keeps its own transform separate from this one. */}
               <g transform="translate(-11 05) scale(1.01)">
               <g className="hero__dest">
                 {/* a soft clearing of paler grass the pines sit on */}

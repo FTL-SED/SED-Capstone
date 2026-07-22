@@ -54,43 +54,11 @@
   pointer-events: none;
 }
 
-/* ---- Branching routes: hover to weigh each option ----------------------- */
-/* Each route is a hoverable group. On hover/focus its warm glow fades in and
-   its destination lifts and brightens; the other two quietly recede so the
-   considered path stands alone. */
-.hero__route {
-  cursor: pointer;
-}
-
+/* ---- Branching routes: static scenery ----------------------------------- */
+/* The routes and their destinations are part of the scene, not interactive
+   controls, so they carry no hover/focus affordances. */
 .hero__route-glow {
-  transition: opacity 0.4s ease;
   pointer-events: none;
-}
-
-.hero__dest {
-  transform-box: fill-box;
-  transform-origin: center bottom;
-  transition: transform 0.4s ease, opacity 0.4s ease;
-}
-
-.hero__route:hover .hero__route-glow,
-.hero__route:focus-visible .hero__route-glow {
-  opacity: 0.9;
-}
-
-.hero__route:hover .hero__dest,
-.hero__route:focus-visible .hero__dest {
-  transform: scale(1.08) translateY(-4px);
-}
-
-/* Dim the unconsidered routes while one is being weighed */
-.hero__paths:hover .hero__route:not(:hover) {
-  opacity: 0.55;
-  transition: opacity 0.4s ease;
-}
-
-.hero__route:focus-visible {
-  outline: none;
 }
 
 /* ---- Minimal overlay: headline + CTA, seated low over the scene --------- */
@@ -198,17 +166,5 @@
   .hero__cloud--3,
   .hero__plane {
     animation: none;
-  }
-
-  /* Keep the highlight (color/opacity) but drop the motion of the lift */
-  .hero__dest,
-  .hero__route-glow,
-  .hero__paths:hover .hero__route:not(:hover) {
-    transition: none;
-  }
-
-  .hero__route:hover .hero__dest,
-  .hero__route:focus-visible .hero__dest {
-    transform: none;
   }
 }
