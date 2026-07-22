@@ -2,8 +2,12 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  /* Translucent frosted bar: content scrolls softly beneath it. Falls back to
+     the solid surface where backdrop-filter isn't supported. */
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  backdrop-filter: saturate(1.4) blur(14px);
+  border-bottom: 1px solid rgba(120, 104, 74, 0.12);
 }
 
 .navbar__inner {
@@ -30,20 +34,46 @@
 }
 
 /* ==========================================================================
-   Hero variant — used on the landing and auth (login / register) pages, which
-   share a warm, full-bleed scene. The bar floats transparently over the sky
-   (rather than being its own coloured band): an editorial serif wordmark with
-   the sunset diamond mark, warm moss links, a quiet "Login" text link and a
-   moss "Register" pill. Applied via the .navbar--hero modifier (see App.jsx),
-   so every other page keeps the standard white bar above.
+   Hero variant — the warm editorial treatment: an editorial serif wordmark
+   with the sunset diamond mark, warm moss links, a quiet "Login" text link and
+   a moss "Register" pill. Applied via the .navbar--hero modifier (see App.jsx).
+   Used two ways:
+     • landing + auth pages add .navbar--floating too, so the bar floats
+       transparently over their full-bleed scene;
+     • the in-app pages (dashboard / discover / create) use .navbar--hero on its
+       own, so the same identity rides the standard sticky, frosted bar.
    ========================================================================== */
-.navbar--hero {
+
+/* Floating behaviour: transparent, lifted out of flow to sit over the scene.
+   Only the landing + auth pages opt into this (via .navbar--floating). */
+.navbar--floating {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   background: transparent;
   border-bottom: none;
+}
+
+/* In-app hero bar (no .navbar--floating): a SOLID warm cream fill instead of
+   the base bar's translucent white. The base .navbar is frosted glass, so it
+   picks up whatever each page paints behind it — the dashboard's sky, the grey
+   Discover canvas, the cream Create page — and reads as a different colour on
+   each. An opaque fill makes the bar identical across all three pages. */
+.navbar--hero:not(.navbar--floating) {
+  background: #f6efe1;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border-bottom: 1px solid rgba(120, 104, 74, 0.16);
+}
+
+/* Landing page: keep the bar floating over the hero scene, but paint it with
+   the same solid cream fill as the in-app dashboard / create / discover bars
+   instead of the transparent .navbar--floating treatment, so its colour matches
+   across the app. */
+.navbar--floating.navbar--landing {
+  background: #f6efe1;
+  border-bottom: 1px solid rgba(120, 104, 74, 0.16);
 }
 
 /* Roomier placement to suit the scene: wider max-width, generous side/top

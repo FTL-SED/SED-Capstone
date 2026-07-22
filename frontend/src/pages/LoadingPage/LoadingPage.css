@@ -1,9 +1,64 @@
+/* ==========================================================================
+   NavQuest — Generating (Loading) scene
+
+   While the itinerary is being generated the traveller stays in the exact same
+   golden-hour city the Create page put them in: the warm gradient sky, the row
+   of flat grey buildings on a straight sidewalk, and the one small car driving
+   the block. The scene markup + class names are shared with CreateItineraryPage
+   (see LoadingPage.jsx / CreateItineraryPage.css); this file only needs to
+   re-declare the warm palette those shared classes read, plus a floating card
+   to match the wizard card the spinner now sits inside.
+   ========================================================================== */
+
 .loading-page {
+  /* Golden-hour palette, identical to .create-itinerary-page so the reused
+     .create-scene / .create-building / .create-car classes render the same. */
+  --cream: #fff7e8;
+  --panel: #fffdf8;
+  --moss: #4e6540;
+  --moss-deep: #3b4d31;
+  --stone: #6e6656;
+  --sunset: #e67e34;
+  --road: #f3e3c1;
+
+  /* Retint the shared tokens for descendants only, so the reused spinner + text
+     pick up the warm identity in this context. */
+  --ink: var(--moss-deep);
+  --slate-800: #46402f;
+  --slate-600: #5c5646;
+  --slate-500: var(--stone);
+  --slate-400: #b0a58c;
+  --border: #ece1c8;
+  --border-strong: #ddcca6;
+  --surface: #fffaf0;
+  --surface-muted: #f7efdd;
+  --accent: var(--sunset);
+  --accent-strong: #cf6a2f;
+  --accent-soft: #f7dcc7;
+
+  position: relative;
+  z-index: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - var(--nav-h) - 6rem);
+  min-height: calc(100vh - var(--nav-h) - 96px - 62px);
   width: 100%;
+}
+
+/* The floating card the spinner + status live in — matches the wizard card on
+   the Create page (same panel, border, radius and shadow) so the two screens
+   read as the same surface. */
+.loading-page__card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 56px;
+  background: var(--panel);
+  border: 1px solid rgba(120, 104, 74, 0.14);
+  border-radius: 24px;
+  box-shadow:
+    0 2px 6px rgba(74, 64, 40, 0.05),
+    0 30px 64px -26px rgba(74, 64, 40, 0.32);
 }
 
 .loading-page__error {
@@ -12,4 +67,11 @@
   align-items: center;
   gap: 1rem;
   text-align: center;
+}
+
+@media (max-width: 640px) {
+  .loading-page__card {
+    padding: 32px 28px;
+    border-radius: 20px;
+  }
 }

@@ -1,6 +1,20 @@
 .wizard-stepper {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
   flex-wrap: wrap;
+  padding: 8px 18px;
+  background: rgba(255, 253, 248, 0.7);
+  border: 1px solid rgba(120, 104, 74, 0.12);
+  border-radius: var(--radius-pill);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+@media (max-width: 640px) {
+  .wizard-stepper {
+    gap: 10px;
+    padding: 8px 12px;
+  }
 }

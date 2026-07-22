@@ -4,12 +4,20 @@ import NavLinks from './NavLinks/NavLinks.jsx';
 import AuthButtons from './AuthButtons/AuthButtons.jsx'
 import AccountIcon from './AccountIcon/AccountIcon.jsx'
 
-function Navbar({isAuthenticated, currentUser, variant}) {
+function Navbar({isAuthenticated, currentUser, variant, floating, landing}) {
   // Logged-out visitors get Login/Register; logged-in users get the primary
   // links plus their account icon — on every page, landing included. The "hero"
-  // variant is the warm, floating bar used over the landing + auth scenes.
+  // variant is the warm editorial treatment (used app-wide); `floating` layers
+  // on the transparent, over-the-scene behaviour for the landing + auth pages.
+  // `landing` further overrides that to the solid cream fill so the landing bar
+  // matches the in-app dashboard / create / discover pages.
   const showAuthButtons = !isAuthenticated;
-  const className = variant === 'hero' ? 'navbar navbar--hero' : 'navbar';
+  const className = [
+    'navbar',
+    variant === 'hero' && 'navbar--hero',
+    floating && 'navbar--floating',
+    landing && 'navbar--landing',
+  ].filter(Boolean).join(' ');
 
   return (
     <header className={className}>
