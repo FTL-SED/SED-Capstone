@@ -40,13 +40,6 @@ export async function listItineraries(params = {}) {
   return data
 }
 
-// PUT /itineraries/:id — update an itinerary the caller owns. Body carries only
-// the fields being changed (e.g. { title, description, isPublic }).
-export async function updateItinerary(id, changes) {
-  const { data } = await api.put(`/itineraries/${id}`, changes)
-  return data
-}
-
 // DELETE /itineraries/:id — delete an itinerary the caller owns (204 No Content).
 export async function deleteItinerary(id) {
   await api.delete(`/itineraries/${id}`)
