@@ -104,15 +104,22 @@ test('rejects a bad trip time', () => {
   assert.match(sent.body.error, /startTime/)
 })
 
-test('rejects endTime equal to or before startTime (same-day only)', () => {
+test('rejects endTime equal to startTime (zero-length / ambiguous window)', () => {
   const equal = run({ trip: { ...validTrip, startTime: '12:00', endTime: '12:00' }, members: [validMember] })
   assert.equal(equal.nextCalled, false)
   assert.equal(equal.sent.code, 400)
-  assert.match(equal.sent.body.error, /later than/)
+  assert.match(equal.sent.body.error, /must differ/)
+})
 
-  const inverted = run({ trip: { ...validTrip, startTime: '18:00', endTime: '09:00' }, members: [validMember] })
-  assert.equal(inverted.nextCalled, false)
-  assert.match(inverted.sent.body.error, /later than/)
+test('accepts an overnight window where endTime < startTime (crosses midnight)', () => {
+  // A late-night plan 22:00 → 02:00: the engine anchors on startTime, so this
+  // is a valid 4-hour window rather than an error.
+  const { sent, nextCalled } = run({
+    trip: { ...validTrip, startTime: '22:00', endTime: '02:00' },
+    members: [validMember],
+  })
+  assert.equal(sent, null)
+  assert.equal(nextCalled, true)
 })
 
 test('each member keeps its own independent prefs', () => {

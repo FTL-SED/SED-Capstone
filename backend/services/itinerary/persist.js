@@ -10,6 +10,15 @@
 //   2. re-hydrate the pin   — a stop only carries pinId; the place fields
 //      (name, coords, address, image, tags, price) come from the shortlist by id.
 import * as itineraries from '../../models/itineraries.js'
+import { toMinutes } from '../../utils/time.js'
+
+// Add N days to a YYYY-MM-DD string, returning YYYY-MM-DD. Used to roll a stop
+// onto the next calendar day when an overnight schedule passes midnight.
+function addDaysISO(dayISO, days) {
+  const d = new Date(`${dayISO}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + days)
+  return d.toISOString().slice(0, 10)
+}
 
 // Correct America/Los_Angeles UTC offset ("-07:00" PDT / "-08:00" PST) for a
 // given YYYY-MM-DD, so times are DST-safe instead of hardcoding one offset.
@@ -31,9 +40,28 @@ function toDateTime(dayISO, hhmm, offset) {
 
 // Build ItineraryStop.create rows from the itinerary's stops. Array index becomes
 // orderInItinerary; each stop references its catalog venue pin by pinId.
+//
+// Stops are in chronological order but carry only wall-clock "HH:MM", so an
+// overnight plan (e.g. 22:00 → 00:30) would otherwise persist endTime BEFORE
+// startTime. We walk the stops tracking the running wall-clock: whenever a time
+// is earlier than the previous one, the day has rolled over to the next
+// calendar day, so we advance the date used to build that DateTime. This keeps
+// every persisted DateTime monotonically increasing across midnight.
 function stopsToStops(stops, shortlist, dayISO) {
   const byId = new Map(shortlist.map((p) => [p.id, p]))
-  const offset = pacificOffset(dayISO)
+
+  // The day rolls forward each time a wall-clock time is < the previous one.
+  let dayOffset = 0
+  let prevMin = -1
+  // Advance dayOffset if this time wrapped past midnight vs the previous one,
+  // then return the DateTime on the correct calendar day (DST-safe offset).
+  const build = (hhmm) => {
+    const m = toMinutes(hhmm)
+    if (m < prevMin) dayOffset += 1
+    prevMin = m
+    const day = dayOffset === 0 ? dayISO : addDaysISO(dayISO, dayOffset)
+    return toDateTime(day, hhmm, pacificOffset(day))
+  }
 
   return stops.map((stop, i) => {
     const pin = byId.get(stop.pinId)
@@ -43,11 +71,16 @@ function stopsToStops(stops, shortlist, dayISO) {
       throw new Error(`stop references pinId ${stop.pinId} not in the shortlist`)
     }
 
+    // Build arrive then depart in order so a within-stop midnight cross (arrive
+    // 23:40, depart 00:10) also rolls the day for departTime.
+    const startTime = build(stop.arriveTime)
+    const endTime = build(stop.departTime)
+
     return {
       pinId: stop.pinId, // reference the catalog venue pin
       orderInItinerary: i,
-      startTime: toDateTime(dayISO, stop.arriveTime, offset),
-      endTime: toDateTime(dayISO, stop.departTime, offset),
+      startTime,
+      endTime,
       mealType: stop.mealType ?? null,
       note: stop.note ?? null,
       travelTimeToNextMinutes: stop.travelTimeToNextMinutes ?? null,

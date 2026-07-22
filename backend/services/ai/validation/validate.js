@@ -7,13 +7,22 @@
 // for debugging. Note: a well-formed { feasible: false, reason } is a valid
 // answer (the AI correctly saying "no itinerary fits"), not a failure.
 import { MEAL_TIME_WINDOWS, CATEGORY } from '../../../config/ai.js'
-import { toMinutes } from '../../../utils/time.js'
+import { toMinutes, minutesFromStart, windowLengthMinutes } from '../../../utils/time.js'
 
 const HHMM_RE = /^([01][0-9]|2[0-3]):[0-5][0-9]$/
 
 const isHHMM = (v) => typeof v === 'string' && HHMM_RE.test(v)
-const inWindow = (t, start, end) => toMinutes(t) >= toMinutes(start) && toMinutes(t) <= toMinutes(end)
-const inMealBlock = (t, block) => inWindow(t, block.start, block.end)
+
+// Stop ORDERING and the trip-window bound are measured in elapsed minutes from
+// the trip's start (see utils/time.minutesFromStart), so an overnight trip
+// (22:00→02:00) sorts a 00:30 stop AFTER the evening instead of treating it as
+// earliest. For a same-day trip this is identical to minutes-since-midnight.
+//
+// MEAL blocks, by contrast, are absolute daytime windows (breakfast 07:00–10:45
+// etc., none cross midnight), so they're matched in plain wall-clock minutes —
+// anchoring them to the trip start would wrap a block that straddles the start.
+const inMealBlock = (t, block) =>
+  toMinutes(t) >= toMinutes(block.start) && toMinutes(t) <= toMinutes(block.end)
 
 // Per-stop shape check (mirrors STOP_SCHEMA in config/ai.js). Pushes a labelled
 // error for each malformed field so the log points at the exact stop.
@@ -38,6 +47,12 @@ const checkBusinessRules = (stops, shortlist, constraints, errors) => {
   const { timeWindow, maxBudgetPerPerson } = constraints ?? {}
   const byId = new Map(shortlist.map((p) => [p.id, p]))
 
+  // Anchor for all time math: the trip start (elapsed minutes from here). When
+  // no window is given, anchor on the first stop's arrival so ordering across
+  // midnight still sorts correctly.
+  const anchor = timeWindow?.startTime ?? stops[0]?.arriveTime ?? '00:00'
+  const fromStart = (t) => minutesFromStart(anchor, t)
+
   // No hallucinated places — every pinId must come from the shortlist.
   for (const [i, stop] of stops.entries()) {
     if (!byId.has(stop.pinId)) {
@@ -45,25 +60,29 @@ const checkBusinessRules = (stops, shortlist, constraints, errors) => {
     }
   }
 
-  // Per-stop: depart must not precede arrive.
+  // Per-stop: depart must not precede arrive (in elapsed-from-start space, so a
+  // stop that arrives 23:30 and departs 00:30 is a 60-min dwell, not negative).
   for (const [i, stop] of stops.entries()) {
-    if (toMinutes(stop.departTime) < toMinutes(stop.arriveTime)) {
+    if (fromStart(stop.departTime) < fromStart(stop.arriveTime)) {
       errors.push(`stops[${i}] departs before it arrives`)
     }
   }
 
   // Chronological: each stop must arrive no earlier than the previous departed.
   for (let i = 1; i < stops.length; i++) {
-    if (toMinutes(stops[i].arriveTime) < toMinutes(stops[i - 1].departTime)) {
+    if (fromStart(stops[i].arriveTime) < fromStart(stops[i - 1].departTime)) {
       errors.push(`stops[${i}] arrives before stops[${i - 1}] departs (out of order)`)
     }
   }
 
-  // Every stop inside the trip time window (only checkable once we have one).
+  // Every stop inside the trip time window. Measured as elapsed-from-start so an
+  // overnight window (22:00→02:00) admits a 00:30 stop instead of rejecting it.
   if (timeWindow?.startTime && timeWindow?.endTime) {
+    const windowEnd = windowLengthMinutes(timeWindow.startTime, timeWindow.endTime)
     for (const [i, stop] of stops.entries()) {
-      if (!inWindow(stop.arriveTime, timeWindow.startTime, timeWindow.endTime) ||
-          !inWindow(stop.departTime, timeWindow.startTime, timeWindow.endTime)) {
+      const a = fromStart(stop.arriveTime)
+      const d = fromStart(stop.departTime)
+      if (a > windowEnd || d > windowEnd) {
         errors.push(`stops[${i}] falls outside the trip window ${timeWindow.startTime}-${timeWindow.endTime}`)
       }
     }

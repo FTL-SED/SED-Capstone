@@ -48,6 +48,27 @@ test('stopsToStops converts arrive/depart to DateTime objects', () => {
   assert.equal(ferry.endTime.toISOString(), '2026-07-15T17:30:00.000Z') // 10:30 PDT
 })
 
+test('stopsToStops rolls the calendar day for an overnight schedule', () => {
+  // A late-night plan: second stop crosses midnight, third is fully after it.
+  // Each persisted endTime must stay AFTER its startTime as an absolute instant,
+  // and after-midnight stops must land on the NEXT calendar day.
+  const overnightStops = [
+    { pinId: 1, arriveTime: '22:00', departTime: '23:15' },
+    { pinId: 2, arriveTime: '23:30', departTime: '00:30' }, // crosses midnight
+  ]
+  const rows = stopsToStops(overnightStops, shortlist, '2026-07-15')
+
+  // Stop 0 both times on the 15th (22:00/23:15 PDT → 05:00/06:15 UTC next day).
+  assert.equal(rows[0].startTime.toISOString(), '2026-07-16T05:00:00.000Z')
+  assert.equal(rows[0].endTime.toISOString(), '2026-07-16T06:15:00.000Z')
+  // Stop 1 arrives 23:30 on the 15th, departs 00:30 which rolls to the 16th.
+  assert.equal(rows[1].startTime.toISOString(), '2026-07-16T06:30:00.000Z')
+  assert.equal(rows[1].endTime.toISOString(), '2026-07-16T07:30:00.000Z')
+  // Every stop: end strictly after start; sequence monotonic across midnight.
+  for (const r of rows) assert.ok(r.endTime > r.startTime, 'endTime must be after startTime')
+  assert.ok(rows[1].startTime > rows[0].endTime, 'stops stay in order across midnight')
+})
+
 test('stopsToStops carries mealType as-is (not folded into tags)', () => {
   const rows = stopsToStops(stops, shortlist, '2026-07-15')
   assert.equal(rows[1].mealType, 'lunch')

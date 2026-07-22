@@ -14,7 +14,7 @@ import {
   CATEGORY,
 } from '../../../config/ai.js'
 import { haversineMiles, milesToMeters } from '../../../utils/geo.js'
-import { toMinutes, toHHMM } from '../../../utils/time.js'
+import { toMinutes, toHHMM, windowLengthMinutes, MINUTES_PER_DAY } from '../../../utils/time.js'
 
 const isRestaurant = (pin) => pin.category === CATEGORY.restaurant
 
@@ -72,12 +72,21 @@ const fallbackSequence = (shortlist, constraints) => {
   const anchor = meetingPoint ?? shortlist[0]
   const ordered = nearestNeighborOrder(shortlist, anchor)
 
-  // Time window (default to a generous 09:00–21:00 if none supplied yet).
-  const startMins = toMinutes(timeWindow?.startTime ?? '09:00')
-  const endMins = toMinutes(timeWindow?.endTime ?? '21:00')
-  if (endMins <= startMins) {
+  // Time window (default to a generous 09:00–21:00 if none supplied yet). We
+  // work the clock in ELAPSED minutes from the start (0-based), so an overnight
+  // window (22:00→02:00) just has a positive length and the clock walks past
+  // midnight naturally. Wall-clock is recovered only where needed (meal-block
+  // lookup, HH:MM output). startWall lets us map elapsed → wall-clock.
+  const startWall = toMinutes(timeWindow?.startTime ?? '09:00')
+  const windowLen = windowLengthMinutes(
+    timeWindow?.startTime ?? '09:00',
+    timeWindow?.endTime ?? '21:00',
+  )
+  if (windowLen <= 0) {
     return { feasible: false, reason: 'Trip time window is empty or inverted.' }
   }
+  // Wall-clock minute-of-day for an elapsed offset from start (wraps past 24h).
+  const wallAt = (elapsed) => (startWall + elapsed) % MINUTES_PER_DAY
 
   // Stop costs are per person, so the cap is the per-person budget directly
   // (no groupSize multiplier — that would mix per-person costs with a
@@ -86,7 +95,7 @@ const fallbackSequence = (shortlist, constraints) => {
 
   const stops = []
   const mealsUsed = new Set() // meal blocks already filled — one meal per block
-  let clock = startMins
+  let clock = 0 // elapsed minutes from the trip start
   let spent = 0
   let prev = null
 
@@ -97,8 +106,8 @@ const fallbackSequence = (shortlist, constraints) => {
     // would leave the clock inflated by travel to a place we never visited.
     const arrive = prev ? clock + travelMinutes(prev, pin, transport) : clock
     const depart = arrive + AVG_STOP_DURATION_MIN
-    // Out of daylight — stop packing the day.
-    if (depart > endMins) break
+    // Out of the trip window — stop packing the day.
+    if (depart > windowLen) break
 
     // Cost is a fact about the place (pin.pricePerPerson), used here only to
     // stay within budget — it's NOT written onto the stop. Downstream reads the
@@ -108,15 +117,16 @@ const fallbackSequence = (shortlist, constraints) => {
 
     // A restaurant landing in an open meal block becomes that meal; a second
     // restaurant in the same block is kept as an ordinary stop (block full).
-    const block = isRestaurant(pin) ? mealBlockAt(arrive) : null
+    // Meal blocks are absolute daytime windows, so match on wall-clock.
+    const block = isRestaurant(pin) ? mealBlockAt(wallAt(arrive)) : null
     const mealType = block && !mealsUsed.has(block) ? block : undefined
     if (mealType) mealsUsed.add(mealType)
 
     stops.push({
       pin,
       pinId: pin.id,
-      arriveTime: toHHMM(arrive),
-      departTime: toHHMM(depart),
+      arriveTime: toHHMM(wallAt(arrive)),
+      departTime: toHHMM(wallAt(depart)),
       ...(mealType ? { mealType } : {}),
     })
 
