@@ -4,6 +4,25 @@ import * as itineraries from '../models/itineraries.js'
 import { addStop } from '../services/itinerary/addStop.js'
 import { parseIdParam, parseDate } from './helpers.js'
 
+// GET /pins
+// Browse/search the shared venue catalog so a user can pick a place to add to
+// their itinerary. Query params: q (name search), category (restaurant|activity),
+// limit, offset. Returns an array of catalog venues. Auth via requireAuth.
+async function browsePins(req, res) {
+  const { q, category } = req.query
+  const limit = Math.min(Number(req.query.limit) || 20, 50)
+  const offset = Math.max(Number(req.query.offset) || 0, 0)
+
+  const venues = await pins.findMany({
+    q: typeof q === 'string' && q.trim() ? q.trim() : undefined,
+    category: category === 'restaurant' || category === 'activity' ? category : undefined,
+    take: limit,
+    skip: offset,
+  })
+
+  return res.status(200).json(venues)
+}
+
 // GET /pins/:id
 // Returns an itinerary stop with its venue. Readable when the parent itinerary
 // is public or owned by the caller. Auth is handled by requireAuth.
@@ -313,6 +332,7 @@ async function deletePin(req, res) {
 }
 
 export {
+  browsePins,
   getPin,
   createPin,
   updatePin,

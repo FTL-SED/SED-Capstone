@@ -46,6 +46,12 @@ function reshapeItinerary(itinerary, { forOwner = true } = {}) {
     if (s.mealType) tags.push(s.mealType)
     return {
       id: p.id,
+      // The ItineraryStop id (distinct from the venue Pin id above). The
+      // /pins/:id edit + delete endpoints operate on this, so the frontend
+      // needs it to remove or edit an individual stop. pinId is the venue id,
+      // used when referencing the same catalog venue elsewhere.
+      stopId: s.id,
+      pinId: p.id,
       name: p.name,
       description: s.note ?? p.description ?? null,
       tags,
