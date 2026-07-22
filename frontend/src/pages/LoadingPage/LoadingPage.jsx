@@ -174,9 +174,10 @@ function LoadingPage() {
     let active = true;
     (async () => {
       try {
-        const { shortlist, constraints, reason } = await getRecommendations(
-          buildRecommendationBody(form)
-        );
+        // Reuse the same members mapping the recommendation body uses, so the
+        // group we persist matches the group the plan was built for.
+        const recommendationBody = buildRecommendationBody(form);
+        const { shortlist, constraints, reason } = await getRecommendations(recommendationBody);
         if (!active) return;
 
         if (!shortlist || shortlist.length === 0) {
@@ -187,6 +188,10 @@ function LoadingPage() {
         const result = await generateItinerary({
           shortlist,
           constraints,
+          // Persist the calendar day + the group so the saved itinerary is
+          // self-describing and editable (an empty date is omitted, not sent).
+          tripDate: form.tripDate || undefined,
+          members: recommendationBody.members,
           isPublic: form.isPublic,
           title: form.title,
           description: form.description,
