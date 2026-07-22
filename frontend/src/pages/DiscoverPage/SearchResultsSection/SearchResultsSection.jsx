@@ -5,7 +5,10 @@ import LoadMoreButton from '../../../components/LoadMoreButton/LoadMoreButton.js
 import ErrorMessage from '../../../components/ErrorMessage/ErrorMessage.jsx'
 
 // Presentational: DiscoverPage owns the fetch and passes results in.
-function SearchResultsSection({ itineraries, loading, error, hasMore, onLoadMore }) {
+function SearchResultsSection({
+  itineraries, loading, error, hasMore, onLoadMore,
+  likedIds, bookmarkedIds, onToggleLike, onToggleBookmark,
+}) {
   return (
     <section className="search-results-section">
       <SectionHeader title="Search Results" />
@@ -13,7 +16,13 @@ function SearchResultsSection({ itineraries, loading, error, hasMore, onLoadMore
       {!error && itineraries.length === 0 && !loading && (
         <p className="search-results-section__empty">No itineraries found.</p>
       )}
-      <ItinerariesGrid itineraries={itineraries} />
+      <ItinerariesGrid
+        itineraries={itineraries}
+        likedIds={likedIds}
+        bookmarkedIds={bookmarkedIds}
+        onToggleLike={onToggleLike}
+        onToggleBookmark={onToggleBookmark}
+      />
       {hasMore && <LoadMoreButton onClick={onLoadMore} />}
     </section>
   )

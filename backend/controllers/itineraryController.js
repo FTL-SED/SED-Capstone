@@ -128,8 +128,19 @@ async function listItineraries(req, res) {
       .filter(Boolean)
     if (tags.length > 0) {
       // Keep only itineraries that have at least one stop whose venue pin
-      // carries at least one of the requested interest tags.
-      where.stops = { some: { pin: { tags: { hasSome: tags } } } }
+      // carries at least one of the requested tags. Pin.tags was split into
+      // interests/cuisines/diets, so match across all three.
+      where.stops = {
+        some: {
+          pin: {
+            OR: [
+              { interests: { hasSome: tags } },
+              { cuisines: { hasSome: tags } },
+              { diets: { hasSome: tags } },
+            ],
+          },
+        },
+      }
     }
   }
 
@@ -237,7 +248,13 @@ async function likeItinerary(req, res) {
   const id = parseIdParam(req, res, 'itinerary id')
   if (id === null) return
 
-  if (!(await loadOrNotFound(res, itineraries.findByIdBasic, id, 'Itinerary'))) return
+  const itinerary = await loadOrNotFound(res, itineraries.findByIdBasic, id, 'Itinerary')
+  if (!itinerary) return
+  // Only public (or the owner's own) itineraries can be liked — otherwise a
+  // private draft could be liked by id and then leak into the liker's dashboard.
+  if (!itinerary.isPublic && itinerary.userId !== req.user.id) {
+    return res.status(403).json({ error: 'Only public itineraries can be liked' })
+  }
 
   await likes.upsert(req.user.id, id)
 

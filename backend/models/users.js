@@ -16,15 +16,31 @@ function findByAuthUserId(authUserId) {
   return prisma.user.findUnique({ where: { authUserId } })
 }
 
-// Owner dashboard: the user plus their created itineraries and the
-// itineraries they've bookmarked/liked.
+// Existence checks for the register pre-validation (username/email uniqueness).
+// Return just the id (or null) — the controller only needs to know if one exists.
+function findByUsername(username) {
+  return prisma.user.findFirst({ where: { username }, select: { id: true } })
+}
+
+function findByEmail(email) {
+  return prisma.user.findFirst({ where: { email }, select: { id: true } })
+}
+
+// Owner dashboard: the user plus their created/bookmarked/liked itineraries.
+// All three lists carry creator + a live like count so the home page cards match
+// the Explore feed (the controller reshapes them via the itineraries model).
+const dashboardItineraryInclude = {
+  creator: { select: { id: true, username: true } },
+  _count: { select: { likes: true } },
+}
+
 function findDashboardById(id) {
   return prisma.user.findUnique({
     where: { id },
     include: {
-      createdItineraries: true,
-      bookmarks: { include: { itinerary: true } },
-      likes: { include: { itinerary: true } },
+      createdItineraries: { include: dashboardItineraryInclude },
+      bookmarks: { include: { itinerary: { include: dashboardItineraryInclude } } },
+      likes: { include: { itinerary: { include: dashboardItineraryInclude } } },
     },
   })
 }
@@ -44,4 +60,4 @@ function update(id, data) {
   })
 }
 
-export { findByAuthUserId, findDashboardById, create, update }
+export { findByAuthUserId, findByUsername, findByEmail, findDashboardById, create, update }
