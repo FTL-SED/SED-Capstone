@@ -7,13 +7,16 @@ import * as itineraries from '../models/itineraries.js'
 async function main() {
   console.log('Phase 4 contract verification: loading itineraries via model layer...\n')
 
-  // Load itineraries through the model layer (exercises reshapeItinerary + stops->pin include)
-  const rows = await itineraries.findMany({
+  // Load id list via findMany (the feed query is intentionally stops-free), then
+  // fetch each through findById — the DETAIL query that still includes stops->pin,
+  // so this actually exercises reshapeItinerary's pins[] flattening.
+  const summaries = await itineraries.findMany({
     where: {},
     orderBy: { createdAt: 'desc' },
     take: 100,
     skip: 0,
   })
+  const rows = (await Promise.all(summaries.map((s) => itineraries.findById(s.id)))).filter(Boolean)
 
   console.log(`Loaded ${rows.length} itineraries\n`)
 

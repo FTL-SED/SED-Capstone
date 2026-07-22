@@ -2,12 +2,21 @@
 // req/res (see .claude/rules/backend.md → Models).
 import prisma from '../lib/prisma.js'
 
-// Shared shape for itinerary responses: the creator summary, stops (with their
-// venue pins) in order, and a live count of likes (the Like rows are the single
-// source of truth — there is no stored likeCount column).
+// Full shape for DETAIL responses (findById/create): creator summary, stops
+// (with their venue pins) in order, and a live count of likes (the Like rows are
+// the single source of truth — there is no stored likeCount column).
 const itineraryInclude = {
   creator: { select: { id: true, username: true } },
   stops: { orderBy: { orderInItinerary: 'asc' }, include: { pin: true } },
+  _count: { select: { likes: true } },
+}
+
+// Lighter shape for LIST/FEED responses (findMany): the Discover feed and card
+// grids only render title/location/cover/creator/likeCount, never the stops or
+// pins — so we skip the stops+pin joins entirely. reshapeItinerary defaults a
+// missing `stops` to `pins: []`, so the response shape stays consistent.
+const itinerarySummaryInclude = {
+  creator: { select: { id: true, username: true } },
   _count: { select: { likes: true } },
 }
 
@@ -55,7 +64,7 @@ async function findMany({ where, orderBy, take, skip }) {
     orderBy,
     take,
     skip,
-    include: itineraryInclude,
+    include: itinerarySummaryInclude,
   })
   return rows.map(reshapeItinerary)
 }
