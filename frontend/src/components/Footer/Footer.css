@@ -9,3 +9,18 @@
   color: var(--slate-500);
   font-size: 0.875rem;
 }
+
+/* Landing variant — closes the green "drive" with a deep blue band, so the
+   footer is unmistakably its own moment at the end of the page. */
+.footer--landing {
+  border-top: none;
+  background: #16324f;
+  padding: 40px 24px 48px;
+}
+
+.footer--landing p {
+  color: #ffffff; /* white, high contrast on the deep blue */
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+}

@@ -7,7 +7,10 @@ function RegisterPage({setCurrentUser}) {
   return (
     <div className="register-page">
       <AuthCard>
-        <h1 className="auth-title">Create Account</h1>
+        <header className="auth-card__head">
+          <h1 className="auth-title">Join NavQuest</h1>
+          <p className="auth-subtitle">Create an account to start planning trips together.</p>
+        </header>
         <RegisterForm setCurrentUser={setCurrentUser}/>
         <LoginSection />
       </AuthCard>

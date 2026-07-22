@@ -2,8 +2,12 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  /* Translucent frosted bar: content scrolls softly beneath it. Falls back to
+     the solid surface where backdrop-filter isn't supported. */
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  backdrop-filter: saturate(1.4) blur(14px);
+  border-bottom: 1px solid rgba(120, 104, 74, 0.12);
 }
 
 .navbar__inner {
@@ -26,5 +30,165 @@
   .navbar__inner {
     gap: 18px;
     padding: 0 16px;
+  }
+}
+
+/* ==========================================================================
+   Hero variant — the warm editorial treatment: an editorial serif wordmark
+   with the sunset diamond mark, warm moss links, a quiet "Login" text link and
+   a moss "Register" pill. Applied via the .navbar--hero modifier (see App.jsx).
+   Used two ways:
+     • landing + auth pages add .navbar--floating too, so the bar floats
+       transparently over their full-bleed scene;
+     • the in-app pages (dashboard / discover / create) use .navbar--hero on its
+       own, so the same identity rides the standard sticky, frosted bar.
+   ========================================================================== */
+
+/* Floating behaviour: transparent, lifted out of flow to sit over the scene.
+   Only the landing + auth pages opt into this (via .navbar--floating). */
+.navbar--floating {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: transparent;
+  border-bottom: none;
+}
+
+/* In-app hero bar (no .navbar--floating): a SOLID warm cream fill instead of
+   the base bar's translucent white. The base .navbar is frosted glass, so it
+   picks up whatever each page paints behind it — the dashboard's sky, the grey
+   Discover canvas, the cream Create page — and reads as a different colour on
+   each. An opaque fill makes the bar identical across all three pages. */
+.navbar--hero:not(.navbar--floating) {
+  background: #f6efe1;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border-bottom: 1px solid rgba(120, 104, 74, 0.16);
+}
+
+/* Landing page: keep the bar floating over the hero scene, but paint it with
+   the same solid cream fill as the in-app dashboard / create / discover bars
+   instead of the transparent .navbar--floating treatment, so its colour matches
+   across the app. */
+.navbar--floating.navbar--landing {
+  background: #f6efe1;
+  border-bottom: 1px solid rgba(120, 104, 74, 0.16);
+}
+
+/* Roomier placement to suit the scene: wider max-width, generous side/top
+   padding and gap instead of the app's fixed-height bar. */
+.navbar--hero .navbar__inner {
+  height: auto;
+  max-width: 1200px;
+  gap: 32px;
+  padding: 26px 40px;
+}
+
+/* Wordmark → editorial serif with the sunset diamond mark */
+.navbar--hero .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navbar--hero .logo::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border-radius: 50% 50% 50% 2px;
+  background: #e1783c;
+  transform: rotate(45deg);
+  box-shadow: 0 0 0 4px rgba(225, 120, 60, 0.16);
+}
+
+.navbar--hero .logo h3 {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 600;
+  font-size: 1.4rem;
+  letter-spacing: -0.01em;
+  color: #33402a;
+}
+
+/* Primary links (shown to signed-in visitors): warm moss with a sunset
+   underline that wipes in on hover / active. */
+.navbar--hero .nav-link {
+  color: #33402a;
+  opacity: 0.82;
+}
+
+.navbar--hero .nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: -2px;
+  height: 2px;
+  background: #e1783c;
+  transition: right 0.24s ease;
+}
+
+.navbar--hero .nav-link:hover,
+.navbar--hero .nav-link--active {
+  color: #33402a;
+  opacity: 1;
+}
+
+.navbar--hero .nav-link:hover::after,
+.navbar--hero .nav-link--active::after {
+  right: 0;
+}
+
+/* Signed-in avatar: warm hover ring */
+.navbar--hero .account-icon:hover {
+  box-shadow: 0 0 0 2px rgba(225, 120, 60, 0.35);
+}
+
+/* "Login" becomes a quiet text link */
+.navbar--hero .login-button {
+  border: none;
+  background: transparent;
+  color: #33402a;
+  font-size: 1rem;
+  padding: 10px 10px;
+  border-radius: 0;
+  opacity: 0.85;
+}
+
+.navbar--hero .login-button:hover {
+  background: transparent;
+  border-color: transparent;
+  opacity: 1;
+}
+
+/* "Register" becomes the moss pill CTA */
+.navbar--hero .register-button {
+  border: 1px solid #47583a;
+  background: #47583a;
+  color: #f6efe1;
+  font-size: 1rem;
+  border-radius: 999px;
+  padding: 12px 26px;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.navbar--hero .register-button:hover {
+  background: #33402a;
+  border-color: #33402a;
+  transform: translateY(-1px);
+}
+
+/* Tighten padding on smaller screens, like the old hero nav */
+@media (max-width: 860px) {
+  .navbar--hero .navbar__inner {
+    padding: 20px 22px;
+    gap: 18px;
+  }
+}
+
+@media (max-width: 600px) {
+  .navbar--hero .navbar__inner {
+    padding: 18px 16px;
+    gap: 12px;
   }
 }

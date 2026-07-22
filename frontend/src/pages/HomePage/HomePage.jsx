@@ -62,7 +62,8 @@ function HomePage() {
         const explore = await listItineraries({ scope: 'public', limit: 10 });
         setExploreItineraries(explore);
 
-        // GET /users/:id returns my created + liked + bookmarked itineraries.
+        // GET /users/:id returns my created + liked + bookmarked itineraries
+        // (owner-only).
         const me = await getUserDashboard(currentUserId);
         const created = me.createdItineraries ?? [];
         const liked = me.likedItineraries ?? [];

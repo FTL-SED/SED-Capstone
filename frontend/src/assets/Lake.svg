@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="100%" height="100%">
+    <!-- Dark Blue Lake Blob -->
+    <path d="M 12 55 C 15 20, 110 12, 160 25 C 190 32, 195 50, 195 52 C 180 75, 140 98, 90 98 C 40 98, 8 85, 12 55 Z" fill="#28354D" />
+
+    <!-- Brown Boat -->
+    <polygon points="82,42 122,42 106,55 90,55" fill="#88603C" />
+</svg>

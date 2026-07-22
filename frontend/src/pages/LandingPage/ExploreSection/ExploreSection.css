@@ -1,0 +1,65 @@
+/* Section 4 — Explore. Uses the shared .beat layout (flipped: adventures grid
+   left, text card right). Only the grid + card styling lives here. */
+
+.explore__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(14px, 1.6vw, 20px);
+}
+
+.explore__card {
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--j-card);
+  color: var(--j-moss-deep);
+  box-shadow: 0 14px 34px rgba(28, 36, 22, 0.32);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.explore__card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 44px rgba(28, 36, 22, 0.4);
+}
+
+.explore__card-art {
+  height: 100px;
+}
+
+/* three warm placeholder tones so the grid reads as varied trips */
+.explore__card--a .explore__card-art {
+  background: linear-gradient(135deg, #e1783c, #c85f2a);
+}
+.explore__card--b .explore__card-art {
+  background: linear-gradient(135deg, #6c7a4e, #47583a);
+}
+.explore__card--c .explore__card-art {
+  background: linear-gradient(135deg, #d9a441, #b8792f);
+}
+
+.explore__card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px 16px;
+}
+
+.explore__card-title {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.explore__card-meta {
+  font-size: 0.8rem;
+  color: rgba(51, 64, 42, 0.66);
+}
+
+/* ---- Responsive -------------------------------------------------------- */
+@media (max-width: 420px) {
+  .explore__grid {
+    grid-template-columns: 1fr;
+  }
+}

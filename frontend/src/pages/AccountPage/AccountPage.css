@@ -1,0 +1,360 @@
+/* ==========================================================================
+   NavQuest — Account "basecamp" scene
+
+   The account page is the traveller's basecamp: a calm mountain overlook that
+   continues the world of the landing, auth and create pages. It reuses the same
+   warm golden-hour sky (drifting clouds + tiny birds) and sets a minimal,
+   geometric layered mountain range beneath it. One floating cream card holds
+   every account control.
+
+   As on the auth + create scenes, the warm palette is retinted onto the shared
+   design tokens, scoped to .account-page, so the reused avatar, inputs, buttons
+   and messages adopt the identity here without their own component files
+   changing — and the rest of the app keeps its navy/teal system untouched.
+   ========================================================================== */
+
+/* Editorial display face for the headings, matching the Login + landing hero */
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600&display=swap");
+
+.account-page {
+  /* Golden-hour palette, shared with the auth + create scenes */
+  --cream: #f6efe1;
+  --panel: #fdf8ee;
+  --moss: #4e6540;
+  --moss-deep: #3b4d31;
+  --sage: #7d8f6d;
+  --stone: #6e6656;
+  --sunset: #e1783c;
+
+  /* Retint the shared tokens for descendants only, so the reused avatar, inputs,
+     buttons and messages pick up the warm identity in this context. The accent
+     is moss here, so focus rings on the reused inputs turn green (per brief). */
+  --ink: var(--moss-deep);
+  --slate-800: #46402f;
+  --slate-600: #5c5646;
+  --slate-500: var(--stone);
+  --slate-400: #b0a58c;
+  --border: #e7ddc6;
+  --border-strong: #d8caa6;
+  --surface: #fffaf0;
+  --surface-muted: #f7efdd;
+  --accent: var(--moss);
+  --accent-strong: var(--moss-deep);
+  --accent-soft: #d7e0cb;
+  --danger: #c85f3a;
+  --radius-sm: 14px;
+
+  position: relative;
+  z-index: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  /* Fill the space between the sticky navbar and footer so the card sits calmly
+     centred in the overlook rather than crowding the top. */
+  min-height: calc(100vh - var(--nav-h) - 96px - var(--foot-h));
+  padding: 8px 0 40px;
+  color: var(--slate-600);
+}
+
+/* ---- The sky + mountains scene (fixed behind the whole viewport) --------- */
+/* A gentle blur pushes the whole overlook back so the basecamp card is the
+   clear focus. The scene is scaled up a touch so the blur doesn't reveal soft
+   edges at the viewport borders — the same treatment the create scene uses. */
+.account-scene {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--cream);
+  filter: blur(5px);
+  transform: scale(1.04);
+}
+
+.account-sky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- The floating basecamp card ----------------------------------------- */
+.account-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 620px;
+  padding: 48px 52px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  background: var(--panel);
+  border: 1px solid rgba(120, 104, 74, 0.16);
+  border-radius: 24px;
+  box-shadow:
+    0 2px 6px rgba(74, 64, 40, 0.05),
+    0 30px 64px -26px rgba(74, 64, 40, 0.34);
+}
+
+/* ---- Profile header ----------------------------------------------------- */
+.account-card__header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.account-card__identity {
+  min-width: 0;
+}
+
+.account-card__eyebrow {
+  margin-bottom: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sunset);
+}
+
+.account-card__name {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  font-size: 2rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--moss-deep);
+  /* Long usernames wrap gracefully instead of overflowing the card. */
+  overflow-wrap: anywhere;
+}
+
+.account-card__subtitle {
+  margin-top: 8px;
+  font-size: 0.98rem;
+  line-height: 1.5;
+  color: var(--stone);
+}
+
+/* ---- Sections: flatten the reused cards into one continuous column ------- */
+/* ProfileSection, the change-username and change-password sections each ship
+   their own card chrome (surface, border, radius, padding, shadow). Inside the
+   basecamp card we strip that so they read as calm stacked groups separated by
+   hairline dividers and generous space — no cards-within-a-card. */
+.account-card__sections {
+  display: flex;
+  flex-direction: column;
+}
+
+.account-card__sections > .profile-section,
+.account-card__sections > .change-username-section,
+.account-card__sections > .change-password-section {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 32px 0;
+}
+
+.account-card__sections > :first-child {
+  padding-top: 0;
+}
+
+.account-card__sections > * + * {
+  border-top: 1px solid var(--border);
+}
+
+/* Serif section titles, matching the header, with room to breathe */
+.account-card .section-header {
+  margin-bottom: 20px;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.account-card .section-header h2 {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  font-size: 1.3rem;
+  letter-spacing: -0.01em;
+  color: var(--moss-deep);
+}
+
+/* ---- Reused inputs, warmed ---------------------------------------------- */
+/* Comfortable padding, cream fill and a soft hover; the green focus ring comes
+   for free from the moss --accent set above (see TextInput/PasswordInput.css). */
+.account-card .text-input input,
+.account-card .password-input input {
+  padding: 13px 15px;
+  background: var(--surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.account-card .text-input input:hover:not(:focus):not([readonly]),
+.account-card .password-input input:hover:not(:focus) {
+  border-color: var(--border-strong);
+}
+
+/* Read-only fields (email, current username) read as settled facts, not inputs */
+.account-card .text-input input[readonly] {
+  background: var(--surface-muted);
+  color: var(--stone);
+  cursor: default;
+}
+
+/* ---- Reused primary buttons — olive green ------------------------------- */
+.account-card .change-username-section__save,
+.account-card .update-password-button {
+  border-color: var(--moss);
+  background: var(--moss);
+}
+
+.account-card .change-username-section__save:hover,
+.account-card .update-password-button:hover {
+  background: var(--moss-deep);
+}
+
+/* ---- Account nav → a quiet footer action row ---------------------------- */
+/* The nav ships as a stacked column; inside the card it becomes a calm row that
+   separates the everyday action (Profile) from the destructive one (Log Out). */
+.account-card .account-nav {
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+}
+
+/* Profile is a muted cream secondary action here */
+.account-card .profile-button {
+  width: auto;
+  padding: 11px 22px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  color: var(--moss-deep);
+  text-align: center;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.account-card .profile-button:hover {
+  background: var(--cream);
+  border-color: var(--moss);
+}
+
+/* Log Out is the danger action — muted terracotta, quiet until hovered */
+.account-card .logout-button {
+  width: auto;
+  padding: 11px 22px;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--danger);
+  text-align: center;
+}
+
+.account-card .logout-button:hover {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+/* ==========================================================================
+   Motion — gentle and almost unnoticeable; stilled for reduced-motion users.
+   Clouds and birds cross left-to-right and wrap off-screen, exactly as on the
+   auth scene, so the two pages share one continuous sky.
+   ========================================================================== */
+.account-cloud--1 { animation: account-drift 100s linear infinite; }
+.account-cloud--2 { animation: account-drift 100s linear infinite; animation-delay: -33s; }
+.account-cloud--3 { animation: account-drift 100s linear infinite; animation-delay: -66s; }
+
+@keyframes account-drift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(1780px); }
+}
+
+.account-bird-fly--1 { animation: account-fly 80s linear infinite; }
+.account-bird-fly--2 { animation: account-fly 80s linear infinite; animation-delay: -26.6s; }
+.account-bird-fly--3 { animation: account-fly 80s linear infinite; animation-delay: -53.2s; }
+
+@keyframes account-fly {
+  from { transform: translateX(0); }
+  to   { transform: translateX(1580px); }
+}
+
+.account-bird--1 { animation: account-bird 9s ease-in-out infinite; }
+.account-bird--2 { animation: account-bird 11s ease-in-out infinite; }
+.account-bird--3 { animation: account-bird 13s ease-in-out infinite; }
+
+@keyframes account-bird {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-9px); }
+}
+
+/* Flap by swapping the wings-up / wings-down artwork; the down frame is hidden
+   by default so a single, correct pose shows when motion is disabled. */
+.account-bird__frame--down { opacity: 0; }
+
+.account-bird__frame--up   { animation: account-flap-up 4s linear infinite; }
+.account-bird__frame--down { animation: account-flap-down 4s linear infinite; }
+
+.account-bird--2 .account-bird__frame--up,
+.account-bird--2 .account-bird__frame--down { animation-delay: -1.3s; }
+.account-bird--3 .account-bird__frame--up,
+.account-bird--3 .account-bird__frame--down { animation-delay: -2.6s; }
+
+@keyframes account-flap-up {
+  0%, 49.999% { opacity: 1; }
+  50%, 100%   { opacity: 0; }
+}
+
+@keyframes account-flap-down {
+  0%, 49.999% { opacity: 0; }
+  50%, 100%   { opacity: 1; }
+}
+
+/* ---- Responsive --------------------------------------------------------- */
+@media (max-width: 640px) {
+  .account-page {
+    padding: 4px 0 32px;
+  }
+
+  .account-card {
+    padding: 32px 22px;
+    border-radius: 20px;
+    gap: 28px;
+  }
+
+  .account-card__header {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+
+  .account-card__name {
+    font-size: 1.7rem;
+  }
+
+  .account-card .account-nav {
+    flex-direction: column-reverse;
+  }
+
+  .account-card .profile-button,
+  .account-card .logout-button {
+    width: 100%;
+  }
+}
+
+/* ---- Reduced motion: hold the sky perfectly still ----------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .account-cloud--1,
+  .account-cloud--2,
+  .account-cloud--3,
+  .account-bird-fly--1,
+  .account-bird-fly--2,
+  .account-bird-fly--3,
+  .account-bird--1,
+  .account-bird--2,
+  .account-bird--3,
+  .account-bird__frame--up,
+  .account-bird__frame--down {
+    animation: none;
+  }
+}

@@ -1,0 +1,110 @@
+/* Section 2 — We connect the dots. Uses the shared .beat layout (flipped:
+   stops diagram left, text card right). The stops now live inside their own
+   panel with a dashed spine threading them, so nothing rides the main road. */
+
+.connect__diagram {
+  padding: clamp(24px, 3vw, 40px) clamp(20px, 3vw, 36px);
+  background: rgba(51, 64, 42, 0.5);
+}
+
+.connect__stops {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2vw, 26px);
+}
+
+/* the dashed spine the stops hang from, running down the panel centre */
+.connect__stops::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--j-road-line) 0 4px,
+    transparent 4px 14px
+  );
+  opacity: 0.6;
+}
+
+.connect__stop {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 50%;
+  gap: 14px;
+}
+
+/* left stops right-align toward the spine; right stops left-align */
+.connect__stop--left {
+  align-self: flex-start;
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.connect__stop--right {
+  align-self: flex-end;
+}
+
+.connect__stop-dot {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--j-sunset);
+  box-shadow: 0 0 0 5px rgba(225, 120, 60, 0.18);
+}
+
+.connect__card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: var(--j-card);
+  color: var(--j-moss-deep);
+  box-shadow: 0 10px 24px rgba(28, 36, 22, 0.28);
+}
+
+.connect__stop--left .connect__card {
+  flex-direction: row-reverse;
+}
+
+.connect__card-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.connect__card-label {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+/* ---- Responsive: pull the stops into a single centred stack ------------ */
+@media (max-width: 480px) {
+  .connect__stops::before {
+    left: 7px;
+  }
+
+  .connect__stop,
+  .connect__stop--left,
+  .connect__stop--right {
+    width: 100%;
+    align-self: stretch;
+    flex-direction: row;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .connect__stop--left .connect__card {
+    flex-direction: row;
+  }
+}

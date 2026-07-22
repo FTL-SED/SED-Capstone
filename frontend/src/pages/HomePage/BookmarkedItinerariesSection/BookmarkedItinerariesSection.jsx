@@ -18,6 +18,7 @@ function BookmarkedItinerariesSection({
         title="Bookmarked"
         itineraries={itineraries}
         loading={loading}
+        emptyMessage="You haven't bookmarked any itineraries yet."
         likedIds={likedIds}
         bookmarkedIds={bookmarkedIds}
         onToggleLike={onToggleLike}

@@ -18,6 +18,7 @@ function RecentItinerariesSection({
       )}
       <ItinerariesGrid
         itineraries={itineraries}
+        loading={loading}
         likedIds={likedIds}
         bookmarkedIds={bookmarkedIds}
         onToggleLike={onToggleLike}

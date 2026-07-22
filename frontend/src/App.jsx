@@ -21,6 +21,18 @@ function App() {
   // The itinerary page is a full-bleed split (map + panel) that fills the space
   // between the navbar and footer, so it opts out of the padded, max-width shell.
   const isFullBleed = pathname.startsWith('/itinerary/');
+  // The landing hero is a full-bleed cinematic scene, so it opts out of the
+  // padded shell and uses the shared navbar's "hero" variant floating over the
+  // scene — the same treatment the auth pages use.
+  const isLanding = pathname === '/';
+  // Pages that carry the warm "hero" navbar identity. The landing + auth pages
+  // add the floating (transparent, over-the-scene) behaviour on top; the in-app
+  // dashboard / discover / create pages wear the same identity on the standard
+  // sticky bar so the navbar looks consistent across them.
+  const isFloatingNav = isLanding || isAuthPage;
+  const isHeroNav = isFloatingNav ||
+    pathname === '/home' || pathname === '/discover' || pathname === '/create' ||
+    pathname === '/account' || isFullBleed;
 
   // by using local storage, if the page references, but current user still stays same,
   // the isAuthenticated details wont be forgotted
@@ -70,8 +82,14 @@ function App() {
 
   return (
     <div className="app">
-      <Navbar isAuthenticated={isAuthenticated} currentUser={currentUser}/>
-      <main className={`app__main${isAuthPage ? ' app__main--bare' : ''}${isFullBleed ? ' app__main--full' : ''}`}>
+      <Navbar
+        isAuthenticated={isAuthenticated}
+        currentUser={currentUser}
+        variant={isHeroNav ? 'hero' : undefined}
+        floating={isFloatingNav}
+        landing={isLanding}
+      />
+      <main className={`app__main${isAuthPage ? ' app__main--bare' : ''}${isFullBleed ? ' app__main--full' : ''}${isLanding ? ' app__main--bare' : ''}`}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route
@@ -99,7 +117,7 @@ function App() {
             element={!isAuthenticated ? <Navigate to="/" replace/> : <AccountPage currentUser={currentUser} setCurrentUser={setCurrentUser} />} />
         </Routes>
       </main>
-      <Footer />
+      {!isAuthPage && !isFullBleed && <Footer variant={isLanding ? 'landing' : undefined} />}
     </div>
   );
 }
