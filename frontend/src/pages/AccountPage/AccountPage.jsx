@@ -142,7 +142,6 @@ function AccountPage({ currentUser, setCurrentUser }) {
         <header className="account-card__header">
           <AccountAvatar currentUser={currentUser} setCurrentUser={setCurrentUser} />
           <div className="account-card__identity">
-            <p className="account-card__eyebrow">Your Basecamp</p>
             <h1 className="account-card__name">{currentUser?.username}</h1>
             <p className="account-card__subtitle">Everything about your travel profile.</p>
           </div>
