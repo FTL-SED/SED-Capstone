@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ItineraryPanel from './ItineraryPanel/ItineraryPanel.jsx'
 import MapView from './MapView/MapView.jsx'
+import EditItineraryModal from './EditItineraryModal/EditItineraryModal.jsx'
 import ErrorMessage from '../../components/ErrorMessage/ErrorMessage.jsx'
 import {
   getItinerary,
@@ -11,7 +12,6 @@ import {
   unlikeItinerary,
   bookmarkItinerary,
   removeBookmark,
-  updateItinerary,
   deleteItinerary,
   copyItinerary,
 } from '../../api/itinerary.js'
@@ -171,6 +171,8 @@ function ItineraryPage() {
   const [loading, setLoading] = useState(true);
   // Guards against double-firing the delete/copy network calls on rapid clicks.
   const [actionBusy, setActionBusy] = useState(false);
+  // Whether the edit-constraints modal is open (owner-only).
+  const [editing, setEditing] = useState(false);
 
   // Like/bookmark UI state. likeCount comes from the itinerary; whether *I've*
   // liked/bookmarked it isn't in GET /itineraries/:id, so we hydrate it from my
@@ -316,34 +318,14 @@ function ItineraryPage() {
     }
   };
 
-  // Owner-only: edit the itinerary's title/description via a simple prompt, then
-  // reflect the saved values (only the scalar fields are editable server-side).
-  const handleEdit = async () => {
-    if (actionBusy) return;
-    const nextTitle = window.prompt('Itinerary title:', itinerary.title);
-    if (nextTitle === null) return;
-    if (nextTitle.trim() === '') {
-      window.alert('Title cannot be empty.');
-      return;
-    }
-    const nextDescription = window.prompt(
-      'Description (leave blank to clear):',
-      itinerary.description ?? '',
-    );
-    if (nextDescription === null) return;
-    setActionBusy(true);
-    try {
-      const updated = await updateItinerary(id, {
-        title: nextTitle.trim(),
-        description: nextDescription.trim() === '' ? null : nextDescription.trim(),
-      });
-      setItinerary((prev) => ({ ...prev, title: updated.title, description: updated.description }));
-    } catch (err) {
-      console.error('Edit failed:', err);
-      window.alert('Could not save changes. Please try again.');
-    } finally {
-      setActionBusy(false);
-    }
+  // Owner-only: open the edit-constraints modal. The modal owns the form + save
+  // (PUT /itineraries/:id) and hands back the updated itinerary on success.
+  const handleEdit = () => setEditing(true);
+
+  // Merge the saved fields back into the itinerary so the page reflects the edit
+  // without a refetch. update() returns only the changed columns, so spread.
+  const handleSaved = (updated) => {
+    setItinerary((prev) => ({ ...prev, ...updated }));
   };
 
   if (loading) return (
@@ -382,6 +364,13 @@ function ItineraryPage() {
         onCopy={handleCopy}
       />
       <MapView pins={itinerary.pins} />
+      {editing && (
+        <EditItineraryModal
+          itinerary={itinerary}
+          onClose={() => setEditing(false)}
+          onSaved={handleSaved}
+        />
+      )}
     </div>
   );
 }

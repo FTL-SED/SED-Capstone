@@ -15,6 +15,7 @@ import { useLocation } from 'react-router-dom'
 // via the `form` + `update` props; the finish handler submits it.
 // See .claude/roadmap/frontend-backend-integration.md (Step 5).
 const INITIAL_FORM = {
+  tripDate: '',
   startTime: '',
   endTime: '',
   transport: '',
