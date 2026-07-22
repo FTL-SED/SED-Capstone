@@ -1,7 +1,23 @@
 import * as itineraries from '../models/itineraries.js'
 import * as likes from '../models/likes.js'
 import * as bookmarks from '../models/bookmarks.js'
+import { TRANSPORT_MODES } from '../config/ai.js'
+import { windowLengthMinutes, minutesFromStart } from '../utils/time.js'
 import { parseIdParam, parseDate, loadOrNotFound, loadOwned } from './helpers.js'
+
+// A persisted stop time (DateTime, stored at Pacific wall-clock) back to the
+// "HH:MM" the window is expressed in. Pinned to America/Los_Angeles so the
+// comparison is timezone-correct regardless of the server's zone.
+const pacificHHMM = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/Los_Angeles',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+})
+function hhmmOf(dateTime) {
+  // en-US hour12:false can emit "24:05" at midnight; normalize the hour to 00.
+  return pacificHHMM.format(new Date(dateTime)).replace(/^24:/, '00:')
+}
 
 // POST /itineraries
 // Creates an itinerary owned by the caller, with its stops referencing venue pins.
@@ -160,16 +176,20 @@ async function getItinerary(req, res) {
   const id = parseIdParam(req, res, 'itinerary id')
   if (id === null) return
 
-  const itinerary = await itineraries.findById(id)
-
-  if (!itinerary) {
+  // Peek at ownership/privacy first (bare row, no relations) so we know whether
+  // to return the owner-only view (members + meeting point) or the public one.
+  const basic = await itineraries.findByIdBasic(id)
+  if (!basic) {
     return res.status(404).json({ error: 'Itinerary not found' })
   }
-
-  if (!itinerary.isPublic && itinerary.userId !== req.user.id) {
+  const isOwner = basic.userId === req.user.id
+  if (!basic.isPublic && !isOwner) {
     return res.status(403).json({ error: 'You do not have access to this itinerary' })
   }
 
+  // Owner gets members + meeting point; a stranger viewing a public itinerary
+  // does not (those are the private planning group's identities/locations).
+  const itinerary = await itineraries.findById(id, { forOwner: isOwner })
   return res.status(200).json(itinerary)
 }
 
@@ -186,7 +206,10 @@ async function updateItinerary(req, res) {
   })
   if (!itinerary) return
 
-  const { title, location, description, coverImageUrl, isPublic } = req.body
+  const {
+    title, location, description, coverImageUrl, isPublic,
+    maxBudgetPerPerson, dayStart, dayEnd, travelRadius, transport,
+  } = req.body
 
   const data = {}
   if (title !== undefined) {
@@ -218,6 +241,83 @@ async function updateItinerary(req, res) {
       return res.status(400).json({ error: 'isPublic must be a boolean' })
     }
     data.isPublic = isPublic
+  }
+
+  // Editable trip constraints (US #7). Each optional; validated when present.
+  const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
+  if (maxBudgetPerPerson !== undefined) {
+    if (maxBudgetPerPerson !== null && (typeof maxBudgetPerPerson !== 'number' || maxBudgetPerPerson < 0)) {
+      return res.status(400).json({ error: 'maxBudgetPerPerson must be a non-negative number or null' })
+    }
+    data.maxBudgetPerPerson = maxBudgetPerPerson
+  }
+  for (const [field, value] of [['dayStart', dayStart], ['dayEnd', dayEnd]]) {
+    if (value !== undefined) {
+      if (value !== null && (typeof value !== 'string' || !TIME_RE.test(value))) {
+        return res.status(400).json({ error: `${field} must be an "HH:MM" string or null` })
+      }
+      data[field] = value
+    }
+  }
+  if (travelRadius !== undefined) {
+    if (travelRadius !== null && (typeof travelRadius !== 'number' || travelRadius <= 0)) {
+      return res.status(400).json({ error: 'travelRadius must be a positive number or null' })
+    }
+    data.travelRadius = travelRadius
+  }
+  if (transport !== undefined) {
+    if (transport !== null && !TRANSPORT_MODES.includes(transport)) {
+      return res.status(400).json({ error: `transport must be one of: ${TRANSPORT_MODES.join(', ')}, or null` })
+    }
+    data.transport = transport
+  }
+
+  // Editing budget/window must not silently contradict the plan's actual stops.
+  // When either changes, load the stops+pins and reject an edit the current
+  // itinerary can't honour (budget below its real cost, or a window that would
+  // exclude a stop) so the persisted constraints stay truthful (US #7).
+  const editsBudget = data.maxBudgetPerPerson != null
+  const editsWindow = data.dayStart != null || data.dayEnd != null
+  if (editsBudget || editsWindow) {
+    const full = await itineraries.findById(id, { forOwner: true }) // owner-only; includes stops
+    const pins = full?.pins ?? []
+
+    if (editsBudget) {
+      const planCost = pins.reduce((sum, p) => sum + (p.pricePerPerson ?? 0), 0)
+      if (data.maxBudgetPerPerson < planCost) {
+        return res.status(409).json({
+          error: `budget ${data.maxBudgetPerPerson} is below this itinerary's per-person cost of ${planCost}`,
+        })
+      }
+    }
+
+    if (editsWindow) {
+      // Effective window after applying whichever bound(s) changed.
+      const startHHMM = data.dayStart ?? full.dayStart
+      const endHHMM = data.dayEnd ?? full.dayEnd
+      // Both-or-neither: an edit must not leave exactly one bound set — a lone
+      // start or end is a window no consumer can bound (and the stop-exclusion
+      // check below can't run), so the persisted state would be untruthful.
+      if (Boolean(startHHMM) !== Boolean(endHHMM)) {
+        return res.status(400).json({
+          error: 'dayStart and dayEnd must be set together (or both cleared)',
+        })
+      }
+      if (startHHMM && endHHMM && pins.length > 0) {
+        const windowLen = windowLengthMinutes(startHHMM, endHHMM)
+        // Each stop's arrival/departure, in elapsed minutes from the new start.
+        const outside = pins.some((p) => {
+          const a = minutesFromStart(startHHMM, hhmmOf(p.startTime))
+          const d = minutesFromStart(startHHMM, hhmmOf(p.endTime))
+          return a > windowLen || d > windowLen
+        })
+        if (outside) {
+          return res.status(409).json({
+            error: 'the new time window would exclude one or more existing stops',
+          })
+        }
+      }
+    }
   }
 
   const updated = await itineraries.update(id, data)
@@ -330,6 +430,15 @@ async function copyItinerary(req, res) {
     description: source.description,
     coverImageUrl: source.coverImageUrl,
     isPublic: false,
+    // Carry the trip-level constraints so the copy is self-describing + editable.
+    tripDate: source.tripDate,
+    dayStart: source.dayStart,
+    dayEnd: source.dayEnd,
+    maxBudgetPerPerson: source.maxBudgetPerPerson,
+    travelRadius: source.travelRadius,
+    transport: source.transport,
+    meetingPointLat: source.meetingPointLat,
+    meetingPointLng: source.meetingPointLng,
     stops: {
       create: source.stops.map((s) => ({
         pinId: s.pinId,
@@ -342,6 +451,10 @@ async function copyItinerary(req, res) {
         note: s.note,
       })),
     },
+    // NOTE: members are intentionally NOT copied. They're the source group (the
+    // original organizer's friends), not the forker's — and their rows carry
+    // real start addresses/coords, so copying them would leak the source group's
+    // data into a stranger's itinerary. A fork starts with no members.
   })
 
   return res.status(201).json(copy)

@@ -141,3 +141,14 @@ test('rejects a member with a non-string-array pref', () => {
   assert.equal(sent.code, 400)
   assert.match(sent.body.error, /interestTags/)
 })
+
+test('accepts a known transport mode and rejects an unknown one', () => {
+  const ok = run({ trip: { ...validTrip, transport: 'walking' }, members: [validMember] })
+  assert.equal(ok.nextCalled, true)
+  assert.equal(ok.sent, null)
+
+  const bad = run({ trip: { ...validTrip, transport: 'teleport' }, members: [validMember] })
+  assert.equal(bad.nextCalled, false)
+  assert.equal(bad.sent.code, 400)
+  assert.match(bad.sent.body.error, /transport must be one of/)
+})

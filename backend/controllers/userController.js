@@ -227,9 +227,12 @@ async function getUser(req, res) {
     username: user.username,
     email: user.email,
     createdAt: user.createdAt,
-    createdItineraries: user.createdItineraries.map((it) => reshapeItinerary(it)),
-    bookmarkedItineraries: user.bookmarks.map((b) => reshapeItinerary(b.itinerary)),
-    likedItineraries: user.likes.map((l) => reshapeItinerary(l.itinerary)),
+    // Created itineraries are the user's own → owner view. Bookmarked/liked are
+    // OTHER people's public itineraries → strip owner-only fields (members,
+    // meeting point) so the dashboard never exposes another group's data.
+    createdItineraries: user.createdItineraries.map((it) => reshapeItinerary(it, { forOwner: true })),
+    bookmarkedItineraries: user.bookmarks.map((b) => reshapeItinerary(b.itinerary, { forOwner: false })),
+    likedItineraries: user.likes.map((l) => reshapeItinerary(l.itinerary, { forOwner: false })),
   })
 }
 

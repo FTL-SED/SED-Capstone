@@ -14,6 +14,8 @@
 // group blob would make every member identical, collapsing coverage to
 // all-or-nothing and making the fairness pass a no-op). The frontend wizard
 // sends this members array directly.
+import { TRANSPORT_MODES } from '../config/ai.js'
+
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
 
 function isStringArray(value) {
@@ -60,6 +62,11 @@ function validateTrip(trip) {
     (typeof trip.travelRadius !== 'number' || trip.travelRadius <= 0)
   ) {
     return 'trip.travelRadius must be a positive number when provided'
+  }
+  // transport is optional; if present it must be one of the known modes (the
+  // engine falls back to a default speed for anything else, so reject unknowns).
+  if (trip.transport !== undefined && !TRANSPORT_MODES.includes(trip.transport)) {
+    return `trip.transport must be one of: ${TRANSPORT_MODES.join(', ')}`
   }
   return null
 }

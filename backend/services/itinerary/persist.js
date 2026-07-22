@@ -11,6 +11,7 @@
 //      (name, coords, address, image, tags, price) come from the shortlist by id.
 import * as itineraries from '../../models/itineraries.js'
 import { toMinutes } from '../../utils/time.js'
+import { TRANSPORT_MODES } from '../../config/ai.js'
 
 // Add N days to a YYYY-MM-DD string, returning YYYY-MM-DD. Used to roll a stop
 // onto the next calendar day when an overnight schedule passes midnight.
@@ -89,12 +90,68 @@ function stopsToStops(stops, shortlist, dayISO) {
   })
 }
 
+// Map the recommendation engine's `constraints` object onto the Itinerary's
+// TRIP-LEVEL constraint columns, so a saved itinerary is self-describing (budget
+// display, US #1) and editable (US #7). Every field is optional — an absent
+// constraint stays null. Group interests/food/diets and groupSize are NOT stored
+// here: they derive from the persisted members (see memberRows), so there's a
+// single source of truth. tripDate is passed separately (the API's own field).
+function constraintColumns(constraints, tripDate) {
+  const c = constraints ?? {}
+  const mp = c.meetingPoint ?? {}
+
+  // Both-or-neither: a half-set window (start without end, or vice versa) is a
+  // window no consumer can bound, so persist it only when BOTH are present —
+  // otherwise store neither. Same for the meeting point coordinate pair.
+  const start = c.timeWindow?.startTime
+  const end = c.timeWindow?.endTime
+  const hasWindow = typeof start === 'string' && typeof end === 'string'
+  const hasMeetingPoint = typeof mp.latitude === 'number' && typeof mp.longitude === 'number'
+
+  return {
+    // A date-only column (@db.Date). Build at UTC midnight and hand Prisma the
+    // Date; @db.Date stores just the calendar day, so no TZ shift on read.
+    tripDate: tripDate ? new Date(`${tripDate}T00:00:00Z`) : null,
+    dayStart: hasWindow ? start : null,
+    dayEnd: hasWindow ? end : null,
+    maxBudgetPerPerson: typeof c.maxBudgetPerPerson === 'number' ? c.maxBudgetPerPerson : null,
+    travelRadius: typeof c.travelRadius === 'number' ? c.travelRadius : null,
+    // Only persist a transport the engine actually understands; drop unknowns
+    // to null rather than let the column violate its implied enum.
+    transport: TRANSPORT_MODES.includes(c.transport) ? c.transport : null,
+    meetingPointLat: hasMeetingPoint ? mp.latitude : null,
+    meetingPointLng: hasMeetingPoint ? mp.longitude : null,
+  }
+}
+
+// Build ItineraryMember.create rows from the group the plan was built for. Each
+// member keeps their name, resolved start location, and preference tags so a
+// saved itinerary can show/edit the actual group (not just the aggregate).
+function memberRows(members) {
+  if (!Array.isArray(members)) return []
+  return members.map((m) => {
+    const loc = m.startLocation ?? m.location ?? {}
+    // Both-or-neither: a lone lat (or lng) is useless for the meeting-point math
+    // and misleading on the map, so store the coordinate pair only when complete.
+    const hasCoords = typeof loc.latitude === 'number' && typeof loc.longitude === 'number'
+    return {
+      name: typeof m.name === 'string' && m.name.trim() ? m.name.trim() : 'Member',
+      startLabel: loc.label ?? null,
+      startLat: hasCoords ? loc.latitude : null,
+      startLng: hasCoords ? loc.longitude : null,
+      interestTags: Array.isArray(m.interestTags) ? m.interestTags : [],
+      foodPrefs: Array.isArray(m.foodPrefs) ? m.foodPrefs : [],
+      diets: Array.isArray(m.diet) ? m.diet : [],
+    }
+  })
+}
+
 // Persist a generated itinerary for a user.
 //   itinerary = { title, location, description, stops[] } (feasible AI/fallback output)
 //   shortlist = the pins it was built from (catalog venue pins with real ids)
-//   opts      = { userId, tripDate?: 'YYYY-MM-DD', isPublic? }
+//   opts      = { userId, tripDate?: 'YYYY-MM-DD', isPublic?, constraints?, members? }
 // Returns the created Itinerary with its creator + ordered stops (itineraryInclude).
-async function persistItinerary(itinerary, shortlist, { userId, tripDate, isPublic = false, title, description }) {
+async function persistItinerary(itinerary, shortlist, { userId, tripDate, isPublic = false, title, description, constraints, members }) {
   // Default to the trip date; fall back to a fixed date if none supplied (the
   // clock times are what matter — the calendar day is cosmetic for a one-day trip).
   const dayISO = tripDate ?? '2026-01-01'
@@ -111,6 +168,8 @@ async function persistItinerary(itinerary, shortlist, { userId, tripDate, isPubl
   const firstVenue = itinerary.stops.length > 0 ? byId.get(itinerary.stops[0].pinId) : null
   const coverImageUrl = firstVenue?.locationImageUrl ?? null
 
+  const memberCreate = memberRows(members)
+
   return itineraries.create({
     userId,
     title: finalTitle,
@@ -118,8 +177,10 @@ async function persistItinerary(itinerary, shortlist, { userId, tripDate, isPubl
     description: finalDescription,
     coverImageUrl,
     isPublic,
+    ...constraintColumns(constraints, tripDate),
     stops: { create: stops },
+    ...(memberCreate.length > 0 ? { members: { create: memberCreate } } : {}),
   })
 }
 
-export { persistItinerary, stopsToStops, toDateTime, pacificOffset }
+export { persistItinerary, stopsToStops, toDateTime, pacificOffset, memberRows, constraintColumns }

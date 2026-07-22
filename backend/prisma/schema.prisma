@@ -55,9 +55,25 @@ model Itinerary {
   isPublic          Boolean           @default(false)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
+
+  // Trip-level constraints the itinerary was generated from — persisted so a
+  // saved itinerary is self-describing (US #1 budget display) and editable
+  // (US #7). All nullable: older rows and manually-created itineraries have none.
+  // Group interests/food/diets and groupSize are NOT stored here — they derive
+  // from the members relation below, so there's one source of truth (no drift).
+  tripDate           DateTime?  @db.Date // calendar day; @db.Date avoids the UTC-midnight off-by-one
+  dayStart           String?    // requested window start, "HH:MM"
+  dayEnd             String?    // requested window end, "HH:MM" (< dayStart ⇒ overnight)
+  maxBudgetPerPerson Float?     // the per-person budget cap the organizer entered
+  travelRadius       Float?     // miles, radius the day was optimized within
+  transport          String?    // walking | biking | transit | driving (see TRANSPORT_MODES)
+  meetingPointLat    Float?     // computed geometric-median group anchor
+  meetingPointLng    Float?
+
   creator           User              @relation("CreatedItineraries", fields: [userId], references: [id], onDelete: Cascade)
   likes             Like[]
   bookmarks         Bookmark[]
+  members           ItineraryMember[]
   sourceItinerary   Itinerary?        @relation("ForkedItinerary", fields: [sourceItineraryId], references: [id], onDelete: SetNull)
   savedCopies       Itinerary[]       @relation("ForkedItinerary")
   stops             ItineraryStop[]
@@ -131,4 +147,26 @@ model ItineraryStop {
   // Backs the interest-filter join (stops → pin) and the ON DELETE RESTRICT check
   // on Pin. itineraryId needs no index — it's the lead column of the unique above.
   @@index([pinId])
+}
+
+// A member of the group a generated itinerary was built for. Captures the
+// per-person inputs the wizard collects (name, start location, and preference
+// tags) so a saved itinerary can show/edit who was in the group and what they
+// wanted — not just the group-level aggregate. Cascade-deleted with the parent.
+model ItineraryMember {
+  id            Int       @id @default(autoincrement())
+  itineraryId   Int
+  name          String
+  // Where this member started from. label is the human-readable address the
+  // frontend's picker resolved; lat/lng are what the meeting-point math uses.
+  // Nullable because a member may be added without a resolved location.
+  startLabel    String?
+  startLat      Float?
+  startLng      Float?
+  interestTags  String[]  // this member's chosen interests
+  foodPrefs     String[]  // this member's food/cuisine prefs
+  diets         String[]  // this member's dietary requirements
+  itinerary     Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+
+  @@index([itineraryId])
 }

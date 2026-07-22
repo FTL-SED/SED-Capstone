@@ -54,6 +54,23 @@ test('constraints carry timeWindow; meetingPoint is computed from member coords,
   assert.equal(constraints.travelRadius, null)
 })
 
+test('constraints carry the group aggregated interests, food prefs, and diets', () => {
+  const withDiet = [
+    ...members,
+    { name: 'Dana', startLocation: { latitude: 37.78, longitude: -122.41 }, interestTags: ['art'], foodPrefs: ['sushi'], diet: ['vegan'] },
+  ]
+  const { constraints } = recommend(trip, withDiet, pins)
+  // Aggregated across all members (order-independent), deduped by the Set.
+  assert.deepEqual([...constraints.interests].sort(), ['art', 'coffee', 'museum', 'stamps'])
+  assert.deepEqual([...constraints.foodPreferences].sort(), ['ramen', 'sushi'])
+  assert.deepEqual(constraints.diets, ['vegan'])
+})
+
+test('constraints diets is an empty array when no member has a diet', () => {
+  const { constraints } = recommend(trip, members, pins)
+  assert.deepEqual(constraints.diets, [])
+})
+
 test('meetingPoint is null when members carry no coordinates', () => {
   const noCoords = members.map(({ startLocation, ...m }) => m)
   const { constraints } = recommend(trip, noCoords, pins)
