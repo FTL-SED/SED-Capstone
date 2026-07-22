@@ -10,8 +10,8 @@ import WrittenItinerary from '../WrittenItinerary/WrittenItinerary.jsx'
 function ItineraryPanel({
   isOwner, pins, title, description, author,
   liked, bookmarked, likeCount, onToggleLike, onToggleBookmark,
-  onEdit, onDelete, onCopy,
-  editMode, onEditDetails, onRemoveStop, onAddStop,
+  onDelete, onCopy,
+  onEditDetails, onRemoveStop, onAddStop,
 }) {
   return (
     <div className="itinerary-panel">
@@ -22,19 +22,18 @@ function ItineraryPanel({
       </header>
       <ActionBar
         isOwner={isOwner}
-        editing={editMode}
         liked={liked}
         bookmarked={bookmarked}
         likeCount={likeCount}
         onToggleLike={onToggleLike}
         onToggleBookmark={onToggleBookmark}
-        onEdit={onEdit}
         onDelete={onDelete}
         onCopy={onCopy}
       />
-      {editMode && (
+      {/* Owner-only "edit trip details" (title, budget, times…). Stop add/remove
+          controls are always shown to the owner inside the timeline below. */}
+      {isOwner && (
         <div className="itinerary-panel__edit-bar">
-          <span className="itinerary-panel__edit-hint">Editing stops — remove or add places below.</span>
           <button type="button" className="action-btn" onClick={onEditDetails}>
             Edit trip details
           </button>
@@ -43,7 +42,7 @@ function ItineraryPanel({
       <div className="itinerary-panel__timeline">
         <WrittenItinerary
           pins={pins}
-          editMode={editMode}
+          editable={isOwner}
           onRemoveStop={onRemoveStop}
           onAddStop={onAddStop}
         />

@@ -59,14 +59,15 @@ function RemoveStopControl({ onConfirm }) {
 }
 
 // Wanderlog-style vertical timeline: a numbered node per stop connected by a
-// line, each with the stop's details. Reuses the Pin* display components. In
-// edit mode each stop gets a remove control and an add-a-stop panel appears.
-function WrittenItinerary({ pins = [], editMode = false, onRemoveStop, onAddStop }) {
+// line, each with the stop's details. Reuses the Pin* display components. For
+// the owner (`editable`), each stop shows a remove control and an add-a-stop
+// panel sits at the bottom.
+function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onAddStop }) {
   if (pins.length === 0) {
     return (
       <div className="written-itinerary">
         <p className="written-itinerary__empty">No stops in this itinerary yet.</p>
-        {editMode && <AddStopPanel onAddStop={onAddStop} />}
+        {editable && <AddStopPanel onAddStop={onAddStop} />}
       </div>
     );
   }
@@ -87,7 +88,7 @@ function WrittenItinerary({ pins = [], editMode = false, onRemoveStop, onAddStop
                 <div className="timeline-stop__head">
                   <PinName name={pin.name} />
                   {meal && <span className="timeline-stop__meal">{meal}</span>}
-                  {editMode && pin.stopId != null && (
+                  {editable && pin.stopId != null && (
                     <RemoveStopControl onConfirm={() => onRemoveStop(pin.stopId)} />
                   )}
                 </div>
@@ -100,7 +101,7 @@ function WrittenItinerary({ pins = [], editMode = false, onRemoveStop, onAddStop
           );
         })}
       </ol>
-      {editMode && <AddStopPanel onAddStop={onAddStop} />}
+      {editable && <AddStopPanel onAddStop={onAddStop} />}
     </>
   );
 }

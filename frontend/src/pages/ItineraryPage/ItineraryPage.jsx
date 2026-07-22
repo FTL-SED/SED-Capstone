@@ -175,9 +175,6 @@ function ItineraryPage() {
   const [actionBusy, setActionBusy] = useState(false);
   // Whether the edit-constraints modal is open (owner-only).
   const [editing, setEditing] = useState(false);
-  // Whether the timeline is in stop-edit mode (owner-only): reveals per-stop
-  // remove controls + the add-a-stop catalog panel.
-  const [editMode, setEditMode] = useState(false);
 
   // Like/bookmark UI state. likeCount comes from the itinerary; whether *I've*
   // liked/bookmarked it isn't in GET /itineraries/:id, so we hydrate it from my
@@ -323,11 +320,6 @@ function ItineraryPage() {
     }
   };
 
-  // Owner-only: the Edit button toggles stop-edit mode (add/remove stops). Trip
-  // details (title, budget, times…) are edited via a separate control inside
-  // edit mode that opens the constraints modal.
-  const handleEdit = () => setEditMode((on) => !on);
-
   // Merge the saved fields back into the itinerary so the page reflects the edit
   // without a refetch. update() returns only the changed columns, so spread.
   const handleSaved = (updated) => {
@@ -409,10 +401,8 @@ function ItineraryPage() {
         likeCount={likeCount}
         onToggleLike={toggleLike}
         onToggleBookmark={toggleBookmark}
-        onEdit={handleEdit}
         onDelete={handleDelete}
         onCopy={handleCopy}
-        editMode={editMode}
         onEditDetails={() => setEditing(true)}
         onRemoveStop={handleRemoveStop}
         onAddStop={handleAddStop}
