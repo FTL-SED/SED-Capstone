@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ItineraryPanel from './ItineraryPanel/ItineraryPanel.jsx'
 import MapView from './MapView/MapView.jsx'
-import EditItineraryModal from './EditItineraryModal/EditItineraryModal.jsx'
 import ErrorMessage from '../../components/ErrorMessage/ErrorMessage.jsx'
 import {
   getItinerary,
@@ -173,8 +172,6 @@ function ItineraryPage() {
   const [loading, setLoading] = useState(true);
   // Guards against double-firing the delete/copy network calls on rapid clicks.
   const [actionBusy, setActionBusy] = useState(false);
-  // Whether the edit-constraints modal is open (owner-only).
-  const [editing, setEditing] = useState(false);
 
   // Like/bookmark UI state. likeCount comes from the itinerary; whether *I've*
   // liked/bookmarked it isn't in GET /itineraries/:id, so we hydrate it from my
@@ -320,12 +317,6 @@ function ItineraryPage() {
     }
   };
 
-  // Merge the saved fields back into the itinerary so the page reflects the edit
-  // without a refetch. update() returns only the changed columns, so spread.
-  const handleSaved = (updated) => {
-    setItinerary((prev) => ({ ...prev, ...updated }));
-  };
-
   // Owner-only: remove a stop from the itinerary. Optimistic — drop it from the
   // timeline (and map) immediately, then DELETE; on failure, put it back.
   const handleRemoveStop = async (stopId) => {
@@ -403,18 +394,10 @@ function ItineraryPage() {
         onToggleBookmark={toggleBookmark}
         onDelete={handleDelete}
         onCopy={handleCopy}
-        onEditDetails={() => setEditing(true)}
         onRemoveStop={handleRemoveStop}
         onAddStop={handleAddStop}
       />
       <MapView pins={itinerary.pins} />
-      {editing && (
-        <EditItineraryModal
-          itinerary={itinerary}
-          onClose={() => setEditing(false)}
-          onSaved={handleSaved}
-        />
-      )}
     </div>
   );
 }

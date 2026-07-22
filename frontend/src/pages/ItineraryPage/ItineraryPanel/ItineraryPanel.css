@@ -68,22 +68,3 @@
   overflow-y: auto;
   padding: 20px;
 }
-
-/* Edit-mode toolbar between the action bar and the timeline. */
-.itinerary-panel__edit-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin: 0 20px;
-  padding: 10px 14px;
-  background: var(--accent-soft);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius);
-}
-.itinerary-panel__edit-hint {
-  font-size: 0.85rem;
-  color: var(--accent-strong);
-  font-weight: 500;
-}

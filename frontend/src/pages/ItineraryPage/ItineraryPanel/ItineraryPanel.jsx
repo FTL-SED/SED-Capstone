@@ -11,7 +11,7 @@ function ItineraryPanel({
   isOwner, pins, title, description, author,
   liked, bookmarked, likeCount, onToggleLike, onToggleBookmark,
   onDelete, onCopy,
-  onEditDetails, onRemoveStop, onAddStop,
+  onRemoveStop, onAddStop,
 }) {
   return (
     <div className="itinerary-panel">
@@ -30,15 +30,6 @@ function ItineraryPanel({
         onDelete={onDelete}
         onCopy={onCopy}
       />
-      {/* Owner-only "edit trip details" (title, budget, times…). Stop add/remove
-          controls are always shown to the owner inside the timeline below. */}
-      {isOwner && (
-        <div className="itinerary-panel__edit-bar">
-          <button type="button" className="action-btn" onClick={onEditDetails}>
-            Edit trip details
-          </button>
-        </div>
-      )}
       <div className="itinerary-panel__timeline">
         <WrittenItinerary
           pins={pins}
