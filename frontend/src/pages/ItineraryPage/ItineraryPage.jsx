@@ -347,6 +347,11 @@ function ItineraryPage() {
     }
   };
 
+  // On narrow screens the split becomes a tabbed view: one of the written
+  // itinerary (the panel) or the visual itinerary (the map) at a time. Defaults
+  // to the written view; ignored on desktop, where both show side by side.
+  const [activeTab, setActiveTab] = useState('written');
+
   // Owner-only: open the edit-constraints modal. The modal owns the form + save
   // (PUT /itineraries/:id) and hands back the updated itinerary on success.
   const handleEdit = () => setEditing(true);
@@ -375,8 +380,10 @@ function ItineraryPage() {
 
   // A true split: the scrolling panel (title, actions, timeline) on the left and
   // the map on the right, together filling the space between nav and footer.
+  // On narrow screens (see ItineraryPage.css) the two collapse into a tabbed
+  // view; the `--tab-*` modifier below drives which pane is visible there.
   return (
-    <div className="itinerary-page">
+    <div className={`itinerary-page itinerary-page--tab-${activeTab}`}>
       <ItineraryPanel
         isOwner={isOwner}
         pins={itinerary.pins}
@@ -387,6 +394,8 @@ function ItineraryPage() {
         bookmarked={bookmarked}
         likeCount={likeCount}
         isPublic={itinerary.isPublic}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
         onToggleLike={toggleLike}
         onToggleBookmark={toggleBookmark}
         onTogglePrivacy={handleTogglePrivacy}

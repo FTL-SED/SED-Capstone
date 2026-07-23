@@ -66,12 +66,19 @@
 }
 
 /* ---- The authentication panel ------------------------------------------- */
+/* A flex column keeps the head, form and switch-link evenly stacked at every
+   width: one shared gap owns the spacing between them (see the zeroed margins
+   in AuthCard/SignUpSection/LoginSection CSS) so nothing drifts as the panel
+   grows or shrinks. Padding is fluid so the frame breathes on small screens. */
 .auth-card {
   position: relative;
   z-index: 1;
   width: 100%;
   max-width: 456px;
-  padding: 48px 44px;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 4vw, 30px);
+  padding: clamp(32px, 6vw, 48px) clamp(24px, 5vw, 44px);
   background: var(--panel);
   border: 1px solid rgba(120, 104, 74, 0.16);
   border-radius: 24px;
@@ -80,23 +87,26 @@
     0 30px 60px -24px rgba(74, 64, 40, 0.34);
 }
 
-/* Welcoming editorial heading + supporting line */
+/* Welcoming editorial heading + supporting line. Spacing to the form is owned
+   by the card's flex gap, not a bottom margin. */
 .auth-card__head {
-  margin-bottom: 30px;
   text-align: center;
 }
 
+/* Fluid type scales smoothly between phone and desktop instead of snapping at
+   a single breakpoint. */
 .auth-title {
   font-family: "Fraunces", Georgia, serif;
   font-weight: 500;
-  font-size: 2.05rem;
+  font-size: clamp(1.7rem, 6vw, 2.05rem);
   letter-spacing: -0.02em;
+  line-height: 1.15;
   color: var(--moss-deep);
 }
 
 .auth-subtitle {
   margin-top: 10px;
-  font-size: 0.98rem;
+  font-size: clamp(0.92rem, 3.2vw, 0.98rem);
   line-height: 1.5;
   color: var(--stone);
 }
@@ -186,18 +196,16 @@
 }
 
 /* ---- Responsive --------------------------------------------------------- */
+/* The card's own fluid padding and type (clamp) handle scaling down to phone
+   widths; here we only trim the surrounding scene padding and soften the
+   corner so the panel sits comfortably in a narrow viewport. */
 @media (max-width: 640px) {
   .auth-scene {
-    padding: 40px 16px;
+    padding: calc(var(--nav-h) + 20px) 16px 40px;
   }
 
   .auth-card {
-    padding: 34px 24px;
     border-radius: 20px;
-  }
-
-  .auth-title {
-    font-size: 1.72rem;
   }
 }
 
