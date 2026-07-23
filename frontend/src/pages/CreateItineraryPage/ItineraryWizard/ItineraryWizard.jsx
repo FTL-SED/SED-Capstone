@@ -25,6 +25,7 @@ const INITIAL_FORM = {
   isPublic: false,
   title: '',
   description: '',
+  coverImageFile: null,
 };
 
 function ItineraryWizard() {

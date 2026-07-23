@@ -2,6 +2,7 @@ import * as itineraries from '../models/itineraries.js'
 import * as likes from '../models/likes.js'
 import * as bookmarks from '../models/bookmarks.js'
 import { parseIdParam, parseDate, loadOrNotFound, loadOwned } from './helpers.js'
+import { uploadItineraryCoverImage } from '../lib/supabase.js'
 
 // POST /itineraries
 // Creates an itinerary owned by the caller, with its stops referencing venue pins.
@@ -364,6 +365,49 @@ async function copyItinerary(req, res) {
   return res.status(201).json(copy)
 }
 
+// POST /itineraries/:id/cover
+// Uploads a cover image the caller owns to Supabase Storage and saves its public
+// URL on the itinerary. Mirrors uploadUserAvatar. Owner-gated via loadOwned.
+async function uploadItineraryCover(req, res) {
+  const id = parseIdParam(req, res, 'itinerary id')
+  if (id === null) return
+
+  // 404 if missing, 403 if not the owner (sets the response itself).
+  const owned = await loadOwned(res, itineraries.findByIdBasic, id, req.user.id, {
+    label: 'Itinerary',
+    action: 'modify',
+  })
+  if (!owned) return
+
+  const file = req.file
+  if (!file) {
+    return res.status(400).json({ error: 'No image file provided' })
+  }
+  if (!file.mimetype?.startsWith('image/')) {
+    return res.status(400).json({ error: 'Cover must be an image file' })
+  }
+
+  try {
+    // One object per itinerary, keyed by id — upsert overwrites the old cover.
+    // The query string busts the CDN cache so the new image shows immediately.
+    const ext = file.mimetype.split('/')[1] || 'png'
+    const publicUrl = await uploadItineraryCoverImage({
+      path: `${id}/cover.${ext}`,
+      buffer: file.buffer,
+      contentType: file.mimetype,
+    })
+    const coverImageUrl = `${publicUrl}?v=${id}-${file.size}`
+
+    const updated = await itineraries.update(id, { coverImageUrl })
+    return res.status(200).json(updated)
+  } catch (err) {
+    console.error('uploadItineraryCover error:', err)
+    return res
+      .status(500)
+      .json({ error: 'Could not upload the cover image. Please try again.' })
+  }
+}
+
 export {
   createItinerary,
   listItineraries,
@@ -375,4 +419,5 @@ export {
   bookmarkItinerary,
   removeBookmark,
   copyItinerary,
+  uploadItineraryCover,
 }

@@ -4,8 +4,13 @@ import { Link } from 'react-router-dom'
 import LikeButton from '../../pages/ItineraryPage/LikeButton/LikeButton.jsx'
 import BookmarkButton from '../../pages/ItineraryPage/BookmarkButton/BookmarkButton.jsx'
 import { getCurrentUser } from '../../lib/currentUser.js'
+// Shared, pre-rendered fallback cover: one static SVG (golden-hour gradient +
+// NavQuest diamond) reused across every card and the itinerary banner, so a
+// coverless itinerary reads as intentional/branded. Bundled + browser-cached —
+// no per-instance render and no external placeholder service.
+import defaultCover from '../../assets/default-cover.svg'
 
-const DEFAULT_COVER_IMAGE = "https://placehold.net/default.png";
+const DEFAULT_COVER_IMAGE = defaultCover;
 
 function ItineraryCard({
   itinerary = {},

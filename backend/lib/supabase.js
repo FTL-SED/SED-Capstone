@@ -16,19 +16,30 @@ const supabaseAdmin = createClient(
 )
 
 const AVATAR_BUCKET = 'avatars'
+const ITINERARY_COVER_BUCKET = 'itinerary-covers'
 
-// Uploads an avatar image to the `avatars` bucket and returns its public URL.
-// `path` is the object key (e.g. `123/avatar.png`); an existing object at the
-// same key is overwritten so a user keeps a single avatar file.
-async function uploadAvatar({ path, buffer, contentType }) {
+// Uploads an image to a Storage bucket and returns its public URL. `path` is the
+// object key (e.g. `123/cover.png`); an existing object at the same key is
+// overwritten (upsert) so each owner keeps a single file per resource.
+async function uploadImage({ bucket, path, buffer, contentType }) {
   const { error } = await supabaseAdmin.storage
-    .from(AVATAR_BUCKET)
+    .from(bucket)
     .upload(path, buffer, { contentType, upsert: true })
 
   if (error) throw error
 
-  const { data } = supabaseAdmin.storage.from(AVATAR_BUCKET).getPublicUrl(path)
+  const { data } = supabaseAdmin.storage.from(bucket).getPublicUrl(path)
   return data.publicUrl
+}
+
+// Uploads a user avatar to the `avatars` bucket. Thin wrapper over uploadImage.
+async function uploadAvatar({ path, buffer, contentType }) {
+  return uploadImage({ bucket: AVATAR_BUCKET, path, buffer, contentType })
+}
+
+// Uploads an itinerary cover to the `itinerary-covers` bucket.
+async function uploadItineraryCoverImage({ path, buffer, contentType }) {
+  return uploadImage({ bucket: ITINERARY_COVER_BUCKET, path, buffer, contentType })
 }
 
 // Changes a user's password via the admin API. Used by the account page's
@@ -42,4 +53,4 @@ async function updateUserPassword(authUserId, password) {
 }
 
 export default supabase
-export { uploadAvatar, updateUserPassword }
+export { uploadAvatar, uploadItineraryCoverImage, updateUserPassword }

@@ -101,3 +101,13 @@ export async function addStop(body) {
 export async function deleteStop(stopId) {
   await api.delete(`/pins/${stopId}`)
 }
+
+// Upload a cover image for an itinerary the caller owns. `file` is a File; axios
+// sets the multipart Content-Type + boundary automatically. Returns the updated
+// itinerary.
+export async function uploadItineraryCover(id, file) {
+  const formData = new FormData()
+  formData.append('cover', file)
+  const { data } = await api.post(`/itineraries/${id}/cover`, formData)
+  return data
+}
