@@ -4,10 +4,16 @@
 .itinerary-page {
   display: flex;
   align-items: stretch;
-  /* Explicit height (viewport minus nav) so the map has a concrete height to
-     fill — a flex:1 / 100% chain here collapsed the map to 0. This page has no
-     footer, so it fills all the space below the nav. */
-  height: calc(100vh - var(--nav-h));
+  /* Fill the leftover height of the flex-column parent (.app__main--full) below
+     the sticky navbar. Using flex instead of calc(100vh - --nav-h) tracks the
+     navbar's ACTUAL height — this page wears the taller hero navbar, so the old
+     fixed 68px subtraction left the page ~24px too tall and drove a document
+     scroll (which slid the map/banner up under the sticky nav). min-height: 0
+     lets it shrink within the column so children get a concrete height and the
+     panel's timeline is the only scroller. */
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Left half: fixed-width column, wide enough for readable stop cards while the
@@ -83,16 +89,10 @@
     0 30px 64px -26px rgba(74, 64, 40, 0.32);
 }
 
-/* The status matches the Create page's "Plan your next trip" prompt exactly —
-   same Fraunces display face, weight, size, spacing and colour (PageHeading.css). */
-.itinerary-page__message-card p {
-  margin: 0;
-  font-family: "Fraunces", Georgia, serif;
-  font-weight: 500;
-  font-size: clamp(2.1rem, 4vw, 2.9rem);
-  letter-spacing: -0.02em;
-  color: var(--moss-deep);
-}
+/* The loading + error states inside the message card now render self-styled
+   components (LoadingSection's .loading-text and ErrorMessage's .error-message),
+   so the card no longer needs to style a bare <p>. Loading uses the shared
+   LoadingSection so it matches the generation screen exactly. */
 
 @media (max-width: 880px) {
   .itinerary-page {

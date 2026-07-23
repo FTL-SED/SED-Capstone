@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import ItineraryPanel from './ItineraryPanel/ItineraryPanel.jsx'
 import MapView from './MapView/MapView.jsx'
 import ErrorMessage from '../../components/ErrorMessage/ErrorMessage.jsx'
+import LoadingSection from '../LoadingPage/LoadingSection/LoadingSection.jsx'
 import {
   getItinerary,
   getUserDashboard,
@@ -364,7 +365,7 @@ function ItineraryPage() {
   if (loading) return (
     <div className="itinerary-page itinerary-page--message">
       <CreateScene />
-      <div className="itinerary-page__message-card"><p>Loading itinerary…</p></div>
+      <LoadingSection text="Loading your itinerary" />
     </div>
   );
   if (error) return (
@@ -387,6 +388,7 @@ function ItineraryPage() {
         title={itinerary.title}
         description={itinerary.description}
         author={itinerary.creator?.username}
+        coverImageUrl={itinerary.coverImageUrl}
         liked={liked}
         bookmarked={bookmarked}
         likeCount={likeCount}
