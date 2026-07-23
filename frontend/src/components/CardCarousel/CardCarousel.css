@@ -16,7 +16,11 @@
   align-items: flex-start;
   gap: 16px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  /* overflow-x:auto forces overflow-y to compute as auto too, so the card's
+     -2px hover lift would be clipped at the top. Reserve matching vertical
+     padding (top + bottom) so the lifted card and its shadow stay visible. */
+  padding-top: 6px;
+  padding-bottom: 6px;
   /* proximity (not mandatory) so momentum swipes glide instead of being yanked
      to the nearest card on every gesture — noticeably smoother with many cards. */
   scroll-snap-type: x proximity;
