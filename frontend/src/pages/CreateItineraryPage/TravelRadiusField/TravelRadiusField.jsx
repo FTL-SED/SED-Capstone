@@ -4,7 +4,7 @@ import TextInput from '../../../components/Inputs/TextInput/TextInput.jsx'
 function TravelRadiusField({ form, update }) {
   return (
     <div className="travel-radius-field">
-      <h2>Max Travel Radius</h2>
+      <h2>Max Travel Radius <span className="field-optional">(optional)</span></h2>
       <TextInput
         placeholder="Enter maximum group travel distance (miles)"
         type="number"

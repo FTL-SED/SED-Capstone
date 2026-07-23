@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import LikeButton from '../../pages/ItineraryPage/LikeButton/LikeButton.jsx'
 import BookmarkButton from '../../pages/ItineraryPage/BookmarkButton/BookmarkButton.jsx'
-import { getCurrentUser } from '../../lib/currentUser.js'
 // Shared, pre-rendered fallback cover: one static SVG (golden-hour gradient +
 // NavQuest diamond) reused across every card and the itinerary banner, so a
 // coverless itinerary reads as intentional/branded. Bundled + browser-cached —
@@ -23,9 +22,6 @@ function ItineraryCard({
   const [imageFailed, setImageFailed] = useState(false);
   const imageSrc = imageFailed || !coverImageUrl ? DEFAULT_COVER_IMAGE : coverImageUrl;
   // Only offer bookmarking on other people's itineraries, not your own.
-  const currentUser = getCurrentUser();
-  const isOwner = currentUser?.id && creator?.id && currentUser.id === creator.id;
-
   // First stop the click from bubbling up and navigating the card's <Link>,
   // then report the toggle to whoever owns the state (HomePage on the home page).
   const handleLike = (event) => {
@@ -48,13 +44,11 @@ function ItineraryCard({
         alt={title || "Itinerary cover"}
         onError={() => setImageFailed(true)}
       />
-      {!isOwner && (
-        <BookmarkButton
-          className="itinerary-card__bookmark"
-          bookmarked={bookmarked}
-          onClick={handleBookmark}
-        />
-      )}
+      <BookmarkButton
+        className="itinerary-card__bookmark"
+        bookmarked={bookmarked}
+        onClick={handleBookmark}
+      />
       <div className="itinerary-card__body">
         <div className="itinerary-card__title-row">
           <h3>{title || "Untitled Itinerary"}</h3>

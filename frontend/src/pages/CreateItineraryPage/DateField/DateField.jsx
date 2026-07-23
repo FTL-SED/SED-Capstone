@@ -6,7 +6,7 @@ import TextInput from '../../../components/Inputs/TextInput/TextInput.jsx'
 function DateField({ form, update }) {
   return (
     <div className="date-field">
-      <h2>Trip Date</h2>
+      <h2>Trip Date <span className="field-required" aria-label="required">*</span></h2>
       <TextInput
         type="date"
         value={form.tripDate}

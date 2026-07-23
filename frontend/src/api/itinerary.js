@@ -40,6 +40,13 @@ export async function listItineraries(params = {}) {
   return data
 }
 
+// PUT /itineraries/:id — update scalar fields the caller owns (e.g. isPublic for
+// the privacy toggle, title, description). Body carries only the fields changing.
+export async function updateItinerary(id, changes) {
+  const { data } = await api.put(`/itineraries/${id}`, changes)
+  return data
+}
+
 // DELETE /itineraries/:id — delete an itinerary the caller owns (204 No Content).
 export async function deleteItinerary(id) {
   await api.delete(`/itineraries/${id}`)

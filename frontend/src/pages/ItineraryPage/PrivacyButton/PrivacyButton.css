@@ -1,0 +1,5 @@
+/* Base styles come from .action-btn (App.css); this only adds Privacy's accent. */
+.privacy-button:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}

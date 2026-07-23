@@ -44,15 +44,18 @@
        own, so the same identity rides the standard sticky, frosted bar.
    ========================================================================== */
 
-/* Floating behaviour: transparent, lifted out of flow to sit over the scene.
-   Only the landing + auth pages opt into this (via .navbar--floating). */
+/* Floating behaviour: lifted out of flow to sit over the page's full-bleed
+   scene. The landing + auth pages opt into this (via .navbar--floating). It
+   keeps the same SOLID cream fill as the in-app hero bar (below) so the bar's
+   colour is identical across the whole app — it just floats over the scene
+   instead of pushing content down. */
 .navbar--floating {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  background: transparent;
-  border-bottom: none;
+  background: #f6efe1;
+  border-bottom: 1px solid rgba(120, 104, 74, 0.16);
 }
 
 /* In-app hero bar (no .navbar--floating): a SOLID warm cream fill instead of
@@ -64,15 +67,6 @@
   background: #f6efe1;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
-  border-bottom: 1px solid rgba(120, 104, 74, 0.16);
-}
-
-/* Landing page: keep the bar floating over the hero scene, but paint it with
-   the same solid cream fill as the in-app dashboard / create / discover bars
-   instead of the transparent .navbar--floating treatment, so its colour matches
-   across the app. */
-.navbar--floating.navbar--landing {
-  background: #f6efe1;
   border-bottom: 1px solid rgba(120, 104, 74, 0.16);
 }
 

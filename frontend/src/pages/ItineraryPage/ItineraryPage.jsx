@@ -16,6 +16,7 @@ import {
   copyItinerary,
   addStop,
   deleteStop,
+  updateItinerary,
 } from '../../api/itinerary.js'
 import { getCurrentUser } from '../../lib/currentUser.js'
 
@@ -241,12 +242,20 @@ function ItineraryPage() {
       while (state.desired !== sent) {
         sent = state.desired;
         const res = sent ? await likeItinerary(id) : await unlikeItinerary(id);
-        if (state.desired === sent && res && typeof res.likeCount === 'number') {
-          setLikeCount(res.likeCount);
+        // The server just confirmed the action we sent, so once this is the
+        // user's final intent `sent` IS the authoritative liked status — pin
+        // both it and the count to the truth (the count comes from res).
+        if (state.desired === sent) {
+          setLiked(sent);
+          if (res && typeof res.likeCount === 'number') setLikeCount(res.likeCount);
         }
       }
     } catch (err) {
       console.error('Like sync failed:', err);
+
+      // to revert the users last action in case it failed
+      setLiked(!state.desired);
+      setLikeCount((c) => Math.max(0, c + (state.desired ? -1 : 1)));
     } finally {
       state.running = false;
     }
@@ -332,6 +341,26 @@ function ItineraryPage() {
     }
   };
 
+  // Owner-only: flip the itinerary between public and private. Optimistic — we
+  // update the itinerary in place immediately, then persist via PUT and revert
+  // if the server rejects, so the toggle never lies. Guarded by actionBusy so a
+  // rapid double-click can't fire two conflicting writes.
+  const handleTogglePrivacy = async () => {
+    if (actionBusy) return;
+    const desired = !itinerary.isPublic;
+    setActionBusy(true);
+    setItinerary((prev) => ({ ...prev, isPublic: desired }));
+    try {
+      await updateItinerary(id, { isPublic: desired });
+    } catch (err) {
+      console.error('Privacy toggle failed, reverting:', err);
+      setItinerary((prev) => ({ ...prev, isPublic: !desired }));
+      window.alert('Could not change the privacy setting. Please try again.');
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
   // Owner-only: add a catalog venue as a new stop, appended at the end. The
   // backend has no auto-scheduler, so we assign the next order slot and default
   // times (right after the last stop, 90-min visit) which the user can adjust.
@@ -392,8 +421,10 @@ function ItineraryPage() {
         liked={liked}
         bookmarked={bookmarked}
         likeCount={likeCount}
+        isPublic={itinerary.isPublic}
         onToggleLike={toggleLike}
         onToggleBookmark={toggleBookmark}
+        onTogglePrivacy={handleTogglePrivacy}
         onDelete={handleDelete}
         onCopy={handleCopy}
         onRemoveStop={handleRemoveStop}
