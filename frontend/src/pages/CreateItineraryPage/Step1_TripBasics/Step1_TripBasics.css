@@ -7,3 +7,23 @@
 .step1-trip-basics .next-button {
   align-self: flex-end;
 }
+
+/* Small legend at the top of the step explaining the required asterisk. */
+.step1-trip-basics__legend {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--slate-500);
+}
+
+/* Red asterisk marking a required field (in the legend and each field heading). */
+.field-required {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+/* Quiet "(optional)" tag next to a field heading. */
+.field-optional {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--slate-500);
+}

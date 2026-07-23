@@ -4,7 +4,7 @@ import TimeInput from '../../../components/Inputs/TimeInput/TimeInput.jsx'
 function TimeRangeField({ form, update }) {
   return (
     <div className="time-range-field">
-      <h2>Time Range</h2>
+      <h2>Time Range <span className="field-required" aria-label="required">*</span></h2>
       <TimeInput
         label="Start Time"
         value={form.startTime}

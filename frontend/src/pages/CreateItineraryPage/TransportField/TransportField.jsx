@@ -7,7 +7,7 @@ const TRANSPORT_OPTIONS = ['walking', 'biking', 'transit', 'driving'];
 function TransportField({ form, update }) {
   return (
     <div className="transport-field">
-      <h2>Preferred Transport</h2>
+      <h2>Preferred Transport <span className="field-optional">(optional)</span></h2>
       <select
         value={form.transport}
         onChange={(e) => update('transport', e.target.value)}
