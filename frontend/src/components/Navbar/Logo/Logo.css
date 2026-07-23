@@ -1,6 +1,65 @@
 .logo h3 {
-  font-size: 1.25rem;
+  font-size: 1.8rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--ink);
+  /* Keep "Nav", the compass-Q and "uest" on one baseline row. */
+  display: inline-flex;
+  align-items: center;
+}
+
+/* The compass sits in the wordmark where the Q would be — sized to the text's
+   cap height and nudged onto the baseline so it reads as a letter, not an icon.
+   overflow is visible so the needle's south tail can extend past the dial. */
+.logo__compass {
+  width: 1.35em;
+  height: 1.35em;
+  overflow: visible;
+  /* Optical spacing so "Nav Q uest" kerns like a word, not three tokens. */
+  margin: 0 0.02em;
+  flex: none;
+}
+
+/* --- Golden-hour palette, matched to the loading spinner / reference image.
+   The navbar's default --accent-strong is teal, so the warm values are set
+   explicitly here rather than inherited. --- */
+
+.logo__compass-face {
+  fill: rgba(255, 255, 255, 0.82);
+}
+
+.logo__compass-ring {
+  fill: none;
+  stroke: #ddcca6;
+  stroke-width: 7;
+}
+
+.logo__compass-ticks line {
+  stroke: #b0a58c;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.logo__compass-tick--n {
+  stroke: #4e6540;
+  stroke-width: 3;
+}
+
+.logo__compass-needle-n {
+  fill: #cf6a2f;
+}
+
+.logo__compass-needle-s {
+  fill: #6e6656;
+}
+
+.logo__compass-hub {
+  fill: #3b4d31;
+}
+
+/* Short diagonal off the ring that completes the Q — same tone as the bezel. */
+.logo__compass-tail {
+  stroke: #ddcca6;
+  stroke-width: 7;
+  stroke-linecap: round;
 }
