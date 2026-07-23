@@ -7,18 +7,24 @@
 // NOTE: keep in sync with the backend if its vocab changes. A shared GET /tags
 // endpoint would remove the duplication (see the roadmap's optional follow-up).
 
-// Interests / activity tags (from the catalog's non-food tags).
+// Interests / activity tags (from the catalog's non-food tags). Ordered so the
+// most broadly-appealing options come first (the wizard shows the first 8 by
+// default). Also consumed by DiscoverPage/FilterControls (order only).
 export const INTEREST_TAGS = [
-  'art', 'museum', 'history', 'architecture', 'landmark', 'scenic_views',
-  'photography', 'nature', 'garden', 'hiking', 'walking', 'beach', 'sunset',
-  'relaxing', 'entertainment', 'music', 'shopping', 'indoor',
+  'art', 'museum', 'history', 'nature', 'scenic_views', 'music', 'shopping', 'walking',
+  'architecture', 'landmark', 'photography', 'garden', 'hiking', 'beach', 'sunset',
+  'relaxing', 'entertainment', 'indoor',
 ]
 
-// Food preferences: cuisines + diets a place can serve (backend CUISINE_TAGS
-// ∪ DIET_TAGS, minus 'vegan'/'vegetarian' duplication handled by the set).
-export const FOOD_TAGS = [
-  'mexican', 'italian', 'thai', 'sushi', 'japanese', 'chinese', 'indian',
-  'french', 'mediterranean', 'vietnamese', 'korean', 'american', 'bbq',
-  'seafood', 'pizza', 'ramen', 'noodles', 'steak', 'burgers',
+// Cuisines a place can serve (backend CUISINE_TAGS), most-common first.
+export const CUISINE_TAGS = [
+  'mexican', 'italian', 'sushi', 'thai', 'chinese', 'american', 'pizza', 'indian',
+  'japanese', 'french', 'mediterranean', 'vietnamese', 'korean', 'bbq', 'seafood',
+  'ramen', 'noodles', 'steak', 'burgers',
+]
+
+// Dietary needs a place can accommodate (backend DIET_TAGS). Short list — the
+// wizard shows all of these with no "View more".
+export const DIET_TAGS = [
   'vegan', 'vegetarian', 'gluten-free', 'halal', 'kosher', 'dairy-free', 'pescatarian',
 ]

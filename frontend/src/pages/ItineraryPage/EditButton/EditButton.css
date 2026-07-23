@@ -1,5 +1,0 @@
-/* Base styles come from .action-btn (App.css); this only adds Edit's accent. */
-.edit-button:hover {
-  border-color: var(--accent);
-  color: var(--accent-strong);
-}

@@ -1,5 +1,4 @@
 import './ActionBar.css'
-import EditButton from '../EditButton/EditButton.jsx'
 import DeleteButton from '../DeleteButton/DeleteButton.jsx'
 import BookmarkButton from '../BookmarkButton/BookmarkButton.jsx'
 import SaveCopyButton from '../SaveCopyButton/SaveCopyButton.jsx'
@@ -15,7 +14,6 @@ function ActionBar({
   onToggleLike,
   onToggleBookmark,
   onTogglePrivacy,
-  onEdit,
   onDelete,
   onCopy,
 }) {
@@ -23,7 +21,6 @@ function ActionBar({
     <div className="action-bar">
       {isOwner ? (
         <>
-          <EditButton onClick={onEdit} />
           <DeleteButton onClick={onDelete} />
           <PrivacyButton isPublic={isPublic} onClick={onTogglePrivacy} />
           <BookmarkButton bookmarked={bookmarked} onClick={onToggleBookmark} />

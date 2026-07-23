@@ -5,7 +5,7 @@ import LoadingSection from './LoadingSection/LoadingSection.jsx'
 import ErrorMessage from '../../components/ErrorMessage/ErrorMessage.jsx'
 import BackButton from '../../components/Inputs/BackButton/BackButton.jsx'
 import { buildRecommendationBody } from '../CreateItineraryPage/buildRequest.js'
-import { getRecommendations, generateItinerary } from '../../api/itinerary.js'
+import { getRecommendations, generateItinerary, uploadItineraryCover } from '../../api/itinerary.js'
 
 // One loading screen for the whole generation. It receives the wizard `form`
 // via router state, runs recommend + generate as a single phase, then navigates
@@ -203,6 +203,17 @@ function LoadingPage() {
           return;
         }
 
+        // If the user chose a cover image in the wizard, upload it now that the
+        // itinerary exists. Non-fatal: the itinerary is already saved, so on
+        // failure we log and continue — the banner falls back to the gradient.
+        if (form.coverImageFile) {
+          try {
+            await uploadItineraryCover(result.itinerary.id, form.coverImageFile);
+          } catch (uploadErr) {
+            console.error('Cover upload failed (non-fatal):', uploadErr);
+          }
+        }
+        if (!active) return;
         navigate(`/itinerary/${result.itinerary.id}`, { replace: true });
       } catch (err) {
         if (!active) return;
@@ -240,9 +251,7 @@ function LoadingPage() {
   return (
     <div className="loading-page">
       <CreateScene />
-      <div className="loading-page__card">
-        <LoadingSection />
-      </div>
+      <LoadingSection text="Generating your itinerary" />
     </div>
   );
 }

@@ -122,6 +122,16 @@ img {
   min-height: 100vh;
 }
 
+/* Full-bleed pages (the itinerary split) have no footer and must fill exactly
+   the viewport. Pinning .app to a definite 100vh height makes .app__main--full's
+   flex:1 resolve to a definite height (viewport minus the ACTUAL navbar height,
+   whatever variant it wears) — which the map/panel then fill via the flex chain.
+   min-height:100vh alone is indefinite, so percentage/stretch heights below
+   collapsed the map to its min-height floor. */
+.app:has(> .app__main--full) {
+  height: 100vh;
+}
+
 .app__main {
   flex: 1;
   width: 100%;

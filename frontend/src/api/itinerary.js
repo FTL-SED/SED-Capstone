@@ -40,8 +40,8 @@ export async function listItineraries(params = {}) {
   return data
 }
 
-// PUT /itineraries/:id — update an itinerary the caller owns. Body carries only
-// the fields being changed (e.g. { title, description, isPublic }).
+// PUT /itineraries/:id — update scalar fields the caller owns (e.g. isPublic for
+// the privacy toggle, title, description). Body carries only the fields changing.
 export async function updateItinerary(id, changes) {
   const { data } = await api.put(`/itineraries/${id}`, changes)
   return data
@@ -84,4 +84,37 @@ export async function bookmarkItinerary(id) {
 }
 export async function removeBookmark(id) {
   await api.delete(`/itineraries/${id}/bookmark`)
+}
+
+// GET /pins — browse/search the venue catalog to pick a place to add to an
+// itinerary. params: { q, category, limit, offset }. Returns catalog venues.
+export async function searchCatalog(params = {}) {
+  const { data } = await api.get('/pins', { params })
+  return data
+}
+
+// POST /pins — add a stop to an itinerary that references an existing catalog
+// venue. body: { itineraryId, pinId, orderInItinerary, startTime, endTime, ... }.
+// (The endpoint operates on ItineraryStop; "pin" in the path is legacy naming.)
+// Returns the created stop (with its venue included).
+export async function addStop(body) {
+  const { data } = await api.post('/pins', body)
+  return data
+}
+
+// DELETE /pins/:stopId — remove a stop from an itinerary (204 No Content). Takes
+// the ItineraryStop id (the `stopId` field on each pin in the detail response),
+// NOT the venue pin id. The catalog venue itself is untouched.
+export async function deleteStop(stopId) {
+  await api.delete(`/pins/${stopId}`)
+}
+
+// Upload a cover image for an itinerary the caller owns. `file` is a File; axios
+// sets the multipart Content-Type + boundary automatically. Returns the updated
+// itinerary.
+export async function uploadItineraryCover(id, file) {
+  const formData = new FormData()
+  formData.append('cover', file)
+  const { data } = await api.post(`/itineraries/${id}/cover`, formData)
+  return data
 }

@@ -163,10 +163,9 @@ async function persistItinerary(itinerary, shortlist, { userId, tripDate, isPubl
   const finalDescription =
     typeof description === 'string' && description.trim() ? description.trim() : itinerary.description ?? null
 
-  // Cover image derives from the first stop's venue pin
-  const byId = new Map(shortlist.map((p) => [p.id, p]))
-  const firstVenue = itinerary.stops.length > 0 ? byId.get(itinerary.stops[0].pinId) : null
-  const coverImageUrl = firstVenue?.locationImageUrl ?? null
+  // Cover image is set only by an explicit user upload (POST /itineraries/:id/cover);
+  // default to null so the banner shows the branded gradient fallback.
+  const coverImageUrl = null
 
   const memberCreate = memberRows(members)
 

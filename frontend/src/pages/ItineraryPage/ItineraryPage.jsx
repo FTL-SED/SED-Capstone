@@ -3,8 +3,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ItineraryPanel from './ItineraryPanel/ItineraryPanel.jsx'
 import MapView from './MapView/MapView.jsx'
-import EditItineraryModal from './EditItineraryModal/EditItineraryModal.jsx'
 import ErrorMessage from '../../components/ErrorMessage/ErrorMessage.jsx'
+import LoadingSection from '../LoadingPage/LoadingSection/LoadingSection.jsx'
 import {
   getItinerary,
   getUserDashboard,
@@ -14,6 +14,8 @@ import {
   removeBookmark,
   deleteItinerary,
   copyItinerary,
+  addStop,
+  deleteStop,
   updateItinerary,
 } from '../../api/itinerary.js'
 import { getCurrentUser } from '../../lib/currentUser.js'
@@ -172,8 +174,6 @@ function ItineraryPage() {
   const [loading, setLoading] = useState(true);
   // Guards against double-firing the delete/copy network calls on rapid clicks.
   const [actionBusy, setActionBusy] = useState(false);
-  // Whether the edit-constraints modal is open (owner-only).
-  const [editing, setEditing] = useState(false);
 
   // Like/bookmark UI state. likeCount comes from the itinerary; whether *I've*
   // liked/bookmarked it isn't in GET /itineraries/:id, so we hydrate it from my
@@ -327,6 +327,20 @@ function ItineraryPage() {
     }
   };
 
+  // Owner-only: remove a stop from the itinerary. Optimistic — drop it from the
+  // timeline (and map) immediately, then DELETE; on failure, put it back.
+  const handleRemoveStop = async (stopId) => {
+    const prevPins = itinerary.pins;
+    setItinerary((prev) => ({ ...prev, pins: prev.pins.filter((p) => p.stopId !== stopId) }));
+    try {
+      await deleteStop(stopId);
+    } catch (err) {
+      console.error('Remove stop failed, reverting:', err);
+      setItinerary((prev) => ({ ...prev, pins: prevPins }));
+      window.alert('Could not remove that stop. Please try again.');
+    }
+  };
+
   // Owner-only: flip the itinerary between public and private. Optimistic — we
   // update the itinerary in place immediately, then persist via PUT and revert
   // if the server rejects, so the toggle never lies. Guarded by actionBusy so a
@@ -352,20 +366,40 @@ function ItineraryPage() {
   // to the written view; ignored on desktop, where both show side by side.
   const [activeTab, setActiveTab] = useState('written');
 
-  // Owner-only: open the edit-constraints modal. The modal owns the form + save
-  // (PUT /itineraries/:id) and hands back the updated itinerary on success.
-  const handleEdit = () => setEditing(true);
-
-  // Merge the saved fields back into the itinerary so the page reflects the edit
-  // without a refetch. update() returns only the changed columns, so spread.
-  const handleSaved = (updated) => {
-    setItinerary((prev) => ({ ...prev, ...updated }));
+  // Owner-only: add a catalog venue as a new stop, appended at the end. The
+  // backend has no auto-scheduler, so we assign the next order slot and default
+  // times (right after the last stop, 90-min visit) which the user can adjust.
+  const handleAddStop = async (venue) => {
+    const pins = itinerary.pins ?? [];
+    const nextOrder = pins.length > 0 ? Math.max(...pins.map((p) => p.orderInItinerary ?? 0)) + 1 : 0;
+    const DEFAULT_VISIT_MIN = 90;
+    const lastEnd = pins.length > 0 ? pins[pins.length - 1].endTime : null;
+    const start = lastEnd ? new Date(lastEnd) : new Date();
+    const end = new Date(start.getTime() + DEFAULT_VISIT_MIN * 60 * 1000);
+    try {
+      const stop = await addStop({
+        itineraryId: Number(id),
+        pinId: venue.id,
+        orderInItinerary: nextOrder,
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+      });
+      // Refetch to get the authoritative flattened pin shape (stopId, tags, etc.)
+      // rather than reconstruct the reshape on the client.
+      const refreshed = await getItinerary(id);
+      setItinerary(refreshed);
+      return stop;
+    } catch (err) {
+      console.error('Add stop failed:', err);
+      window.alert(err.response?.data?.error || 'Could not add that stop. Please try again.');
+      return null;
+    }
   };
 
   if (loading) return (
     <div className="itinerary-page itinerary-page--message">
       <CreateScene />
-      <div className="itinerary-page__message-card"><p>Loading itinerary…</p></div>
+      <LoadingSection text="Loading your itinerary" />
     </div>
   );
   if (error) return (
@@ -390,6 +424,7 @@ function ItineraryPage() {
         title={itinerary.title}
         description={itinerary.description}
         author={itinerary.creator?.username}
+        coverImageUrl={itinerary.coverImageUrl}
         liked={liked}
         bookmarked={bookmarked}
         likeCount={likeCount}
@@ -399,18 +434,12 @@ function ItineraryPage() {
         onToggleLike={toggleLike}
         onToggleBookmark={toggleBookmark}
         onTogglePrivacy={handleTogglePrivacy}
-        onEdit={handleEdit}
         onDelete={handleDelete}
         onCopy={handleCopy}
+        onRemoveStop={handleRemoveStop}
+        onAddStop={handleAddStop}
       />
       <MapView pins={itinerary.pins} />
-      {editing && (
-        <EditItineraryModal
-          itinerary={itinerary}
-          onClose={() => setEditing(false)}
-          onSaved={handleSaved}
-        />
-      )}
     </div>
   );
 }

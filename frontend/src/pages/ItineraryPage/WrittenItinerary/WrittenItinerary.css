@@ -75,6 +75,58 @@
   padding: 2px 10px;
 }
 
+/* Edit-mode remove control, pushed to the right edge of the stop's head row. */
+.timeline-stop__remove {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--slate-500);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+.timeline-stop__remove:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+/* The inline "Remove?" confirm that replaces the trash button on first click. */
+.timeline-stop__confirm {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--slate-600);
+}
+.timeline-stop__confirm-yes,
+.timeline-stop__confirm-no {
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.timeline-stop__confirm-yes {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: #fff;
+}
+.timeline-stop__confirm-yes:hover {
+  filter: brightness(0.95);
+}
+.timeline-stop__confirm-no:hover {
+  background: var(--surface-muted);
+}
+
 .timeline-stop__desc {
   margin: 6px 0 0;
   font-size: 0.85rem;

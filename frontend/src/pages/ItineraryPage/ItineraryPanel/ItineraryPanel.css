@@ -37,13 +37,98 @@
   min-height: 0; /* enables the timeline's internal scroll */
 }
 
-/* Title / description / author, pinned above the scrolling timeline. The
-   off-white surface lifts the header off the cream body, echoing the floating
-   panels on Discover. */
+/* The header is pinned above the scrolling timeline: a photo banner up top,
+   then a readable surface strip for the description below it. */
 .itinerary-panel__header {
-  padding: 22px 22px 16px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+}
+
+/* Google-Maps-style place banner: the cover photo fills a fixed-aspect strip
+   with the title + author laid over it. A warm golden-hour gradient always
+   sits underneath, so a missing or broken image reads as an intentional warm
+   cover rather than an empty box. */
+.itinerary-panel__banner {
+  position: relative;
+  /* Fixed height (not aspect-ratio) so the banner is deterministic and can
+     never grow tall enough to push the panel past its height and spill into a
+     document scroll — only the timeline below scrolls. */
+  height: 180px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--sunset) 0%, var(--moss) 100%);
+  display: flex;
+}
+
+.itinerary-panel__banner-img {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Fallback-only brand mark: the NavQuest diamond (same recipe as the navbar
+   wordmark) centered low-opacity over the gradient, so a coverless banner reads
+   as intentional/branded rather than empty. Sits below the scrim (z-index 1) and
+   content (z-index 2). Rendered only when there is no cover image. */
+.itinerary-panel__banner-mark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 0;
+  width: 64px;
+  height: 64px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border-radius: 50% 50% 50% 2px;
+  background: #ffffff;
+  opacity: 0.18;
+}
+
+/* Bottom-weighted dark scrim guarantees the overlaid white text clears the
+   4.5:1 contrast bar even over a light photo, without dimming the whole image. */
+.itinerary-panel__banner-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    to top,
+    rgba(28, 22, 12, 0.78) 0%,
+    rgba(28, 22, 12, 0.42) 34%,
+    rgba(28, 22, 12, 0.08) 68%,
+    rgba(28, 22, 12, 0) 100%
+  );
+}
+
+/* Title + author anchored to the bottom of the photo, like a map place card. */
+.itinerary-panel__banner-content {
+  position: relative;
+  z-index: 2;
+  align-self: flex-end;
+  width: 100%;
+  padding: 18px 22px 16px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Retint the shared Title/Author to read cleanly on the photo. */
+.itinerary-panel__banner-content .itinerary-title {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+.itinerary-panel__banner-content .itinerary-author {
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+  align-self: flex-end;
+}
+
+/* Description sits below the photo on the readable surface strip. */
+.itinerary-panel__meta {
+  padding: 14px 22px 16px;
 }
 
 /* The title reads as an editorial heading — same Fraunces display face, weight

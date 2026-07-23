@@ -103,6 +103,12 @@ model Pin {
   address          String?
   locationImageUrl String?
   hoursOpen        Json?
+  // Provenance + AI-enrichment tracking. `source` distinguishes hand-curated
+  // venues from the bulk OpenStreetMap import; `enrichedAt` is stamped when the
+  // AI enrichment job fills a venue's rating/tags, so the job can target only
+  // un-enriched OSM rows and stays idempotent/resumable.
+  source           String?
+  enrichedAt       DateTime?
   stops            ItineraryStop[]
 }
 

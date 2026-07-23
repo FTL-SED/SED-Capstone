@@ -6,7 +6,7 @@ test('reshapeItinerary flattens stops+pin into the legacy pins[] shape', () => {
   const row = {
     id: 7, title: 'Day', location: 'SF', _count: { likes: 2 },
     stops: [
-      { orderInItinerary: 0, startTime: new Date('2026-01-01T17:00:00Z'), endTime: new Date('2026-01-01T18:00:00Z'),
+      { id: 55, orderInItinerary: 0, startTime: new Date('2026-01-01T17:00:00Z'), endTime: new Date('2026-01-01T18:00:00Z'),
         travelTimeToNextMinutes: 10, distanceToNextMeters: 500, mealType: 'lunch', note: 'grab tacos',
         pin: { id: 3, name: 'Taqueria', description: 'tacos', tags: ['food','mexican'], interests: [], cuisines: ['mexican'], diets: [],
                rating: 4.5, pricePerPerson: 14, latitude: 37.75, longitude: -122.41, address: 'SF', locationImageUrl: null } },
@@ -17,6 +17,10 @@ test('reshapeItinerary flattens stops+pin into the legacy pins[] shape', () => {
   assert.equal(out.stops, undefined)
   const p = out.pins[0]
   assert.equal(p.name, 'Taqueria')
+  // The stop id (for /pins/:id edit+delete) is distinct from the venue pin id.
+  assert.equal(p.stopId, 55)
+  assert.equal(p.pinId, 3)
+  assert.equal(p.id, 3) // legacy: id remains the venue id for existing consumers
   assert.equal(p.orderInItinerary, 0)
   assert.equal(p.pricePerPerson, 14)
   assert.equal(p.travelTimeToNextMinutes, 10)
