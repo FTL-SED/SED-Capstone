@@ -65,9 +65,14 @@ function MapView({ pins = [] }) {
   return (
     <div className="map-view">
       <MapContainer center={center} zoom={13} className="map-view__map" scrollWheelZoom>
+        {/* CARTO Voyager basemap: a soft, muted, low-contrast style close to
+            Google Maps' look — free and keyless, unlike the harsh, heavily
+            saturated raw OpenStreetMap raster tiles. */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          subdomains="abcd"
+          maxZoom={20}
         />
         {located.map((pin, i) => (
           <Marker key={pin.id ?? i} position={[pin.latitude, pin.longitude]} icon={numberedIcon(i + 1)}>
