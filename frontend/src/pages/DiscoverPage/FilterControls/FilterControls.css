@@ -93,3 +93,59 @@
   color: #fff;
   border-color: #2d3a4a;
 }
+
+/* ---- Mobile: stack the bar into two rows ------------------------------- */
+/* On phones the single row is too cramped, so it wraps: the search bar takes
+   its own full-width row on top, and the Tags dropdown + Recent/Popular sort
+   share the row beneath it. The two filter groups split that row evenly and
+   grow to comfortable tap targets. */
+@media (max-width: 640px) {
+  .filter-controls {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* flex-basis:100% forces the search onto its own line; the two filters that
+     follow then wrap together onto the next row. */
+  .filter-controls__search {
+    flex: 1 1 100%;
+  }
+
+  /* Second row: Tags on the left, sort on the right, splitting the width. */
+  .filter-controls__interests,
+  .filter-controls__sort {
+    flex: 1;
+  }
+
+  /* Sit the two sort pills flush so they read as one segmented control. */
+  .filter-controls__sort {
+    gap: 0;
+  }
+
+  /* The Tags toggle fills its half and reads a touch larger for the thumb. */
+  .tags-dropdown__toggle {
+    width: 100%;
+    justify-content: space-between;
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+  }
+
+  /* Recent/Popular each take an equal share of the sort half. */
+  .filter-controls__sort .sort-toggle {
+    flex: 1;
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+
+  /* First/last sort pills round their outer edges so the pair reads as one
+     segmented control at the wider tap size. */
+  .filter-controls__sort .sort-toggle:first-child {
+    border-radius: var(--radius-pill) 0 0 var(--radius-pill);
+  }
+
+  .filter-controls__sort .sort-toggle:last-child {
+    border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
+  }
+}

@@ -143,3 +143,50 @@
 .bookmark-button.itinerary-card__bookmark .bookmark-button__label {
   display: none;
 }
+
+/* ==========================================================================
+   Responsive: fewer cards fit per carousel/grid as the screen narrows (see
+   CardCarousel.css / ItinerariesGrid.css), so each card gets wider — grow the
+   caption text to match and let the title use two lines instead of truncating
+   to one, so the extra room reads as clearer content rather than empty space.
+
+   The breakpoint is 1024px (not phone-only) so the whole tablet range is
+   covered: iPads report 810–834px CSS width in portrait and 1024px in
+   landscape, where the base 1rem title / 0.8125rem meta were too small to read
+   comfortably. The narrower ≤400px rule below still overrides for phones.
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .itinerary-card__title-row h3 {
+    /* Bigger title, wrapped to at most two lines (ellipsis on the second).
+       Replaces the single-line truncation now that the card is wide enough. */
+    font-size: 1.0625rem;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .itinerary-card__meta {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .itinerary-card__title-row h3 {
+    font-size: 1.1875rem;
+  }
+
+  .itinerary-card__meta {
+    font-size: 0.9375rem;
+    /* On a near-full-width card there's room to stack location above the
+       creator, so neither has to truncate. */
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  /* Stacked, so drop the inline "•" separator that joined them on one line. */
+  .itinerary-card__creator::before {
+    content: none;
+  }
+}

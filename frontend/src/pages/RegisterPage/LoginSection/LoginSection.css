@@ -1,4 +1,4 @@
+/* Spacing above this switch-link is owned by the auth card's flex gap. */
 .login-section {
-  margin-top: 24px;
   text-align: center;
 }

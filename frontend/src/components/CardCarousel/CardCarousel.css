@@ -38,11 +38,34 @@
   display: none;
 }
 
-/* Show exactly 5 cards across the visible track. Four 16px gaps are shared
-   across the five cards (4 * 16 / 5 = 12.8px subtracted from each). */
+/* How many cards fill the visible track scales with the viewport, so the cards
+   (and their text) grow larger and fewer as the screen shrinks. The counts and
+   breakpoints deliberately mirror the Explore page's ItinerariesGrid (4 → 2 →
+   1 at 900px and 480px) so the Dashboard carousel and the Explore grid show the
+   same number of cards across at every width. Each rule solves the same flexbox
+   equation: N cards share (N-1) * 16px of gap, so each card's basis is
+   calc((100% - (N-1)*16px) / N). Widest first. */
+
+/* >900px — four cards (three 16px gaps: 3 * 16 = 48px). */
 .card-carousel__track .itinerary-card {
-  flex: 0 0 calc((100% - 64px) / 5);
+  flex: 0 0 calc((100% - 48px) / 4);
   scroll-snap-align: start;
+}
+
+/* ≤900px — two cards (one gap: 16px). */
+@media (max-width: 900px) {
+  .card-carousel__track .itinerary-card {
+    flex: 0 0 calc((100% - 16px) / 2);
+  }
+}
+
+/* ≤480px — a single card, sized so the next one peeks in and hints that the
+   row still scrolls (the carousel's scroll affordance; the grid stacks to one
+   full-width column at the same breakpoint). */
+@media (max-width: 480px) {
+  .card-carousel__track .itinerary-card {
+    flex: 0 0 82%;
+  }
 }
 
 /* Loading placeholder: same footprint as a real card's cover, with a pulse.

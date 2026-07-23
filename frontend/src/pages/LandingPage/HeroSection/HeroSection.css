@@ -145,17 +145,126 @@
 }
 
 /* ---- Responsive --------------------------------------------------------- */
-@media (max-width: 860px) {
-  .hero__overlay {
-    bottom: clamp(8vh, 12vh, 140px);
-    gap: 24px;
-  }
-}
+/* On phones/tablets the full-bleed `slice` scene would crop the left (lake) and
+   right (town) destinations right off the screen, leaving only the centre
+   route. Instead of cropping, we let the WHOLE 1440×900 composition scale down
+   to the viewport width — a true "scaled-down desktop". The scene keeps its
+   native 1440:900 aspect ratio in a box of its own, so `slice` has nothing left
+   to crop and all three routes stay visible, drawing naturally closer together
+   as the screen narrows.
 
-@media (max-width: 600px) {
-  /* Keep the headline within the viewport on narrow phones */
+   With the scene no longer full-bleed, the hero becomes a simple flex COLUMN:
+   the scaled scene on top, the headline + CTA stacked below it on a dark moss
+   ground that continues the scene's meadow foot (so the cream headline stays
+   legible without the overlay scrim). */
+@media (max-width: 820px) {
+  .hero {
+    min-height: 0;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    /* The floating navbar is opaque cream and sits at top:0 over the hero, so it
+       covers the top of the scene — hiding the sky and making the plane look as
+       though it flies mid-scene. Pad the hero down by the navbar's height so the
+       full sky (and the plane crossing it) clears the bar. */
+    padding-top: 77px;
+    /* Cream matches both the navbar and the scene's own sky, so the padded strip
+       reads as continuous sky behind the floating bar — no seam. The copy below
+       gets its own dark ground via .hero__overlay. */
+    background: #f6efe1;
+  }
+
+  /* Scene: a box shorter than the drawing itself, with the SVG top-aligned and
+     the overflow clipped. This trims the tall, empty foreground meadow off the
+     BOTTOM while keeping the sky (and its drifting plane) and the three horizon
+     destinations in frame — so the destinations, not the grass, lead the eye.
+     Done purely by clipping, so `preserveAspectRatio` is untouched and the
+     desktop hero is unaffected. */
+  .hero__scene {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    aspect-ratio: 1440 / 585;
+    overflow: hidden;
+  }
+
+  /* The SVG keeps its full 1440×900 proportions and sits flush to the top of
+     the shorter scene box; everything below the crop line is clipped away. */
+  .hero__svg {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1440 / 900;
+    display: block;
+  }
+
+  /* The scrim only exists to darken the scene behind overlaid text; with the
+     copy now sitting BELOW the scene, it's no longer needed. */
+  .hero__scrim {
+    display: none;
+  }
+
+  /* Overlay: no longer floated over the scene — it flows underneath it on grass
+     that continues the scene's cropped meadow foot, darkening to moss so the
+     cream headline + CTA stay legible. */
+  .hero__overlay {
+    position: relative;
+    inset: auto;
+    bottom: auto;
+    padding: clamp(28px, 7vw, 48px) 24px clamp(40px, 10vw, 72px);
+    gap: clamp(18px, 5vw, 30px);
+    background: linear-gradient(to bottom, #6c7a4e, var(--moss-deep) 42%);
+  }
+
+  /* Scale the headline down with the viewport (still cream on the moss ground) */
   .hero .hero-heading {
-    font-size: clamp(2rem, 8vw, 2.6rem);
+    font-size: clamp(1.9rem, 7vw, 3rem);
+  }
+
+  /* Scale the CTA to match so it never overwhelms the smaller headline */
+  .hero .start-planning-button__btn {
+    font-size: clamp(0.95rem, 3.6vw, 1.05rem);
+    padding: clamp(0.78rem, 3vw, 0.95rem) clamp(1.7rem, 6vw, 2.4rem);
+  }
+
+  /* Nudge the whole road network (routes + destinations) down a little so it
+     sits lower in the cropped mobile frame, and scale each destination up in
+     place so the lake, forest village and hillside town read clearly at phone
+     size. Transforms are in the SVG's own coordinate space (view-box units);
+     each destination scales around its own centre so it grows without drifting. */
+  .hero__paths {
+    transform: translateY(26px);
+  }
+
+  .hero__dest {
+    transform-box: fill-box;
+    /* scale from the BOTTOM edge (where each destination meets its road) so it
+       grows upward into the sky instead of sliding sideways off its road */
+    transform-origin: center bottom;
+    transform: scale(1.18);
+  }
+
+  /* The plane is a tiny, low-contrast tan mark at desktop scale — once the whole
+     scene shrinks to a phone it all but vanishes. Grow it in place (around its
+     own bounding box, so it doesn't drift and doesn't fight the parent group's
+     drift animation) and darken it for a clear silhouette against the sky. */
+  .hero__plane path {
+    transform-box: fill-box;
+    transform-origin: center;
+    /* Clear the desktop position ATTRIBUTE (transform="translate(-40 140)")
+       rather than nudging on top of it. In the transform chain `scale` is
+       applied AFTER (outside) that attribute, so its 140-unit y-offset got
+       multiplied by 2.4 and dumped the plane down onto the mountain ridge —
+       mid-scene. `transform: none` drops that offset so the individual
+       translate/scale below place the plane directly: scale grows it around its
+       own centre (no drift) and translate seats it high in the open sky, clear
+       of the ridge. x starts just off the left edge; the parent group's drift
+       animation carries it across. */
+    transform: none;
+    translate: -45px 104px;
+    scale: 2.4;
+    fill: #5a4a30;
   }
 }
 

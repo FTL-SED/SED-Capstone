@@ -95,6 +95,15 @@
 
 /* ---- Responsive: beats collapse to a single centred column ------------ */
 @media (max-width: 820px) {
+  /* The beats' top/bottom padding is sized for the tall desktop field
+     (clamp min 160px). On a phone that leaves a big empty green band above the
+     first beat and — more noticeably — below the last one, right before the
+     footer. Scale it down so the drive fills the mobile view without the dead
+     space at either end. */
+  .journey-field__beats {
+    padding-block: clamp(48px, 9vh, 96px);
+  }
+
   .field-beat {
     grid-template-columns: 1fr;
     gap: 28px;
