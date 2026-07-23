@@ -284,27 +284,17 @@
   padding: 26px 40px;
 }
 
-/* Wordmark → editorial serif with the sunset diamond mark */
+/* Wordmark → editorial serif. The compass-Q glyph in the wordmark is the brand
+   mark now, so there's no separate leading icon. */
 .navbar--hero .logo {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-}
-
-.navbar--hero .logo::before {
-  content: "";
-  width: 14px;
-  height: 14px;
-  border-radius: 50% 50% 50% 2px;
-  background: #e1783c;
-  transform: rotate(45deg);
-  box-shadow: 0 0 0 4px rgba(225, 120, 60, 0.16);
 }
 
 .navbar--hero .logo h3 {
   font-family: "Fraunces", Georgia, serif;
   font-weight: 600;
-  font-size: 1.4rem;
+  font-size: 1.8rem;
   letter-spacing: -0.01em;
   color: #33402a;
 }
