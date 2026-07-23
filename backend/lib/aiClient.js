@@ -6,15 +6,15 @@
 import fs from 'node:fs'
 import https from 'node:https'
 import OpenAI from 'openai'
-import { AI_MODEL, AI_OPENROUTER_MODEL } from '../config/ai.js'
+import { AI_MODEL, AI_OPENAI_MODEL } from '../config/ai.js'
 
-// The Salesforce internal gateway and OpenRouter both speak the OpenAI
+// The Salesforce internal gateway and OpenAI both speak the OpenAI
 // chat-completions wire format, so the same SDK talks to either — only the base
-// URL, model id, and TLS handling differ. We pick between them by which key is
-// set: AI_KEY means the internal gateway, OPENROUTER_API_KEY means OpenRouter.
+// URL (OpenAI's is the SDK default, so we don't set one), model id, and TLS
+// handling differ. We pick between them by which key is set: AI_KEY means the
+// internal gateway, OPEN_AI_API_KEY means OpenAI directly.
 const GATEWAY_BASE_URL =
   'https://eng-ai-model-gateway.sfproxy.devx-preprod.aws-esvc1-useast2.aws.sfdc.cl'
-const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
 
 // Build the OpenAI client once, the first time it's actually needed — not at
 // import time, so tests can import the service without a key or cert set.
@@ -24,7 +24,7 @@ let cached
 export function getAiClient() {
   if (cached) return cached
 
-  // Prefer the internal gateway (AI_KEY); fall back to OpenRouter.
+  // Prefer the internal gateway (AI_KEY); fall back to OpenAI.
   if (process.env.AI_KEY) {
     if (!process.env.NODE_EXTRA_CA_CERTS) throw new Error('NODE_EXTRA_CA_CERTS is not set')
     cached = {
@@ -39,18 +39,17 @@ export function getAiClient() {
         }),
       }),
     }
-  } else if (process.env.OPENROUTER_API_KEY) {
-    // OpenRouter uses a public certificate Node already trusts, so no custom
-    // httpAgent and no NODE_EXTRA_CA_CERTS needed.
+  } else if (process.env.OPEN_AI_API_KEY) {
+    // OpenAI's default base URL + a public certificate Node already trusts, so
+    // no baseURL override, no custom httpAgent, no NODE_EXTRA_CA_CERTS needed.
     cached = {
-      model: AI_OPENROUTER_MODEL,
+      model: AI_OPENAI_MODEL,
       client: new OpenAI({
-        apiKey: process.env.OPENROUTER_API_KEY,
-        baseURL: OPENROUTER_BASE_URL,
+        apiKey: process.env.OPEN_AI_API_KEY,
       }),
     }
   } else {
-    throw new Error('AI_KEY (or OPENROUTER_API_KEY) is not set')
+    throw new Error('AI_KEY (or OPEN_AI_API_KEY) is not set')
   }
 
   return cached

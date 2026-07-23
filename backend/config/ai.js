@@ -1,3 +1,4 @@
+
 // Tunables + output schema for the AI itinerary sequencing service
 // (services/ai/). Like config/recommendation.js, all AI knobs live here so
 // behavior changes by editing config, not code. See ../.claude/docs/ai-design.md.
@@ -12,14 +13,20 @@ export { AVG_STOP_DURATION_MIN, CATEGORY } from './recommendation.js'
 // timeout).
 export const AI_MODEL =
   'claude-sonnet-4-5-20250929'
-// OpenRouter model id, used when the client talks to OpenRouter instead of the
+// OpenAI model id, used when the client talks to OpenAI directly instead of the
 // Salesforce gateway (they namespace model ids differently, so the gateway id
-// above isn't valid there). Override with OPENROUTER_MODEL if you want a
-// different/free tier.
-export const AI_OPENROUTER_MODEL =
-  process.env.OPENROUTER_MODEL || 'anthropic/claude-sonnet-4.5'
+// above isn't valid there). gpt-5-nano is OpenAI's cheapest tier — chosen to
+// keep spend low. Override with OPENAI_MODEL if you want a different model.
+export const AI_OPENAI_MODEL =
+  process.env.OPENAI_MODEL || 'gpt-5-nano'
 export const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS) || 20_000
 export const AI_MAX_RETRIES = Number(process.env.AI_MAX_RETRIES) || 2
+
+// Hard ceiling on tokens the model may generate per call (reasoning + visible
+// output for reasoning models like gpt-5-nano). One itinerary JSON is well
+// under this; the cap is a cost guardrail so a runaway generation can't drain
+// the limited OpenAI budget. Override with AI_MAX_OUTPUT_TOKENS if needed.
+export const AI_MAX_OUTPUT_TOKENS = Number(process.env.AI_MAX_OUTPUT_TOKENS) || 2_000
 
 // Meal anchors ("HH:MM", Pacific wall-clock) the prompt + fallback use to slot
 // restaurants and label meal stops. Kept generously wide (and non-overlapping)

@@ -2,7 +2,7 @@
 // The prompt (what we ask) lives in prompt.js; the client + its env/cert wiring
 // live in lib/aiClient.js. This file only handles the network call, retries,
 // and JSON parsing — no process.env access.
-import { AI_TIMEOUT_MS, AI_MAX_RETRIES } from '../../../config/ai.js'
+import { AI_TIMEOUT_MS, AI_MAX_RETRIES, AI_MAX_OUTPUT_TOKENS } from '../../../config/ai.js'
 import { getAiClient } from '../../../lib/aiClient.js'
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -31,6 +31,12 @@ const requestOnce = async (messages) => {
     {
       model,
       messages,
+      // Cap generated tokens as a cost guardrail — one itinerary JSON is well
+      // under this, but for a reasoning model (gpt-5-nano) this also bounds the
+      // billed reasoning tokens so a runaway generation can't drain the budget.
+      // max_completion_tokens is the current param (max_tokens is deprecated and
+      // rejected by reasoning models); the gateway accepts it too.
+      max_completion_tokens: AI_MAX_OUTPUT_TOKENS,
       // No response_format: forcing JSON mode makes this gateway's model return
       // an empty {}. We ask for JSON in the prompt instead, then parse it here.
     },
