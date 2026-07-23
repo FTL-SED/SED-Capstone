@@ -4,14 +4,17 @@ import DeleteButton from '../DeleteButton/DeleteButton.jsx'
 import BookmarkButton from '../BookmarkButton/BookmarkButton.jsx'
 import SaveCopyButton from '../SaveCopyButton/SaveCopyButton.jsx'
 import LikeButton from '../LikeButton/LikeButton.jsx'
+import PrivacyButton from '../PrivacyButton/PrivacyButton.jsx'
 
 function ActionBar({
   isOwner = true,
   liked,
   bookmarked,
   likeCount,
+  isPublic,
   onToggleLike,
   onToggleBookmark,
+  onTogglePrivacy,
   onEdit,
   onDelete,
   onCopy,
@@ -22,6 +25,7 @@ function ActionBar({
         <>
           <EditButton onClick={onEdit} />
           <DeleteButton onClick={onDelete} />
+          <PrivacyButton isPublic={isPublic} onClick={onTogglePrivacy} />
           <BookmarkButton bookmarked={bookmarked} onClick={onToggleBookmark} />
           <LikeButton liked={liked} likeCount={likeCount} onClick={onToggleLike} />
         </>
