@@ -4,7 +4,7 @@ import TextInput from '../../../components/Inputs/TextInput/TextInput.jsx'
 function BudgetField({ form, update }) {
   return (
     <div className="budget-field">
-      <h2>Budget</h2>
+      <h2>Budget <span className="field-required" aria-label="required">*</span></h2>
       <TextInput
         placeholder="Enter average budget per person"
         type="number"

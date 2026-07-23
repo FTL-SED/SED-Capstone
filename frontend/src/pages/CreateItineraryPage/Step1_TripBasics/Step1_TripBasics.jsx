@@ -36,6 +36,9 @@ function Step1_TripBasics({ form, update, onNext }) {
 
   return (
     <div className="step1-trip-basics">
+      <p className="step1-trip-basics__legend">
+        <span className="field-required" aria-hidden="true">*</span> Required
+      </p>
       <DateField form={form} update={update} />
       <TimeRangeField form={form} update={update} />
       <TransportField form={form} update={update} />
