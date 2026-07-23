@@ -242,12 +242,20 @@ function ItineraryPage() {
       while (state.desired !== sent) {
         sent = state.desired;
         const res = sent ? await likeItinerary(id) : await unlikeItinerary(id);
-        if (state.desired === sent && res && typeof res.likeCount === 'number') {
-          setLikeCount(res.likeCount);
+        // The server just confirmed the action we sent, so once this is the
+        // user's final intent `sent` IS the authoritative liked status — pin
+        // both it and the count to the truth (the count comes from res).
+        if (state.desired === sent) {
+          setLiked(sent);
+          if (res && typeof res.likeCount === 'number') setLikeCount(res.likeCount);
         }
       }
     } catch (err) {
       console.error('Like sync failed:', err);
+
+      // to revert the users last action in case it failed
+      setLiked(!state.desired);
+      setLikeCount((c) => Math.max(0, c + (state.desired ? -1 : 1)));
     } finally {
       state.running = false;
     }
