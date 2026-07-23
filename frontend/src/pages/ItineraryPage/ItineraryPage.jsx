@@ -14,6 +14,7 @@ import {
   removeBookmark,
   deleteItinerary,
   copyItinerary,
+  updateItinerary,
 } from '../../api/itinerary.js'
 import { getCurrentUser } from '../../lib/currentUser.js'
 
@@ -318,6 +319,26 @@ function ItineraryPage() {
     }
   };
 
+  // Owner-only: flip the itinerary between public and private. Optimistic — we
+  // update the itinerary in place immediately, then persist via PUT and revert
+  // if the server rejects, so the toggle never lies. Guarded by actionBusy so a
+  // rapid double-click can't fire two conflicting writes.
+  const handleTogglePrivacy = async () => {
+    if (actionBusy) return;
+    const desired = !itinerary.isPublic;
+    setActionBusy(true);
+    setItinerary((prev) => ({ ...prev, isPublic: desired }));
+    try {
+      await updateItinerary(id, { isPublic: desired });
+    } catch (err) {
+      console.error('Privacy toggle failed, reverting:', err);
+      setItinerary((prev) => ({ ...prev, isPublic: !desired }));
+      window.alert('Could not change the privacy setting. Please try again.');
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
   // Owner-only: open the edit-constraints modal. The modal owns the form + save
   // (PUT /itineraries/:id) and hands back the updated itinerary on success.
   const handleEdit = () => setEditing(true);
@@ -357,8 +378,10 @@ function ItineraryPage() {
         liked={liked}
         bookmarked={bookmarked}
         likeCount={likeCount}
+        isPublic={itinerary.isPublic}
         onToggleLike={toggleLike}
         onToggleBookmark={toggleBookmark}
+        onTogglePrivacy={handleTogglePrivacy}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onCopy={handleCopy}

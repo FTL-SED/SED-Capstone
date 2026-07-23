@@ -9,7 +9,8 @@ import WrittenItinerary from '../WrittenItinerary/WrittenItinerary.jsx'
 // CRUD action bar, and the scrolling stop timeline — all in one panel.
 function ItineraryPanel({
   isOwner, pins, title, description, author,
-  liked, bookmarked, likeCount, onToggleLike, onToggleBookmark,
+  liked, bookmarked, likeCount, isPublic,
+  onToggleLike, onToggleBookmark, onTogglePrivacy,
   onEdit, onDelete, onCopy,
 }) {
   return (
@@ -24,8 +25,10 @@ function ItineraryPanel({
         liked={liked}
         bookmarked={bookmarked}
         likeCount={likeCount}
+        isPublic={isPublic}
         onToggleLike={onToggleLike}
         onToggleBookmark={onToggleBookmark}
+        onTogglePrivacy={onTogglePrivacy}
         onEdit={onEdit}
         onDelete={onDelete}
         onCopy={onCopy}
