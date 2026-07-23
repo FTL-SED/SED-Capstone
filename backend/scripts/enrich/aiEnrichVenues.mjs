@@ -135,13 +135,18 @@ async function main() {
   const remaining = await prisma.pin.count({ where: { source: 'osm', enrichedAt: null } })
   console.log(`\n${APPLY ? 'Enriched' : 'Would enrich'} ${enriched}, skipped ${skipped}. Remaining un-enriched OSM: ${remaining}${APPLY ? '' : ' (dry run — nothing written)'}`)
 
-  if (proposedTally.size) {
+  // Only rewrite the report on a FULL run — a scoped/partial run (--limit) sees
+  // just a subset of venues and would otherwise clobber the committed full-run
+  // report with a smaller list.
+  if (proposedTally.size && !Number.isFinite(LIMIT)) {
     const lines = [...proposedTally.entries()]
       .sort((a, b) => b[1].count - a[1].count)
       .map(([tag, { count, examples }]) => `- \`${tag}\` — ${count}× (e.g. ${examples.join(', ')})`)
     const report = `# Proposed out-of-vocab tags\n\nAI-suggested tags NOT in config/tagVocab.js. Review and add the good ones, then re-run enrichment to store them.\n\n${lines.join('\n')}\n`
     fs.writeFileSync(new URL('./proposed-tags.md', import.meta.url), report)
     console.log(`\nWrote ${proposedTally.size} proposed tags to scripts/enrich/proposed-tags.md`)
+  } else if (proposedTally.size) {
+    console.log(`\n(${proposedTally.size} proposed tags collected — report not rewritten on a partial/--limit run)`)
   }
 
   await prisma.$disconnect()

@@ -17,6 +17,19 @@ test('clusterByProximity groups same-name pins within the threshold', () => {
   assert.deepEqual(clusters[0].map((p) => p.id).sort(), [1, 2])
 })
 
+test('clusterByProximity single-linkage: a chain A~B~C stays one cluster even if A–C exceeds the threshold', () => {
+  // At SF latitude ~0.001° lon ≈ 88m. A→B ≈ 88m (ok), B→C ≈ 88m (ok),
+  // but A→C ≈ 176m (> 100m). Single-linkage must still merge all three.
+  const pins = [
+    P(1, 'Chain', 37.7700, -122.4200),
+    P(2, 'Chain', 37.7700, -122.4190), // ~88m from #1
+    P(3, 'Chain', 37.7700, -122.4180), // ~88m from #2, ~176m from #1
+  ]
+  const clusters = clusterByProximity(pins, 100)
+  assert.equal(clusters.length, 1)
+  assert.deepEqual(clusters[0].map((p) => p.id).sort(), [1, 2, 3])
+})
+
 test('clusterByProximity is case-insensitive on name and ignores singletons', () => {
   const pins = [P(1, 'Cafe X', 37.77, -122.42), P(2, 'cafe x', 37.7701, -122.42)]
   const clusters = clusterByProximity(pins, 100)
