@@ -36,8 +36,10 @@
   --shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
   --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
 
-  /* Layout */
-  --page-max: 1120px;
+  /* Layout — the shared content column width. Kept a touch under common laptop
+     widths (1280/1440/1536) so mid-size screens fill out instead of leaving wide
+     empty gutters; genuinely large monitors still center with modest margins. */
+  --page-max: 1280px;
   --nav-h: 68px;
   --foot-h: 65px; /* footer: ~20px padding top+bottom + one line of text */
 }
@@ -52,6 +54,18 @@ html,
 body,
 #root {
   height: 100%;
+}
+
+/* Guard against a stray wide element (a full-bleed SVG, an un-shrunk flex/grid
+   child) forcing a horizontal scrollbar — which the browser answers by zooming
+   the whole page out, leaving empty gutters on the sides. `clip` (not `hidden`)
+   is deliberate: `overflow-x: hidden` turns body into a scroll container, which
+   reserves a classic vertical-scrollbar gutter that shows the body background
+   as a thin strip down the right edge. `clip` trims horizontal overflow WITHOUT
+   creating that scroll container, so no gutter/strip appears and pages fill the
+   viewport edge-to-edge. */
+body {
+  overflow-x: clip;
 }
 
 body {
@@ -237,8 +251,13 @@ img {
 }
 
 @media (max-width: 640px) {
-  .app__main {
-    padding: 24px 16px 48px;
+  /* Tighter side gutters on phones so the content column runs closer to the
+     edges instead of leaving a wide inset. Excludes the full-bleed variants:
+     without :not(), this same-specificity rule loads AFTER --bare / --full and
+     would re-add padding to them — pushing the landing hero (and auth pages)
+     down, exposing a strip of body background above the floating navbar. */
+  .app__main:not(.app__main--bare):not(.app__main--full) {
+    padding: 20px 12px 40px;
   }
 
   .section-header h2 {

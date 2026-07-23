@@ -189,6 +189,11 @@
 }
 
 /* ---- Responsive --------------------------------------------------------- */
+/* On phones the card goes edge-to-edge and everything inside it is retuned for
+   the thumb: field headings scale down so they don't crowd the narrow card, and
+   every input, dropdown, pill and button grows to a comfortable ~44px tap target.
+   All of this is scoped to .create-itinerary-page so the shared controls stay
+   untouched on the pages that reuse them. */
 @media (max-width: 640px) {
   .create-itinerary-page {
     padding-bottom: 170px;
@@ -198,6 +203,79 @@
   .create-itinerary-page .itinerary-wizard {
     padding: 28px 20px;
     border-radius: 20px;
+  }
+
+  /* Scale the field headings down from their 1.4rem desktop size so they read
+     comfortably in the narrower card. */
+  .create-itinerary-page .date-field h2,
+  .create-itinerary-page .time-range-field h2,
+  .create-itinerary-page .transport-field h2,
+  .create-itinerary-page .travel-radius-field h2,
+  .create-itinerary-page .budget-field h2,
+  .create-itinerary-page .step2-members > h2 {
+    font-size: 1.2rem;
+  }
+
+  /* Grow the inputs + dropdowns into full-width, ~44px-tall tap targets. */
+  .create-itinerary-page .text-input input,
+  .create-itinerary-page .time-input input,
+  .create-itinerary-page .transport-field select,
+  .create-itinerary-page .privacy-field select {
+    min-height: 44px;
+    padding: 12px 14px;
+    padding-right: 40px; /* selects keep room for the chevron */
+  }
+
+  .create-itinerary-page .text-input input,
+  .create-itinerary-page .time-input input {
+    padding-right: 14px; /* text/time inputs have no chevron */
+  }
+
+  /* Roomier interest / food pills so they're easy to tap without mis-hits. */
+  .create-itinerary-page .tag-pill {
+    padding: 0.5rem 0.9rem;
+    font-size: 0.9rem;
+  }
+
+  /* The "+ Add member" affordance becomes a full-width, tappable bar. */
+  .create-itinerary-page .step2-members__add {
+    align-self: stretch;
+    min-height: 44px;
+    padding: 0.65rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  /* Lay the step controls out with Flexbox so each button stretches to fill
+     half the row — big, evenly spaced, and easy to hit on a small screen. */
+  .create-itinerary-page .step2-members__nav,
+  .create-itinerary-page .step3-finish__nav {
+    gap: 12px;
+  }
+
+  .create-itinerary-page .step2-members__nav .next-button,
+  .create-itinerary-page .step2-members__nav .back-button,
+  .create-itinerary-page .step3-finish__nav .next-button,
+  .create-itinerary-page .step3-finish__nav .back-button,
+  .create-itinerary-page .step3-finish__nav .finish-button {
+    flex: 1;
+    min-height: 44px;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* Step 1's lone Next button spans the full width instead of hugging the edge. */
+  .create-itinerary-page .step1-trip-basics .next-button {
+    align-self: stretch;
+    min-height: 44px;
+    justify-content: center;
+  }
+}
+
+/* On the narrowest phones the two-column review grid stacks into one column so
+   each label/value pair keeps its full width. */
+@media (max-width: 480px) {
+  .create-itinerary-page .details-list {
+    grid-template-columns: 1fr;
   }
 }
 

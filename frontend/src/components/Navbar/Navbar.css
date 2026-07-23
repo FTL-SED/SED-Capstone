@@ -34,6 +34,202 @@
 }
 
 /* ==========================================================================
+   Hamburger menu (mobile only)
+   Above the breakpoint the toggle, overlay and drawer are all hidden and the
+   bar keeps its inline links exactly as before. At/below it the inline links
+   collapse into a slide-in drawer, leaving only the wordmark + account icon on
+   the top bar.
+   ========================================================================== */
+
+/* The hamburger button is desktop-hidden; the mobile media query reveals it. */
+.navbar__menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-left: -8px; /* optical: pull the icon toward the left edge */
+  border: none;
+  background: transparent;
+  color: inherit;
+  border-radius: var(--radius-sm);
+}
+
+/* Three stacked bars drawn from one <span> plus its ::before/::after. */
+.navbar__menu-icon,
+.navbar__menu-icon::before,
+.navbar__menu-icon::after {
+  content: "";
+  display: block;
+  width: 22px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.navbar__menu-icon {
+  position: relative;
+}
+
+.navbar__menu-icon::before {
+  position: absolute;
+  top: -7px;
+}
+
+.navbar__menu-icon::after {
+  position: absolute;
+  top: 7px;
+}
+
+/* Dim, click-to-close scrim behind the drawer. Hidden on desktop; at the mobile
+   breakpoint it's laid out full-screen but stays non-interactive until open —
+   without pointer-events:none the invisible (opacity:0) scrim would still sit
+   over the whole viewport at z-index 60 and swallow every tap on the page and
+   navbar. pointer-events is re-enabled by the --open modifier below. */
+.navbar__overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(51, 64, 42, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.24s ease;
+}
+
+/* Slide-in panel holding the nav links. Off-canvas to the left by default. */
+.navbar__drawer {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 61;
+  width: min(78vw, 300px);
+  padding: 20px;
+  background: #f6efe1;
+  border-right: 1px solid rgba(120, 104, 74, 0.16);
+  box-shadow: 6px 0 28px -12px rgba(74, 64, 40, 0.5);
+  transform: translateX(-100%);
+  transition: transform 0.26s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navbar__drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.navbar__drawer-title {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 600;
+  font-size: 1.2rem;
+  color: #33402a;
+}
+
+.navbar__drawer-close {
+  border: none;
+  background: transparent;
+  color: #33402a;
+  font-size: 1.75rem;
+  line-height: 1;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+}
+
+/* Stack the links vertically inside the drawer (the shared .nav-links is a
+   horizontal row by default). */
+.navbar__drawer .nav-links,
+.navbar__drawer .auth-buttons {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.navbar__drawer .nav-link {
+  padding: 12px 4px;
+  font-size: 1.05rem;
+}
+
+.navbar__drawer .auth-buttons {
+  gap: 4px;
+  margin-top: 0;
+}
+
+/* In the drawer, Login + Register drop their top-bar treatment (a quiet text
+   link + a moss pill) and render as uniform, full-width stacked items — the
+   SAME format the signed-in drawer gives its nav links, so the two states look
+   consistent. Matching .navbar__drawer .nav-link: left-aligned, 12px 4px
+   padding, 1.05rem, plain (no border / pill / fill). */
+/* Prefixed with .navbar so these out-specify the later .navbar--hero button
+   rules (equal specificity would otherwise let the hero pill/text-link win,
+   since the drawer sits inside .navbar--hero). */
+.navbar .navbar__drawer .login-button,
+.navbar .navbar__drawer .register-button {
+  width: 100%;
+  padding: 12px 4px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #33402a;
+  font-size: 1.05rem;
+  font-weight: 500;
+  text-align: left;
+  opacity: 0.82;
+}
+
+.navbar .navbar__drawer .login-button:hover,
+.navbar .navbar__drawer .register-button:hover {
+  background: transparent;
+  border-color: transparent;
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  /* Reveal the hamburger and hide the inline links / auth buttons; the account
+     icon stays, pushed to the right. */
+  .navbar__menu-toggle {
+    display: inline-flex;
+  }
+
+  .navbar__inner > .nav-links,
+  .navbar__inner > .auth-buttons {
+    display: none;
+  }
+
+  .navbar__overlay,
+  .navbar__drawer {
+    display: block;
+  }
+
+  /* The wordmark sits just right of the hamburger; the account icon (or, for
+     signed-out visitors, nothing) is pushed to the far edge. */
+  .navbar__inner > .logo {
+    margin-right: auto;
+  }
+
+  .navbar__overlay--open {
+    opacity: 1;
+    /* Only the open scrim catches clicks (to close the drawer); the closed one
+       stays click-through so the page underneath stays tappable. */
+    pointer-events: auto;
+  }
+
+  .navbar__drawer--open {
+    transform: translateX(0);
+  }
+}
+
+/* Respect reduced-motion: no slide, just show/hide. */
+@media (prefers-reduced-motion: reduce) {
+  .navbar__drawer,
+  .navbar__overlay {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
    Hero variant — the warm editorial treatment: an editorial serif wordmark
    with the sunset diamond mark, warm moss links, a quiet "Login" text link and
    a moss "Register" pill. Applied via the .navbar--hero modifier (see App.jsx).
@@ -56,6 +252,13 @@
   right: 0;
   background: #f6efe1;
   border-bottom: 1px solid rgba(120, 104, 74, 0.16);
+  /* The bar paints a solid fill, so it doesn't need the base bar's frosted
+     blur. Dropping backdrop-filter also stops it creating a containing block
+     for the fixed drawer + overlay, which would otherwise trap them inside the
+     short header box instead of letting them fill the viewport (see the same
+     reset on the in-app hero bar below). */
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /* In-app hero bar (no .navbar--floating): a SOLID warm cream fill instead of
@@ -74,7 +277,9 @@
    padding and gap instead of the app's fixed-height bar. */
 .navbar--hero .navbar__inner {
   height: auto;
-  max-width: 1200px;
+  /* Match the content column (--page-max) so the bar and the page below share
+     the same left/right edges instead of the bar running wider. */
+  max-width: var(--page-max);
   gap: 32px;
   padding: 26px 40px;
 }
@@ -131,6 +336,11 @@
 .navbar--hero .nav-link:hover::after,
 .navbar--hero .nav-link--active::after {
   right: 0;
+}
+
+/* Hamburger + drawer accents pick up the warm moss identity on hero pages. */
+.navbar--hero .navbar__menu-toggle {
+  color: #33402a;
 }
 
 /* Signed-in avatar: warm hover ring */

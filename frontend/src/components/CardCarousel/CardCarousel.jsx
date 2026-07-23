@@ -5,8 +5,9 @@ import CarouselArrow from '../CarouselArrow/CarouselArrow.jsx'
 import SectionHeader from '../SectionHeader/SectionHeader.jsx'
 
 // How many placeholder squares to show while the first fetch is in flight —
-// matches the ~5 cards visible per view.
-const PLACEHOLDER_COUNT = 5;
+// matches the 4 cards visible per view at the widest breakpoint (see
+// CardCarousel.css), which now mirrors the Explore grid's column count.
+const PLACEHOLDER_COUNT = 4;
 
 // `title` is the section heading; the arrows sit on the same row (right-aligned)
 // so the heading and controls line up. `headerAction` is an optional extra
@@ -51,7 +52,7 @@ function CardCarousel({
     return () => window.removeEventListener('resize', updateArrowStates);
   }, [updateArrowStates, itineraries, loading]);
 
-  // Page by one full view (~5 cards) in either direction.
+  // Page by one full view (the visible cards) in either direction.
   const scrollBy = (multiplier) => {
     const el = trackRef.current;
     if (!el) return;
