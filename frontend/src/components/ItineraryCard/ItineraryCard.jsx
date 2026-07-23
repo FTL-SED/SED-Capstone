@@ -43,13 +43,11 @@ function ItineraryCard({
         alt={title || "Itinerary cover"}
         onError={() => setImageFailed(true)}
       />
-      {!isOwner && (
-        <BookmarkButton
-          className="itinerary-card__bookmark"
-          bookmarked={bookmarked}
-          onClick={handleBookmark}
-        />
-      )}
+      <BookmarkButton
+        className="itinerary-card__bookmark"
+        bookmarked={bookmarked}
+        onClick={handleBookmark}
+      />
       <div className="itinerary-card__body">
         <div className="itinerary-card__title-row">
           <h3>{title || "Untitled Itinerary"}</h3>
