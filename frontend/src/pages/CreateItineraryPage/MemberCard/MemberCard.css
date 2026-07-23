@@ -33,3 +33,15 @@
   color: #555;
   margin-top: 0.25rem;
 }
+
+/* Sub-group caption under the "Food preferences" label (Cuisines / Dietary).
+   Quieter than .member-card__label so it reads as a subdivision, not a new field. */
+.member-card__sublabel {
+  display: block;
+  margin: 0.5rem 0 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--slate-500, #6e6656);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

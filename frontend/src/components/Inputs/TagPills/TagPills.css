@@ -36,3 +36,54 @@
   outline: 2px solid var(--accent, #0d9488);
   outline-offset: 2px;
 }
+
+/* "View more / View less" disclosure — a ghost/dashed pill so it never reads as
+   selectable content or a selected pill (solid orange is reserved for --on). */
+.tag-pill--more {
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--border-strong, #cbd5e1);
+  color: var(--accent, #0d9488);
+  font-weight: 600;
+  /* Meets the 44px touch-target minimum for the new control. */
+  min-height: 44px;
+}
+
+.tag-pill--more:hover {
+  background: transparent;
+  border-color: var(--accent, #0d9488);
+  color: var(--accent-strong, #0f766e);
+}
+
+/* Revealed overflow pills break to their own full-width line below the toggle
+   and wrap like the main row. The [hidden] override is required because this
+   rule sets display:flex, which would otherwise beat the UA `[hidden]` rule. */
+.tag-pills__overflow {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.tag-pills__overflow[hidden] {
+  display: none;
+}
+
+/* Gentle reveal — enhancement only; reduced-motion users get an instant show. */
+@media (prefers-reduced-motion: no-preference) {
+  .tag-pills__overflow:not([hidden]) .tag-pill {
+    animation: tag-pills-reveal 200ms ease-out both;
+  }
+
+  @keyframes tag-pills-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
