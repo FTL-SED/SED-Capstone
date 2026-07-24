@@ -8,6 +8,31 @@
   align-self: flex-end;
 }
 
+/* Date + Group availability sit side by side as two equal rectangles;
+   they stack on narrow screens. */
+.step1-trip-basics__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  /* Equal-height columns so both headings sit level at the top; each field
+     pushes its input box to the bottom (see .date-field) so the boxes stay
+     aligned with the time pickers below their inline labels. */
+  align-items: stretch;
+}
+
+/* Max radius + Budget stacked as two rectangles in a column. */
+.step1-trip-basics__column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (max-width: 560px) {
+  .step1-trip-basics__row {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Small legend at the top of the step explaining the required asterisk. */
 .step1-trip-basics__legend {
   margin: 0;

@@ -1,5 +1,12 @@
 .tag-pills {
   display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Pills wrap and size to their label (as before); the row fills and wraps. */
+.tag-pills__grid {
+  display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
 }
@@ -37,15 +44,24 @@
   outline-offset: 2px;
 }
 
+/* Toggle row: keep the "View more / View less" control on its own line, always
+   pushed to the right so it never wraps into the pill grid. */
+.tag-pills__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 /* "View more / View less" disclosure — a ghost/dashed pill so it never reads as
-   selectable content or a selected pill (solid orange is reserved for --on). */
+   selectable content or a selected pill (solid accent is reserved for --on). It
+   sizes to its label (not a grid cell) since it lives outside the grid. */
 .tag-pill--more {
   background: transparent;
   border-style: dashed;
   border-color: var(--border-strong, #cbd5e1);
   color: var(--accent, #0d9488);
   font-weight: 600;
-  /* Meets the 44px touch-target minimum for the new control. */
+  text-transform: none;
+  /* Meets the 44px touch-target minimum for the control. */
   min-height: 44px;
 }
 
@@ -55,24 +71,10 @@
   color: var(--accent-strong, #0f766e);
 }
 
-/* Revealed overflow pills break to their own full-width line below the toggle
-   and wrap like the main row. The [hidden] override is required because this
-   rule sets display:flex, which would otherwise beat the UA `[hidden]` rule. */
-.tag-pills__overflow {
-  flex-basis: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.4rem;
-}
-
-.tag-pills__overflow[hidden] {
-  display: none;
-}
-
-/* Gentle reveal — enhancement only; reduced-motion users get an instant show. */
+/* Gentle reveal for overflow pills — enhancement only; reduced-motion users get
+   an instant show. */
 @media (prefers-reduced-motion: no-preference) {
-  .tag-pills__overflow:not([hidden]) .tag-pill {
+  .tag-pill--reveal {
     animation: tag-pills-reveal 200ms ease-out both;
   }
 

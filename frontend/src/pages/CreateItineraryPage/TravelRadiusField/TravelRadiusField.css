@@ -1,4 +1,17 @@
-.travel-radius-field h2 {
-  font-size: 1.4rem;
+/* Heading + live value on one line, slider below (see .range-slider in App.css). */
+.travel-radius-field__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
+}
+
+.travel-radius-field__head h2 {
+  font-size: 1.4rem;
+}
+
+.travel-radius-field__readout {
+  font-weight: 600;
+  color: var(--accent-strong);
 }

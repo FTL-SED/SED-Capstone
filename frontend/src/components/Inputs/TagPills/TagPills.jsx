@@ -27,13 +27,13 @@ function TagPills({ options = [], selected = [], onChange, collapsedCount, group
     collapsedCount,
   })
 
-  const renderPill = (option) => {
+  const renderPill = (option, reveal = false) => {
     const isOn = selected.includes(option)
     return (
       <button
         key={option}
         type="button"
-        className={`tag-pill${isOn ? ' tag-pill--on' : ''}`}
+        className={`tag-pill${isOn ? ' tag-pill--on' : ''}${reveal ? ' tag-pill--reveal' : ''}`}
         aria-pressed={isOn}
         onClick={() => toggle(option)}
       >
@@ -44,30 +44,32 @@ function TagPills({ options = [], selected = [], onChange, collapsedCount, group
 
   return (
     <div className="tag-pills" role="group">
-      {alwaysVisible.map(renderPill)}
+      {/* All shown pills live in one equal-column grid so they stay uniform in
+          size; overflow pills join the same grid when expanded. */}
+      <div
+        id={regionId}
+        className="tag-pills__grid"
+        aria-live="polite"
+        aria-label={`${groupLabel}`}
+      >
+        {alwaysVisible.map((o) => renderPill(o))}
+        {hasToggle && expanded && overflow.map((o) => renderPill(o, true))}
+      </div>
 
+      {/* The toggle sits on its own row, always aligned right — never wrapping
+          into the pill grid's rows. */}
       {hasToggle && (
-        <button
-          type="button"
-          className="tag-pill tag-pill--more"
-          aria-expanded={expanded}
-          aria-controls={regionId}
-          aria-label={expanded ? `View less ${groupLabel}` : `View ${overflow.length} more ${groupLabel}`}
-          onClick={() => setExpanded((e) => !e)}
-        >
-          {expanded ? 'View less' : `View more (+${overflow.length})`}
-        </button>
-      )}
-
-      {hasToggle && (
-        <div
-          id={regionId}
-          className="tag-pills__overflow"
-          hidden={!expanded}
-          aria-live="polite"
-          aria-label={`More ${groupLabel}`}
-        >
-          {overflow.map(renderPill)}
+        <div className="tag-pills__actions">
+          <button
+            type="button"
+            className="tag-pill tag-pill--more"
+            aria-expanded={expanded}
+            aria-controls={regionId}
+            aria-label={expanded ? `View less ${groupLabel}` : `View ${overflow.length} more ${groupLabel}`}
+            onClick={() => setExpanded((e) => !e)}
+          >
+            {expanded ? 'View less' : `View more (+${overflow.length})`}
+          </button>
         </div>
       )}
     </div>

@@ -1,4 +1,24 @@
-.budget-field h2 {
-  font-size: 1.4rem;
+/* Heading + live value on one line, slider below (see .range-slider in App.css). */
+.budget-field__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
+}
+
+.budget-field__head h2 {
+  font-size: 1.4rem;
+}
+
+.budget-field__readout {
+  font-weight: 600;
+  color: var(--accent-strong);
+  white-space: nowrap;
+}
+
+.budget-field__unit {
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: var(--slate-500);
 }
