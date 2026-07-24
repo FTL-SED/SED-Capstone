@@ -1,3 +1,4 @@
+import itineraryPreview from '../../../assets/itinerary-preview.png'
 import './ChaosToClaritySection.css'
 
 /*
@@ -21,6 +22,8 @@ const BEATS = [
   {
     title: 'Your itinerary, built in seconds.',
     copy: 'Our AI organizes destinations into a route that makes sense: less backtracking, better timing, and more time enjoying the day.',
+    image: itineraryPreview,
+    imageAlt: 'A finished NavQuest itinerary — a Mission District taco crawl with timed stops beside a live map of the route.',
   },
   {
     title: 'Discover journeys worth sharing.',
@@ -111,10 +114,19 @@ function ChaosToClaritySection() {
                 <p className="journey-copy">{beat.copy}</p>
               </div>
 
-              {/* image placeholder */}
-              <div className="field-beat__image" role="img" aria-label="Sample image">
-                <span className="field-beat__image-label">Sample image</span>
-              </div>
+              {/* a real preview where the beat provides one, else a placeholder */}
+              {beat.image ? (
+                <img
+                  className="field-beat__image field-beat__image--photo"
+                  src={beat.image}
+                  alt={beat.imageAlt}
+                  loading="lazy"
+                />
+              ) : (
+                <div className="field-beat__image" role="img" aria-label="Sample image">
+                  <span className="field-beat__image-label">Sample image</span>
+                </div>
+              )}
             </div>
 
             {/* greenery filling the open grass between this beat and the next —

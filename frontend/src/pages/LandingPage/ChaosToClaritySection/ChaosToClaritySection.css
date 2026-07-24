@@ -75,6 +75,17 @@
   color: rgba(246, 239, 225, 0.7);
 }
 
+/* A real photo keeps the placeholder box's size/frame but shows in full —
+   stretched to fill (never cropped). Solid (not dashed) border and a soft
+   shadow lift it off the field. */
+.field-beat__image--photo {
+  object-fit: fill;
+  border-style: solid;
+  border-color: rgba(246, 239, 225, 0.12);
+  background: none;
+  box-shadow: 0 26px 60px rgba(18, 24, 14, 0.5);
+}
+
 .field-beat__image-label {
   font-size: 0.85rem;
   font-weight: 600;
