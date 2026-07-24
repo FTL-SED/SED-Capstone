@@ -20,7 +20,7 @@ const INITIAL_FORM = {
   endTime: '',
   transport: '',
   travelRadius: '',
-  budget: '',
+  budget: '25', // slider default; budget is required, so start at a real value
   members: [newMember()],
   isPublic: false,
   title: '',

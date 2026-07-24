@@ -322,3 +322,101 @@ img {
     animation: none;
   }
 }
+
+/* Accent-themed range slider, shared by the budget + travel-radius fields. The
+   track is filled up to the thumb with the accent via a --fill custom property
+   set inline from the current value. */
+.range-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  margin: 6px 0;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    to right,
+    var(--accent) 0%,
+    var(--accent) var(--fill, 0%),
+    var(--border-strong) var(--fill, 0%),
+    var(--border-strong) 100%
+  );
+  cursor: pointer;
+}
+
+.range-slider:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+.range-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+/* Firefox draws its own track fill; keep it neutral and let the thumb read. */
+.range-slider::-moz-range-track {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: transparent;
+}
+
+/* Min / max labels beneath a slider. */
+.range-slider__ticks {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--slate-400);
+}
+
+/* Editable upper-bound on the right of a slider's ticks: a compact inline input
+   so users can raise the ceiling past the default range. */
+.range-slider__max {
+  display: inline-flex;
+  align-items: center;
+  color: var(--slate-500);
+}
+
+.range-slider__max input {
+  width: 3.5em;
+  padding: 2px 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--slate-800);
+  font: inherit;
+  text-align: right;
+  /* Trim the native number spinners so the compact field stays tidy. */
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.range-slider__max input::-webkit-outer-spin-button,
+.range-slider__max input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.range-slider__max input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}

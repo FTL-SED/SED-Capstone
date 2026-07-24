@@ -39,11 +39,15 @@ function Step1_TripBasics({ form, update, onNext }) {
       <p className="step1-trip-basics__legend">
         <span className="field-required" aria-hidden="true">*</span> Required
       </p>
-      <DateField form={form} update={update} />
-      <TimeRangeField form={form} update={update} />
+      <div className="step1-trip-basics__row">
+        <DateField form={form} update={update} />
+        <TimeRangeField form={form} update={update} />
+      </div>
       <TransportField form={form} update={update} />
-      <TravelRadiusField form={form} update={update} />
-      <BudgetField form={form} update={update} />
+      <div className="step1-trip-basics__column">
+        <TravelRadiusField form={form} update={update} />
+        <BudgetField form={form} update={update} />
+      </div>
       <ErrorMessage message={error} />
       <NextButton onClick={handleNext} />
     </div>

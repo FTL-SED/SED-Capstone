@@ -3,6 +3,133 @@
   margin-bottom: 12px;
 }
 
-.time-range-field .time-input + .time-input {
-  margin-top: 12px;
+/* Start – End shown inline with a dash between; each picker splits the row. */
+.time-range-field__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.time-range-field__dash {
+  padding-bottom: 12px;
+  color: var(--slate-500);
+}
+
+/* One time control (label + boxed trigger + wheel popup). */
+.time-picker {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.time-picker__label {
+  color: var(--slate-600);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.time-picker__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--slate-800);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.time-picker__trigger:hover {
+  border-color: var(--accent);
+}
+
+.time-picker__trigger:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.time-picker__value--empty {
+  color: var(--slate-400);
+}
+
+.time-picker__chevron {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--slate-500);
+  transition: transform 0.15s ease;
+}
+
+.time-picker__chevron--open {
+  transform: rotate(180deg);
+}
+
+/* Wheel popup: three scrollable columns (hour / minute / AM-PM). */
+.time-picker__popup {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.time-wheel {
+  height: 132px;
+  width: 44px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  scroll-snap-type: y proximity;
+  /* Scroll without a visible scrollbar (Firefox / IE). */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Scroll without a visible scrollbar (WebKit / Blink). */
+.time-wheel::-webkit-scrollbar {
+  display: none;
+}
+
+.time-wheel__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 6px 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--slate-600);
+  font-size: 0.9rem;
+  cursor: pointer;
+  scroll-snap-align: center;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.time-wheel__item:hover {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.time-wheel__item--selected,
+.time-wheel__item--selected:hover {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
 }

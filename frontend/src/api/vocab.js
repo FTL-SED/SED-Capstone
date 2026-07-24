@@ -7,20 +7,29 @@
 // NOTE: keep in sync with the backend if its vocab changes. A shared GET /tags
 // endpoint would remove the duplication (see the roadmap's optional follow-up).
 
-// Interests / activity tags (from the catalog's non-food tags). Ordered so the
-// most broadly-appealing options come first (the wizard shows the first 8 by
-// default). Also consumed by DiscoverPage/FilterControls (order only).
+// Interests / activity tags — the canonical INTERESTS keys from
+// backend/config/tagVocab.js. Ordered so the most broadly-appealing options come
+// first (the wizard shows the first 8 by default). Also consumed by
+// DiscoverPage/FilterControls (order only). 'live music' is stored spaced (not
+// the canonical camelCase `liveMusic`) so it renders as "Live Music" through the
+// pills' capitalize styling.
+// NOTE: matching is raw-string overlap against catalog pins, and the catalog is
+// not yet re-tagged to this taxonomy, so several of these won't match venues
+// until that migration lands (see the venue-taxonomy-redesign spec).
 export const INTEREST_TAGS = [
-  'art', 'museum', 'history', 'nature', 'scenic_views', 'music', 'shopping', 'walking',
-  'architecture', 'landmark', 'photography', 'garden', 'hiking', 'beach', 'sunset',
-  'relaxing', 'entertainment', 'indoor',
+  'art', 'museums', 'history', 'architecture', 'nature', 'outdoors', 'scenic', 'photography',
+  'coffee', 'food', 'desserts', 'markets', 'shopping', 'nightlife', 'live music',
+  'entertainment', 'fitness', 'wellness',
 ]
 
-// Cuisines a place can serve (backend CUISINE_TAGS), most-common first.
+// Cuisines a place can serve. These are the values actually stored on catalog
+// pins' `cuisines` column — the engine matches member foodPrefs against them by
+// raw string overlap (normalizeTag isn't wired in), so a pill that isn't a real
+// catalog cuisine would silently match nothing. Most-common first. (Food-type
+// words like sushi/pizza/bbq/ramen/burgers live under interests, not cuisine.)
 export const CUISINE_TAGS = [
-  'mexican', 'italian', 'sushi', 'thai', 'chinese', 'american', 'pizza', 'indian',
-  'japanese', 'french', 'mediterranean', 'vietnamese', 'korean', 'bbq', 'seafood',
-  'ramen', 'noodles', 'steak', 'burgers',
+  'mexican', 'italian', 'thai', 'chinese', 'american', 'indian', 'japanese',
+  'french', 'mediterranean', 'vietnamese', 'korean', 'seafood', 'steak',
 ]
 
 // Dietary needs a place can accommodate (backend DIET_TAGS). Short list — the
