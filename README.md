@@ -16,7 +16,7 @@ NavQuest is an AI-powered itinerary planning platform designed to help people in
 
 The site generates tailored itineraries based on user inputs like budget, starting locations, transportation preferences, interests, availability and displays them both as textual plans and on an interactive map which shows each group member's information. Such as starts, visits, ends, travel methods, activity duration.
 
-Deployment Website: **https://sed-capstone.onrender.com/t**
+Deployment Website: **https://sed-capstone.onrender.com**
 
 ### Open-source libraries used
 
