@@ -13,6 +13,10 @@ export function buildRecommendationBody(form) {
   };
   if (form.transport) trip.transport = form.transport;
 
+  // Meals opt-in/out. Default (undefined form field) is to include meals, so
+  // only the explicit false needs sending — but send the boolean for clarity.
+  trip.includeMeals = form.includeMeals !== false;
+
   const radius = Number(form.travelRadius);
   if (form.travelRadius !== '' && Number.isFinite(radius) && radius > 0) {
     trip.travelRadius = radius;

@@ -63,3 +63,12 @@ test('omits transport when not chosen', () => {
   const { trip } = buildRecommendationBody({ ...baseForm, transport: '' })
   assert.equal('transport' in trip, false)
 })
+
+test('includes trip.includeMeals from the form', () => {
+  const base = {
+    startTime: '10:00', endTime: '20:30', budget: '100', transport: '', travelRadius: '',
+    members: [{ name: 'A', location: { latitude: 37.78, longitude: -122.4 }, interestTags: [], foodPrefs: [] }],
+  }
+  assert.equal(buildRecommendationBody({ ...base, includeMeals: true }).trip.includeMeals, true)
+  assert.equal(buildRecommendationBody({ ...base, includeMeals: false }).trip.includeMeals, false)
+})

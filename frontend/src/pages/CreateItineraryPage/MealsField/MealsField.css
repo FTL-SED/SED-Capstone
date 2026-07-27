@@ -1,0 +1,44 @@
+.meals-field h2 {
+  font-size: 1.4rem;
+  margin-bottom: 12px;
+}
+
+.meals-field__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Pill button. Unselected reads as a quiet outlined chip; the selected
+   mode is outlined in the accent with a soft tint so it stands out clearly. */
+.meals-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--slate-600);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease,
+    background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.meals-pill:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.meals-pill:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.meals-pill--selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
