@@ -31,7 +31,7 @@ test('422 when no member has an email', async () => {
 })
 
 test('200 sends one BCC email and reports sent/skipped', async () => {
-  const req = { params: { id: '1' }, user: { id: 7 }, body: {} }
+  const req = { params: { id: '1' }, user: { id: 7, email: 'owner@x.com' }, body: {} }
   const res = makeRes()
   let sentArgs
   await exportItineraryEmail(req, res, {
@@ -48,6 +48,49 @@ test('200 sends one BCC email and reports sent/skipped', async () => {
   assert.deepEqual(res.body.skipped, [{ name: 'Bo' }])
   assert.deepEqual(sentArgs.bcc, ['ana@x.com'])
   assert.ok(sentArgs.attachments?.[0]?.content instanceof Buffer)
+})
+
+test('email is deliverability-friendly: recipients in BCC only, replyTo owner, multipart HTML', async () => {
+  const req = { params: { id: '1' }, user: { id: 7, email: 'owner@x.com' }, body: {} }
+  const res = makeRes()
+  let sentArgs
+  await exportItineraryEmail(req, res, {
+    loadOwned: okOwned,
+    findForExport: async () => ({
+      id: 1, title: 'SF Day', pins: [],
+      members: [{ name: 'Ana', email: 'ana@x.com' }, { name: 'Bo', email: 'bo@x.com' }],
+    }),
+    buildPdf: async () => Buffer.from('%PDF-1.4'),
+    sendMail: async (args) => { sentArgs = args; return { messageId: 'm1' } },
+  })
+  assert.equal(res.statusCode, 200)
+  // Recipients go in BCC so they can't see each other; the controller does NOT set
+  // `to` (the mailer defaults it to the sending account for a valid To: header).
+  assert.deepEqual(sentArgs.bcc, ['ana@x.com', 'bo@x.com'])
+  assert.equal(sentArgs.to, undefined)
+  // Replies route to the owner who sent it.
+  assert.equal(sentArgs.replyTo, 'owner@x.com')
+  // A proper multipart body: both text and HTML present.
+  assert.ok(typeof sentArgs.text === 'string' && sentArgs.text.length > 0)
+  assert.match(sentArgs.html, /NavQuest/)
+})
+
+test('email HTML escapes a malicious itinerary title', async () => {
+  const req = { params: { id: '1' }, user: { id: 7, email: 'owner@x.com' }, body: {} }
+  const res = makeRes()
+  let sentArgs
+  await exportItineraryEmail(req, res, {
+    loadOwned: okOwned,
+    findForExport: async () => ({
+      id: 1, title: '<script>alert(1)</script>', pins: [],
+      members: [{ name: 'Ana', email: 'ana@x.com' }],
+    }),
+    buildPdf: async () => Buffer.from('%PDF-1.4'),
+    sendMail: async (args) => { sentArgs = args; return { messageId: 'm1' } },
+  })
+  assert.equal(res.statusCode, 200)
+  assert.doesNotMatch(sentArgs.html, /<script>/)
+  assert.match(sentArgs.html, /&lt;script&gt;/)
 })
 
 test('502 when sending fails', async () => {

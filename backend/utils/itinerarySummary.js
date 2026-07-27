@@ -60,3 +60,27 @@ export function buildItinerarySummary(itinerary) {
     lines: pins.map(buildLine),
   }
 }
+
+// Structured variant for the PDF renderer: instead of one pre-joined string per
+// stop, expose the raw parts so the PDF can style each independently (bold name,
+// muted category, a time chip, a small travel sub-line). Missing fields come back
+// as '' / null so the renderer can simply skip them — same don't-punish convention.
+export function buildItinerarySummaryData(itinerary) {
+  const pins = Array.isArray(itinerary?.pins) ? itinerary.pins : []
+  return {
+    brand: 'NavQuest',
+    title: itinerary?.title ?? 'Itinerary',
+    subtitle: buildSubtitle(itinerary ?? {}),
+    stops: pins.map((pin, index) => ({
+      index: index + 1,
+      time: [fmtTime(pin.startTime), fmtTime(pin.endTime)].filter(Boolean).join('–'),
+      name: pin.name ?? '',
+      category:
+        Array.isArray(pin.tags) && pin.tags.length > 0 ? pin.tags[0] : '',
+      travelToNext:
+        typeof pin.travelTimeToNextMinutes === 'number'
+          ? pin.travelTimeToNextMinutes
+          : null,
+    })),
+  }
+}

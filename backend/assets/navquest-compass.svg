@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- NavQuest golden-hour compass (from frontend Logo.jsx). Styles are inlined
+       here because svg-to-pdfkit reads presentation attributes, not external CSS. -->
+  <circle cx="50" cy="50" r="45" fill="rgba(255,255,255,0.82)" />
+  <circle cx="50" cy="50" r="45" fill="none" stroke="#ddcca6" stroke-width="7" />
+
+  <g stroke="#b0a58c" stroke-width="2" stroke-linecap="round">
+    <line x1="50" y1="9" x2="50" y2="19" stroke="#4e6540" stroke-width="3" />
+    <line x1="91" y1="50" x2="81" y2="50" />
+    <line x1="50" y1="91" x2="50" y2="81" />
+    <line x1="9" y1="50" x2="19" y2="50" />
+  </g>
+
+  <polygon points="50,16 45,50 55,50" fill="#cf6a2f" />
+  <polygon points="50,84 45,50 55,50" fill="#6e6656" />
+
+  <line x1="82" y1="82" x2="96" y2="96" stroke="#ddcca6" stroke-width="7" stroke-linecap="round" />
+
+  <circle cx="50" cy="50" r="5" fill="#3b4d31" />
+</svg>

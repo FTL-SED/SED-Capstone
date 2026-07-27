@@ -7,6 +7,32 @@ import { parseIdParam, loadOwned } from './helpers.js'
 import { buildItineraryPdf } from '../services/export/itineraryPdf.js'
 import { sendMail as realSendMail } from '../lib/mailer.js'
 
+// Escapes user-controlled text before it goes into the HTML email body.
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+// A small branded HTML body so the message is a proper multipart/alternative
+// (text + HTML) rather than a bare text line whose only content is an attachment
+// — the latter scores worse with spam filters. Golden-hour palette, matching the PDF.
+function buildEmailHtml(title, text) {
+  const safeTitle = escapeHtml(title)
+  const safeText = escapeHtml(text)
+  return `<div style="font-family:Arial,Helvetica,sans-serif;color:#2b2b2b;line-height:1.5">
+  <div style="background:#33402a;color:#f6efe1;padding:16px 20px;font-size:20px;font-weight:bold">NavQuest</div>
+  <div style="padding:20px">
+    <h2 style="color:#33402a;margin:0 0 8px">${safeTitle}</h2>
+    <p style="margin:0 0 12px">${safeText}</p>
+    <p style="color:#6e6656;font-size:13px;margin:0">The full itinerary is attached as a PDF.</p>
+  </div>
+</div>`
+}
+
 // Deps are injectable so the unit test can run without a DB or live SMTP.
 const DEFAULT_DEPS = {
   loadOwned,
@@ -43,11 +69,17 @@ async function exportItineraryEmail(req, res, deps = {}) {
   try {
     const pdf = await buildPdf(itinerary)
     const filename = `${(itinerary.title || 'itinerary').replace(/[^\w.-]+/g, '_')}.pdf`
+    const text = `Here's our plan for ${itinerary.title}. The full itinerary is attached as a PDF.`
 
     await sendMail({
       subject: `Your NavQuest itinerary: ${itinerary.title}`,
-      text: `Here's our plan for ${itinerary.title}. The full itinerary is attached as a PDF.`,
+      text,
+      html: buildEmailHtml(itinerary.title, text),
+      // Real recipients in BCC (they can't see each other); `to` defaults to the
+      // sending account in the mailer so the message still has a valid To: header.
       bcc: recipients.map((m) => m.email.trim()),
+      // Replies go to the owner who sent it, not the no-reply Gmail account.
+      replyTo: req.user?.email,
       attachments: [{ filename, content: pdf, contentType: 'application/pdf' }],
     })
 
