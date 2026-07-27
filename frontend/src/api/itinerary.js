@@ -86,6 +86,12 @@ export async function removeBookmark(id) {
   await api.delete(`/itineraries/${id}/bookmark`)
 }
 
+// POST /itineraries/:id/visited — mark an itinerary as visited ("I've been
+// here"). Idempotent; 204 No Content. There is no un-mark endpoint yet.
+export async function markVisited(id) {
+  await api.post(`/itineraries/${id}/visited`)
+}
+
 // GET /pins — browse/search the venue catalog to pick a place to add to an
 // itinerary. params: { q, category, limit, offset }. Returns catalog venues.
 export async function searchCatalog(params = {}) {

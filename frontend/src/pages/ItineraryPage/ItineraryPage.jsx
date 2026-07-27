@@ -17,6 +17,7 @@ import {
   addStop,
   deleteStop,
   updateItinerary,
+  markVisited,
 } from '../../api/itinerary.js'
 import { getCurrentUser } from '../../lib/currentUser.js'
 
@@ -181,6 +182,7 @@ function ItineraryPage() {
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+  const [visited, setVisited] = useState(false);
 
   const currentUserId = getCurrentUser()?.id;
 
@@ -211,6 +213,7 @@ function ItineraryPage() {
             const numId = Number(id);
             setLiked((me.likedItineraries ?? []).some((it) => it.id === numId));
             setBookmarked((me.bookmarkedItineraries ?? []).some((it) => it.id === numId));
+            setVisited((me.visitedItineraries ?? []).some((it) => it.id === numId));
           } catch {
             /* leave defaults */
           }
@@ -296,6 +299,20 @@ function ItineraryPage() {
     setBookmarked(desired);
     bookmarkSync.current.desired = desired;
     syncBookmark();
+  };
+
+  // Mark this itinerary as visited ("I've been here"). One-way for now: no
+  // un-mark endpoint. Optimistic — show visited immediately, revert on failure.
+  const handleMarkVisited = async () => {
+    if (visited) return;
+    setVisited(true);
+    try {
+      await markVisited(id);
+    } catch (err) {
+      console.error('Mark visited failed, reverting:', err);
+      setVisited(false);
+      window.alert('Could not mark this as visited. Please try again.');
+    }
   };
 
   // Owner-only: delete this itinerary after confirming, then go home.
@@ -429,6 +446,7 @@ function ItineraryPage() {
         bookmarked={bookmarked}
         likeCount={likeCount}
         isPublic={itinerary.isPublic}
+        visited={visited}
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onToggleLike={toggleLike}
@@ -436,6 +454,7 @@ function ItineraryPage() {
         onTogglePrivacy={handleTogglePrivacy}
         onDelete={handleDelete}
         onCopy={handleCopy}
+        onMarkVisited={handleMarkVisited}
         onRemoveStop={handleRemoveStop}
         onAddStop={handleAddStop}
       />
