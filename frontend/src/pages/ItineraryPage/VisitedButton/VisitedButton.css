@@ -1,0 +1,9 @@
+/* Neutral outline over .action-btn (App.css); teal on hover, filled when marked. */
+.visited-button:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+.visited-button--on {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}

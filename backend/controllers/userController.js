@@ -233,6 +233,9 @@ async function getUser(req, res) {
     createdItineraries: user.createdItineraries.map((it) => reshapeItinerary(it, { forOwner: true })),
     bookmarkedItineraries: user.bookmarks.map((b) => reshapeItinerary(b.itinerary, { forOwner: false })),
     likedItineraries: user.likes.map((l) => reshapeItinerary(l.itinerary, { forOwner: false })),
+    // Visited itineraries are other people's public itineraries → forOwner:false
+    // strips owner-only fields (members, meeting point), same as liked/bookmarked.
+    visitedItineraries: user.visited.map((v) => reshapeItinerary(v.itinerary, { forOwner: false })),
   })
 }
 
