@@ -142,3 +142,41 @@ test('works without a timeWindow (falls back to a default day)', () => {
   assert.equal(result.feasible, true)
   assert.ok(result.stops.length > 0)
 })
+
+test('fallback: full-day trip seats a lunch AND a dinner meal', () => {
+  const shortlist = [
+    { id: 1, name: 'Museum', category: 'activity', pricePerPerson: 20, latitude: 37.785, longitude: -122.401, rating: 4.6 },
+    { id: 2, name: 'Park', category: 'activity', pricePerPerson: 0, latitude: 37.769, longitude: -122.456, rating: 4.8 },
+    { id: 3, name: 'Viewpoint', category: 'activity', pricePerPerson: 0, latitude: 37.802, longitude: -122.405, rating: 4.5 },
+    { id: 10, name: 'Taqueria', category: 'restaurant', pricePerPerson: 14, latitude: 37.751, longitude: -122.418, rating: 4.5 },
+    { id: 11, name: 'Ramen', category: 'restaurant', pricePerPerson: 22, latitude: 37.785, longitude: -122.432, rating: 4.7 },
+  ]
+  const constraints = {
+    timeWindow: { startTime: '10:00', endTime: '20:30' },
+    maxBudgetPerPerson: 120,
+    transport: 'driving',
+    includeMeals: true,
+    foodBelowMin: false,
+  }
+  const result = fallbackSequence(shortlist, constraints)
+  assert.equal(result.feasible, true)
+  const mealTypes = new Set(result.stops.filter((s) => s.mealType).map((s) => s.mealType))
+  assert.ok(mealTypes.has('lunch'), 'expected a lunch meal')
+  assert.ok(mealTypes.has('dinner'), 'expected a dinner meal')
+})
+
+test('fallback: includeMeals=false seats no meals', () => {
+  const shortlist = [
+    { id: 1, name: 'Museum', category: 'activity', pricePerPerson: 20, latitude: 37.785, longitude: -122.401, rating: 4.6 },
+    { id: 10, name: 'Taqueria', category: 'restaurant', pricePerPerson: 14, latitude: 37.751, longitude: -122.418, rating: 4.5 },
+  ]
+  const constraints = {
+    timeWindow: { startTime: '10:00', endTime: '20:30' },
+    maxBudgetPerPerson: 120,
+    transport: 'driving',
+    includeMeals: false,
+  }
+  const result = fallbackSequence(shortlist, constraints)
+  assert.equal(result.feasible, true)
+  assert.equal(result.stops.filter((s) => s.mealType).length, 0)
+})

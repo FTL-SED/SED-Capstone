@@ -10,7 +10,7 @@
 import {
   AVG_STOP_DURATION_MIN,
   MEAL_TIME_WINDOWS,
-  mealBlockAt,
+  blocksOverlappingWindow,
   travelMinutesFor,
   CATEGORY,
 } from '../../../config/ai.js'
@@ -55,67 +55,70 @@ const nearestNeighborOrder = (pins, anchor) => {
 // { feasible: true, title, location, description, stops[] } or
 // { feasible: false, reason } when nothing can fit.
 const fallbackSequence = (shortlist, constraints) => {
-  const { timeWindow, maxBudgetPerPerson, meetingPoint, transport } = constraints ?? {}
+  const {
+    timeWindow, maxBudgetPerPerson, meetingPoint, transport,
+    includeMeals, foodBelowMin,
+  } = constraints ?? {}
 
   if (!Array.isArray(shortlist) || shortlist.length === 0) {
     return { feasible: false, reason: 'No places available to sequence.' }
   }
 
-  // Anchor: the meetingPoint if given, else the first pin (so ordering still
-  // works before the engine supplies a meetingPoint).
-  const anchor = meetingPoint ?? shortlist[0]
-  const ordered = nearestNeighborOrder(shortlist, anchor)
-
-  // Time window (default to a generous 09:00–21:00 if none supplied yet). We
-  // work the clock in ELAPSED minutes from the start (0-based), so an overnight
-  // window (22:00→02:00) just has a positive length and the clock walks past
-  // midnight naturally. Wall-clock is recovered only where needed (meal-block
-  // lookup, HH:MM output). startWall lets us map elapsed → wall-clock.
   const startWall = toMinutes(timeWindow?.startTime ?? '09:00')
-  const windowLen = windowLengthMinutes(
-    timeWindow?.startTime ?? '09:00',
-    timeWindow?.endTime ?? '21:00',
-  )
+  const startHHMM = timeWindow?.startTime ?? '09:00'
+  const endHHMM = timeWindow?.endTime ?? '21:00'
+  const windowLen = windowLengthMinutes(startHHMM, endHHMM)
   if (windowLen <= 0) {
     return { feasible: false, reason: 'Trip time window is empty or inverted.' }
   }
-  // Wall-clock minute-of-day for an elapsed offset from start (wraps past 24h).
   const wallAt = (elapsed) => (startWall + elapsed) % MINUTES_PER_DAY
-
-  // Stop costs are per person, so the cap is the per-person budget directly
-  // (no groupSize multiplier — that would mix per-person costs with a
-  // whole-group cap). Matches validate.js's budget rule.
   const budgetCap = typeof maxBudgetPerPerson === 'number' ? maxBudgetPerPerson : Infinity
 
+  // Which meal blocks to guarantee: same-day blocks overlapping the window,
+  // but only when the group wants meals and food isn't scarce (best-effort
+  // otherwise — the greedy walk can still land a restaurant in a window).
+  const wantMeals = includeMeals === true && !foodBelowMin
+  const targetBlocks = wantMeals ? blocksOverlappingWindow(startHHMM, endHHMM) : []
+
+  // Reserve one best-rated, distinct restaurant per target block. Each becomes
+  // a fixed anchor at its block's open time (elapsed from start, clamped ≥0).
+  const usedIds = new Set()
+  const anchors = []
+  for (const block of targetBlocks) {
+    const blockStart = toMinutes(MEAL_TIME_WINDOWS[block].start)
+    // Skip blocks that start before the trip — breakfast when starting at 10am doesn't make sense.
+    if (blockStart < startWall) continue
+    const pick = shortlist
+      .filter((p) => isRestaurant(p) && !usedIds.has(p.id))
+      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))[0]
+    if (!pick) continue
+    usedIds.add(pick.id)
+    const openElapsed = blockStart - startWall
+    if (openElapsed + AVG_STOP_DURATION_MIN <= windowLen) {
+      anchors.push({ block, pin: pick, arrive: openElapsed })
+    }
+  }
+  anchors.sort((a, b) => a.arrive - b.arrive)
+
+  // Activities (and any unreserved restaurants) in nearest-neighbor order.
+  const rest = shortlist.filter((p) => !usedIds.has(p.id))
+  const anchorPoint = meetingPoint ?? shortlist[0]
+  const ordered = nearestNeighborOrder(rest, anchorPoint)
+
   const stops = []
-  const mealsUsed = new Set() // meal blocks already filled — one meal per block
-  let clock = 0 // elapsed minutes from the trip start
+  let clock = 0
   let spent = 0
   let prev = null
+  let ai = 0
+  let mi = 0
 
-  for (const pin of ordered) {
-    // Travel from the previous stop eats clock time before we can arrive.
-    // Compute the candidate arrival locally — do NOT mutate `clock`/`prev`
-    // until we actually keep this stop, or a pin skipped for budget below
-    // would leave the clock inflated by travel to a place we never visited.
-    const arrive = prev ? clock + travelMinutes(prev, pin, transport) : clock
+  // Budget still needed by not-yet-placed meal anchors, so activities can't
+  // spend money the guaranteed meals require.
+  const reservedMealBudget = () =>
+    anchors.slice(mi).reduce((sum, a) => sum + (a.pin.pricePerPerson ?? 0), 0)
+
+  const emit = (pin, arrive, mealType) => {
     const depart = arrive + AVG_STOP_DURATION_MIN
-    // Out of the trip window — stop packing the day.
-    if (depart > windowLen) break
-
-    // Cost is a fact about the place (pin.pricePerPerson), used here only to
-    // stay within budget — it's NOT written onto the stop. Downstream reads the
-    // price from the shortlist by pinId (see validate.js / persist.js).
-    const cost = typeof pin.pricePerPerson === 'number' ? pin.pricePerPerson : 0
-    if (spent + cost > budgetCap) continue // skip this one, try the next
-
-    // A restaurant landing in an open meal block becomes that meal; a second
-    // restaurant in the same block is kept as an ordinary stop (block full).
-    // Meal blocks are absolute daytime windows, so match on wall-clock.
-    const block = isRestaurant(pin) ? mealBlockAt(wallAt(arrive)) : null
-    const mealType = block && !mealsUsed.has(block) ? block : undefined
-    if (mealType) mealsUsed.add(mealType)
-
     stops.push({
       pin,
       pinId: pin.id,
@@ -123,23 +126,60 @@ const fallbackSequence = (shortlist, constraints) => {
       departTime: toHHMM(wallAt(depart)),
       ...(mealType ? { mealType } : {}),
     })
-
-    spent += cost
+    spent += typeof pin.pricePerPerson === 'number' ? pin.pricePerPerson : 0
     clock = depart
     prev = pin
+  }
+
+  // Interleave: place activities until the next meal anchor is due, then the
+  // meal (held to its open time), until the day is full or nothing fits.
+  while (true) {
+    const nextMeal = mi < anchors.length ? anchors[mi] : null
+
+    if (ai < ordered.length) {
+      const pin = ordered[ai]
+      const arrive = prev ? clock + travelMinutes(prev, pin, transport) : clock
+      const depart = arrive + AVG_STOP_DURATION_MIN
+      const cost = typeof pin.pricePerPerson === 'number' ? pin.pricePerPerson : 0
+      const fitsWindow = depart <= windowLen
+      const fitsBudget = spent + cost + reservedMealBudget() <= budgetCap
+      // Yield to the meal once an activity would run into its open time.
+      const beforeMeal = !nextMeal || depart <= nextMeal.arrive
+      if (fitsWindow && fitsBudget && beforeMeal) {
+        emit(pin, arrive)
+        ai++
+        continue
+      }
+      if (!fitsWindow && !nextMeal) break
+      if (fitsWindow && !fitsBudget && !nextMeal) { ai++; continue }
+    }
+
+    if (nextMeal) {
+      const arrive = Math.max(prev ? clock + travelMinutes(prev, nextMeal.pin, transport) : clock, nextMeal.arrive)
+      // Only tag the mealType when it lands inside the block; otherwise place it
+      // as an ordinary stop so validation's "mealType outside its block" rule
+      // can't reject the day (rare in SF's short distances / wide blocks).
+      const inBlock = arrive <= (toMinutes(MEAL_TIME_WINDOWS[nextMeal.block].end) - startWall)
+      if (arrive + AVG_STOP_DURATION_MIN <= windowLen) {
+        emit(nextMeal.pin, arrive, inBlock ? nextMeal.block : undefined)
+      }
+      mi++
+      continue
+    }
+
+    break
   }
 
   if (stops.length === 0) {
     return { feasible: false, reason: 'No places fit the trip time window and budget.' }
   }
 
-  // Backfill travel legs now that the visit order is fixed (last stop has none).
+  // Re-sort by arrival so a held meal never sits out of chronological order,
+  // then backfill travel legs on the final order.
+  stops.sort((a, b) => toMinutes(a.arriveTime) - toMinutes(b.arriveTime))
   backfillTravelLegs(stops, (stop) => stop.pin, transport)
 
-  // Strip the internal `pin` reference — the returned stops match the schema
-  // (pinId only; name/coords are re-hydrated downstream from the shortlist).
   const cleanStops = stops.map(({ pin, ...stop }) => stop)
-
   const location = shortlist[0].address ?? 'your destination'
   return {
     feasible: true,
