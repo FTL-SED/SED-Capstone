@@ -76,7 +76,7 @@ test('backfills travel legs on all but the last stop', () => {
 })
 
 test('respects the per-person budget cap', () => {
-  const tight = { ...constraints, maxBudgetPerPerson: 30 } // cap = 30/person
+  const tight = { ...constraints, maxBudgetPerPerson: 30, includeMeals: false } // cap = 30/person
   const { stops } = fallbackSequence(shortlist, tight)
   // Stops carry no cost — sum the chosen pins' prices from the shortlist.
   const priceById = new Map(shortlist.map((p) => [p.id, p.pricePerPerson]))
@@ -145,11 +145,12 @@ test('works without a timeWindow (falls back to a default day)', () => {
 
 test('fallback: full-day trip seats a lunch AND a dinner meal', () => {
   const shortlist = [
-    { id: 1, name: 'Museum', category: 'activity', pricePerPerson: 20, latitude: 37.785, longitude: -122.401, rating: 4.6 },
-    { id: 2, name: 'Park', category: 'activity', pricePerPerson: 0, latitude: 37.769, longitude: -122.456, rating: 4.8 },
-    { id: 3, name: 'Viewpoint', category: 'activity', pricePerPerson: 0, latitude: 37.802, longitude: -122.405, rating: 4.5 },
-    { id: 10, name: 'Taqueria', category: 'restaurant', pricePerPerson: 14, latitude: 37.751, longitude: -122.418, rating: 4.5 },
-    { id: 11, name: 'Ramen', category: 'restaurant', pricePerPerson: 22, latitude: 37.785, longitude: -122.432, rating: 4.7 },
+    { id: 1, name: 'Museum', category: 'activity', pricePerPerson: 20, latitude: 37.785, longitude: -122.401, rating: 4.6, address: 'San Francisco' },
+    { id: 2, name: 'Park', category: 'activity', pricePerPerson: 0, latitude: 37.769, longitude: -122.456, rating: 4.8, address: 'San Francisco' },
+    { id: 3, name: 'Viewpoint', category: 'activity', pricePerPerson: 0, latitude: 37.802, longitude: -122.405, rating: 4.5, address: 'San Francisco' },
+    { id: 10, name: 'Taqueria', category: 'restaurant', pricePerPerson: 14, latitude: 37.751, longitude: -122.418, rating: 4.5, address: 'San Francisco' },
+    { id: 11, name: 'Ramen', category: 'restaurant', pricePerPerson: 22, latitude: 37.785, longitude: -122.432, rating: 4.7, address: 'San Francisco' },
+    { id: 12, name: 'Cafe', category: 'restaurant', pricePerPerson: 12, latitude: 37.775, longitude: -122.420, rating: 4.4, address: 'San Francisco' },
   ]
   const constraints = {
     timeWindow: { startTime: '10:00', endTime: '20:30' },
@@ -179,4 +180,51 @@ test('fallback: includeMeals=false seats no meals', () => {
   const result = fallbackSequence(shortlist, constraints)
   assert.equal(result.feasible, true)
   assert.equal(result.stops.filter((s) => s.mealType).length, 0)
+})
+
+test('fallback: 08:00-start full-day trip includes breakfast, lunch, and dinner meals', () => {
+  const shortlist = [
+    { id: 1, name: 'Museum', category: 'activity', pricePerPerson: 20, latitude: 37.785, longitude: -122.401, rating: 4.6, address: 'San Francisco' },
+    { id: 2, name: 'Park', category: 'activity', pricePerPerson: 0, latitude: 37.769, longitude: -122.456, rating: 4.8, address: 'San Francisco' },
+    { id: 10, name: 'Breakfast Spot', category: 'restaurant', pricePerPerson: 18, latitude: 37.795, longitude: -122.394, rating: 4.6, address: 'San Francisco' },
+    { id: 11, name: 'Taqueria', category: 'restaurant', pricePerPerson: 14, latitude: 37.751, longitude: -122.418, rating: 4.5, address: 'San Francisco' },
+    { id: 12, name: 'Ramen', category: 'restaurant', pricePerPerson: 22, latitude: 37.785, longitude: -122.432, rating: 4.7, address: 'San Francisco' },
+  ]
+  const constraints = {
+    timeWindow: { startTime: '08:00', endTime: '20:30' },
+    maxBudgetPerPerson: 120,
+    transport: 'driving',
+    includeMeals: true,
+    foodBelowMin: false,
+  }
+  const result = fallbackSequence(shortlist, constraints)
+  assert.equal(result.feasible, true)
+  const mealTypes = new Set(result.stops.filter((s) => s.mealType).map((s) => s.mealType))
+  assert.ok(mealTypes.has('breakfast'), 'expected a breakfast meal')
+  assert.ok(mealTypes.has('lunch'), 'expected a lunch meal')
+  assert.ok(mealTypes.has('dinner'), 'expected a dinner meal')
+})
+
+test('fallback: 11:30-start trip does NOT include breakfast (block no longer overlaps)', () => {
+  const shortlist = [
+    { id: 1, name: 'Museum', category: 'activity', pricePerPerson: 20, latitude: 37.785, longitude: -122.401, rating: 4.6, address: 'San Francisco' },
+    { id: 2, name: 'Park', category: 'activity', pricePerPerson: 0, latitude: 37.769, longitude: -122.456, rating: 4.8, address: 'San Francisco' },
+    { id: 10, name: 'Breakfast Spot', category: 'restaurant', pricePerPerson: 18, latitude: 37.795, longitude: -122.394, rating: 4.6, address: 'San Francisco' },
+    { id: 11, name: 'Taqueria', category: 'restaurant', pricePerPerson: 14, latitude: 37.751, longitude: -122.418, rating: 4.5, address: 'San Francisco' },
+    { id: 12, name: 'Ramen', category: 'restaurant', pricePerPerson: 22, latitude: 37.785, longitude: -122.432, rating: 4.7, address: 'San Francisco' },
+  ]
+  const constraints = {
+    timeWindow: { startTime: '11:30', endTime: '20:30' },
+    maxBudgetPerPerson: 120,
+    transport: 'driving',
+    includeMeals: true,
+    foodBelowMin: false,
+  }
+  const result = fallbackSequence(shortlist, constraints)
+  assert.equal(result.feasible, true)
+  const mealTypes = new Set(result.stops.filter((s) => s.mealType).map((s) => s.mealType))
+  assert.ok(!mealTypes.has('breakfast'), 'should NOT have breakfast (block 07:00-10:45 does not overlap 11:30-20:30)')
+  // Should still have lunch and dinner
+  assert.ok(mealTypes.has('lunch'), 'expected a lunch meal')
+  assert.ok(mealTypes.has('dinner'), 'expected a dinner meal')
 })

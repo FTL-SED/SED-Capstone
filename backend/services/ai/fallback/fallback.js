@@ -77,7 +77,7 @@ const fallbackSequence = (shortlist, constraints) => {
   // Which meal blocks to guarantee: same-day blocks overlapping the window,
   // but only when the group wants meals and food isn't scarce (best-effort
   // otherwise — the greedy walk can still land a restaurant in a window).
-  const wantMeals = includeMeals === true && !foodBelowMin
+  const wantMeals = includeMeals !== false && !foodBelowMin
   const targetBlocks = wantMeals ? blocksOverlappingWindow(startHHMM, endHHMM) : []
 
   // Reserve one best-rated, distinct restaurant per target block. Each becomes
@@ -85,15 +85,12 @@ const fallbackSequence = (shortlist, constraints) => {
   const usedIds = new Set()
   const anchors = []
   for (const block of targetBlocks) {
-    const blockStart = toMinutes(MEAL_TIME_WINDOWS[block].start)
-    // Skip blocks that start before the trip — breakfast when starting at 10am doesn't make sense.
-    if (blockStart < startWall) continue
     const pick = shortlist
       .filter((p) => isRestaurant(p) && !usedIds.has(p.id))
       .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))[0]
     if (!pick) continue
     usedIds.add(pick.id)
-    const openElapsed = blockStart - startWall
+    const openElapsed = Math.max(0, toMinutes(MEAL_TIME_WINDOWS[block].start) - startWall)
     if (openElapsed + AVG_STOP_DURATION_MIN <= windowLen) {
       anchors.push({ block, pin: pick, arrive: openElapsed })
     }
