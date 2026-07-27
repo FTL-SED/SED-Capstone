@@ -91,6 +91,9 @@ function recommend(trip, members, pins) {
       diets: [...groupDiet],
       maxMemberDistance,
       foodBelowMin,
+      // Whether the group wants meals scheduled. Default true; the AI/fallback
+      // and validator gate meal enforcement on this (opt-out ⇒ no meal rules).
+      includeMeals: trip.includeMeals !== false,
     },
   }
 }

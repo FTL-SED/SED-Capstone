@@ -152,3 +152,22 @@ test('accepts a known transport mode and rejects an unknown one', () => {
   assert.equal(bad.sent.code, 400)
   assert.match(bad.sent.body.error, /transport must be one of/)
 })
+
+test('accepts a valid boolean includeMeals', () => {
+  const { sent, nextCalled } = run({ trip: { ...validTrip, includeMeals: false }, members: [validMember] })
+  assert.equal(sent, null)
+  assert.equal(nextCalled, true)
+})
+
+test('rejects a non-boolean includeMeals', () => {
+  const { sent, nextCalled } = run({ trip: { ...validTrip, includeMeals: 'yes' }, members: [validMember] })
+  assert.equal(nextCalled, false)
+  assert.equal(sent.code, 400)
+  assert.match(sent.body.error, /includeMeals/)
+})
+
+test('accepts an omitted includeMeals (defaults to including meals)', () => {
+  const { sent, nextCalled } = run({ trip: validTrip, members: [validMember] })
+  assert.equal(sent, null)
+  assert.equal(nextCalled, true)
+})

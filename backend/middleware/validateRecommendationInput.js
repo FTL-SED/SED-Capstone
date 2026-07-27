@@ -68,6 +68,11 @@ function validateTrip(trip) {
   if (trip.transport !== undefined && !TRANSPORT_MODES.includes(trip.transport)) {
     return `trip.transport must be one of: ${TRANSPORT_MODES.join(', ')}`
   }
+  // includeMeals is optional; when present it must be a boolean. Absent ⇒ the
+  // engine treats the trip as wanting meals (see recommend()'s constraints).
+  if (trip.includeMeals !== undefined && typeof trip.includeMeals !== 'boolean') {
+    return 'trip.includeMeals must be a boolean when provided'
+  }
   return null
 }
 
