@@ -2,7 +2,8 @@
 // fixed rules, and a "user" message with this trip's places and constraints.
 // Takes the shortlist + constraints, returns the `messages` array the client
 // sends to the model.
-import { MEAL_TIME_WINDOWS } from '../../../config/ai.js'
+import { MEAL_TIME_WINDOWS, AVG_STOP_DURATION_MIN } from '../../../config/ai.js'
+import { windowLengthMinutes } from '../../../utils/time.js'
 
 // Caps on the user-controllable text that reaches the model. Pins can be
 // user-created (POST /pins), so name/tags are untrusted input; length-capping
@@ -47,6 +48,19 @@ const SYSTEM_PROMPT = [
   '- When foodBelowMin is true, meal options in range are scarce — prioritise keeping the few restaurants you do have rather than dropping them.',
   `- Meal windows (Pacific, HH:MM): breakfast ${MEAL_TIME_WINDOWS.breakfast.start}-${MEAL_TIME_WINDOWS.breakfast.end}, lunch ${MEAL_TIME_WINDOWS.lunch.start}-${MEAL_TIME_WINDOWS.lunch.end}, dinner ${MEAL_TIME_WINDOWS.dinner.start}-${MEAL_TIME_WINDOWS.dinner.end}. Tag a meal stop with the matching mealType.`,
   "- The chosen stops' combined pricePerPerson must not exceed maxBudgetPerPerson. Drop stops to stay within it; you don't output cost, we read each place's price from the shortlist.",
+  '',
+  'DAY COVERAGE — these are hard requirements, not suggestions:',
+  '- Schedule stops for the ENTIRE time window. The FIRST stop must arrive at (or within ~15 min of) the window start, and the LAST stop must depart within one stop-length of the window end — not hours before it.',
+  '- Aim for the target number of stops given in the constraints (targetStops). Use that many shortlist places unless budget or opening hours genuinely forbid it. More real stops is better than a short day.',
+  '- No dead air: the gap between one stop departing and the next arriving is travel time only. Never leave an idle gap larger than ~30 min; if you would, insert another shortlist place instead.',
+  '- Do NOT end the day early while unused shortlist places remain and time is left in the window. Prefer adding a place over stopping.',
+  '- When includeMeals is not false, place a meal (a restaurant, tagged with its mealType) in EACH meal window the trip overlaps. Only skip a meal window if no suitable restaurant is provided in the shortlist.',
+  '',
+  'Before you output, VERIFY and fix your own draft:',
+  '  1. Does the last stop depart within one stop-length of the window end? If not, add stops until it does.',
+  '  2. Is every required meal window filled with a mealType-tagged restaurant? If not, add one.',
+  '  3. Are there any idle gaps > ~30 min? If so, fill them with unused shortlist places.',
+  'Only emit the itinerary once all three checks pass (or you have genuinely run out of places/budget).',
   '- Keep every arriveTime/departTime inside the trip time window, in chronological order.',
   '',
   'Output: a single JSON object, no prose, matching exactly:',
@@ -71,7 +85,7 @@ const SYSTEM_PROMPT = [
 const buildUserMessage = (shortlist, constraints) => {
   const {
     timeWindow, maxBudgetPerPerson, groupSize,
-    meetingPoint, travelRadius, transport, maxMemberDistance, foodBelowMin,
+    meetingPoint, travelRadius, transport, maxMemberDistance, foodBelowMin, includeMeals,
   } = constraints ?? {}
 
   // startingCoordinates are intentionally omitted — the model anchors on
@@ -83,6 +97,18 @@ const buildUserMessage = (shortlist, constraints) => {
   if (transport) details.transport = transport
   if (maxMemberDistance != null) details.maxMemberDistance = maxMemberDistance
   if (foodBelowMin) details.foodBelowMin = foodBelowMin
+
+  // Give the model a concrete coverage target: how many ~AVG_STOP_DURATION_MIN
+  // stops fit the window. This is what turns "fill the day" from advice into a
+  // number it can aim at and self-check against. Omit when the window is
+  // unknown (the prompt still works, just without the numeric target).
+  if (timeWindow?.startTime && timeWindow?.endTime) {
+    const windowLen = windowLengthMinutes(timeWindow.startTime, timeWindow.endTime)
+    if (windowLen > 0) {
+      details.targetStops = Math.max(1, Math.floor(windowLen / AVG_STOP_DURATION_MIN))
+    }
+  }
+  if (includeMeals === false) details.includeMeals = false
 
   return [
     'Constraints:',

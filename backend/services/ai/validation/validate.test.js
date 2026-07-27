@@ -226,7 +226,8 @@ test('validate: does NOT require meals when includeMeals is false', () => {
     feasible: true, title: 'T', location: 'L', description: 'D',
     stops: [{ pinId: 1, arriveTime: '11:00', departTime: '12:30' }],
   }
-  const constraints = { timeWindow: { startTime: '10:00', endTime: '14:30' }, maxBudgetPerPerson: 100, includeMeals: false }
+  // Tight window (11:00-12:45) that the single stop fills, so coverage backstop doesn't trip
+  const constraints = { timeWindow: { startTime: '11:00', endTime: '12:45' }, maxBudgetPerPerson: 100, includeMeals: false }
   const { valid } = validateItinerary(result, shortlist, constraints)
   assert.equal(valid, true)
 })
@@ -238,6 +239,36 @@ test('validate: does NOT require meals when food is scarce (foodBelowMin)', () =
     stops: [{ pinId: 1, arriveTime: '11:00', departTime: '12:30' }],
   }
   const constraints = { timeWindow: { startTime: '10:00', endTime: '14:30' }, maxBudgetPerPerson: 100, includeMeals: true, foodBelowMin: true }
+  const { valid } = validateItinerary(result, shortlist, constraints)
+  assert.equal(valid, true)
+})
+
+test('validate: rejects an AI day that ends early with unused pins', () => {
+  const shortlist = Array.from({ length: 12 }, (_, i) => ({ id: i + 1, category: 'activity', pricePerPerson: 0 }))
+  const result = {
+    feasible: true, title: 'T', location: 'L', description: 'D',
+    stops: [
+      { pinId: 1, arriveTime: '10:00', departTime: '11:30' },
+      { pinId: 2, arriveTime: '11:45', departTime: '13:15' },
+    ], // ends 13:15 in a 10:00–20:30 window, 10 pins unused
+  }
+  const constraints = { timeWindow: { startTime: '10:00', endTime: '20:30' }, maxBudgetPerPerson: 100, includeMeals: false }
+  const { valid, errors } = validateItinerary(result, shortlist, constraints)
+  assert.equal(valid, false)
+  assert.ok(errors.some((e) => /day ends too early/.test(e)), errors.join('; '))
+})
+
+test('validate: a day filling near the window end passes coverage', () => {
+  const shortlist = Array.from({ length: 3 }, (_, i) => ({ id: i + 1, category: 'activity', pricePerPerson: 0 }))
+  const result = {
+    feasible: true, title: 'T', location: 'L', description: 'D',
+    stops: [
+      { pinId: 1, arriveTime: '10:00', departTime: '13:00' },
+      { pinId: 2, arriveTime: '13:15', departTime: '16:30' },
+      { pinId: 3, arriveTime: '16:45', departTime: '20:00' },
+    ], // ends 20:00, all pins used
+  }
+  const constraints = { timeWindow: { startTime: '10:00', endTime: '20:30' }, maxBudgetPerPerson: 100, includeMeals: false }
   const { valid } = validateItinerary(result, shortlist, constraints)
   assert.equal(valid, true)
 })

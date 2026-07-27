@@ -6,7 +6,7 @@
 // Returns { valid, errors } — errors is a list of plain-English problems, handy
 // for debugging. Note: a well-formed { feasible: false, reason } is a valid
 // answer (the AI correctly saying "no itinerary fits"), not a failure.
-import { MEAL_TIME_WINDOWS, CATEGORY, isInMealBlock, blocksOverlappingWindow } from '../../../config/ai.js'
+import { MEAL_TIME_WINDOWS, CATEGORY, isInMealBlock, blocksOverlappingWindow, AVG_STOP_DURATION_MIN } from '../../../config/ai.js'
 import { toMinutes, minutesFromStart, windowLengthMinutes } from '../../../utils/time.js'
 
 const HHMM_RE = /^([01][0-9]|2[0-3]):[0-5][0-9]$/
@@ -135,6 +135,20 @@ const checkBusinessRules = (stops, shortlist, constraints, errors) => {
   for (const [i, stop] of stops.entries()) {
     if (stop.mealType && !isInMealBlock(toMinutes(stop.arriveTime), MEAL_TIME_WINDOWS[stop.mealType])) {
       errors.push(`stops[${i}] mealType "${stop.mealType}" but arriveTime ${stop.arriveTime} is outside that block`)
+    }
+  }
+
+  // Coverage (lower bound): a day that ends well short of the window end while
+  // unused shortlist pins remain is under-filled. Rejecting it routes the AI's
+  // short day to the deterministic fallback, which packs the window. Slack of
+  // one stop's duration avoids nagging over a reasonable early finish.
+  if (timeWindow?.startTime && timeWindow?.endTime && stops.length > 0) {
+    const windowEnd = windowLengthMinutes(timeWindow.startTime, timeWindow.endTime)
+    const lastDepart = fromStart(stops[stops.length - 1].departTime)
+    const usedIds = new Set(stops.map((s) => s.pinId))
+    const unused = shortlist.filter((p) => !usedIds.has(p.id)).length
+    if (unused > 0 && windowEnd - lastDepart > AVG_STOP_DURATION_MIN) {
+      errors.push(`day ends too early: last stop departs at ${stops[stops.length - 1].departTime}, ${unused} unused places remain`)
     }
   }
 }

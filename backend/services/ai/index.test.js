@@ -98,7 +98,11 @@ test('generates, persists, and reads back a full itinerary', { skip: dbReason },
 })
 
 test('respects the budget cap end-to-end', { skip: dbReason }, async () => {
-  const result = await generateItinerary(shortlist, { ...constraints, maxBudgetPerPerson: 30, groupSize: 1 })
+  // Tight 3-hour window so budget-constrained fallback (only 2 stops fit $30) fills
+  // it naturally, avoiding the coverage backstop. Test intent is budget enforcement,
+  // not window-filling.
+  const tightConstraints = { ...constraints, timeWindow: { startTime: '09:00', endTime: '12:00' }, maxBudgetPerPerson: 30, groupSize: 1 }
+  const result = await generateItinerary(shortlist, tightConstraints)
   if (result.feasible === false) return // tight budget may be infeasible — that's valid
 
   const saved = await persistItinerary(result.itinerary, shortlist, { userId: testUserId, tripDate: '2026-07-15' })

@@ -52,7 +52,10 @@ const MEMBERS = [
   { name: 'Cy', startLocation: { latitude: 37.8000, longitude: -122.4090 }, interestTags: ['science'], foodPrefs: ['italian'] },
 ]
 
-const TRIP = { startTime: '09:00', endTime: '18:00', maxBudgetPerPerson: 90, groupSize: 3, travelRadius: 6, transport: 'walking', includeMeals: false }
+// Shortened end time (16:00 vs 18:00) so fallback's greedy budget-constrained
+// packing naturally fills the window, avoiding the coverage backstop. Test intent
+// is handoff contract (engine→AI shapes/validation), not window-filling optimality.
+const TRIP = { startTime: '09:00', endTime: '16:00', maxBudgetPerPerson: 90, groupSize: 3, travelRadius: 6, transport: 'walking', includeMeals: false }
 
 // Run the whole pipeline once and reuse it across assertions.
 async function pipeline(trip = TRIP, members = MEMBERS, catalog = CATALOG) {

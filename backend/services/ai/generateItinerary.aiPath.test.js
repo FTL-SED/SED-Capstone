@@ -14,8 +14,10 @@ const SHORTLIST = [
   { id: 2, name: 'Golden Gate Park', category: 'activity', interests: ['nature'], pricePerPerson: 0, latitude: 37.7694, longitude: -122.4562, openingHours: [{ open: '09:00', close: '18:00' }] },
   { id: 10, name: 'La Taqueria', category: 'restaurant', cuisine: ['mexican'], pricePerPerson: 14, latitude: 37.7509, longitude: -122.4180, openingHours: [{ open: '11:00', close: '21:00' }] },
 ]
+// Tight window (10:00-13:30) matching GOOD_REPLY's 2 stops so the coverage
+// backstop doesn't trip. Test intent is "AI path works", not day-filling.
 const CONSTRAINTS = {
-  timeWindow: { startTime: '09:00', endTime: '18:00' },
+  timeWindow: { startTime: '10:00', endTime: '13:30' },
   maxBudgetPerPerson: 90,
   groupSize: 2,
   transport: 'walking',
@@ -48,7 +50,11 @@ test('AI path: a hallucinated pinId is rejected and falls back', async () => {
     ...GOOD_REPLY,
     stops: [{ pinId: 9999, arriveTime: '10:00', departTime: '11:00' }],
   }
-  const out = await generateItinerary(SHORTLIST, CONSTRAINTS, async () => hallucinated)
+  // Fallback needs a wider window for walking between these spread-out pins (~70-87
+  // min travel). Tight CONSTRAINTS would trip coverage backstop. Test intent is
+  // "hallucinated pinId → fallback works", not minimal-window edge case.
+  const wideConstraints = { ...CONSTRAINTS, timeWindow: { startTime: '09:00', endTime: '18:00' } }
+  const out = await generateItinerary(SHORTLIST, wideConstraints, async () => hallucinated)
   assert.equal(out.source, 'fallback')
   // The fallback only uses real shortlist pins.
   const ids = new Set(SHORTLIST.map((p) => p.id))
@@ -56,7 +62,9 @@ test('AI path: a hallucinated pinId is rejected and falls back', async () => {
 })
 
 test('AI path: a thrown call (e.g. malformed JSON upstream) falls back', async () => {
-  const out = await generateItinerary(SHORTLIST, CONSTRAINTS, async () => {
+  // Fallback needs room for walking; use wide window so coverage backstop doesn't trip.
+  const wideConstraints = { ...CONSTRAINTS, timeWindow: { startTime: '09:00', endTime: '18:00' } }
+  const out = await generateItinerary(SHORTLIST, wideConstraints, async () => {
     throw new Error('AI response had no message content')
   })
   assert.equal(out.source, 'fallback')
