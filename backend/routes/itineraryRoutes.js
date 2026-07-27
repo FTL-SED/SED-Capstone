@@ -11,6 +11,7 @@ import {
   bookmarkItinerary,
   removeBookmark,
   markVisited,
+  unmarkVisited,
   copyItinerary,
   uploadItineraryCover,
 } from '../controllers/itineraryController.js'
@@ -38,6 +39,7 @@ router.post('/:id/bookmark', requireAuth, bookmarkItinerary)
 router.delete('/:id/bookmark', requireAuth, removeBookmark)
 
 router.post('/:id/visited', requireAuth, markVisited)
+router.delete('/:id/visited', requireAuth, unmarkVisited)
 
 router.post('/:id/copy', requireAuth, copyItinerary)
 

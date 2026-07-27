@@ -331,6 +331,20 @@ async function markVisited(req, res) {
   return res.status(204).send()
 }
 
+// DELETE /itineraries/:id/visited
+// Un-marks an itinerary as visited (safe to call repeatedly). No public-or-owner
+// guard needed: removing your own visited row can't leak anyone else's data.
+async function unmarkVisited(req, res) {
+  const id = parseIdParam(req, res, 'itinerary id')
+  if (id === null) return
+
+  if (!(await loadOrNotFound(res, itineraries.findByIdBasic, id, 'Itinerary'))) return
+
+  await visited.remove(req.user.id, id)
+
+  return res.status(204).send()
+}
+
 // POST /itineraries/:id/copy
 // Deep-duplicates a public (or owned) itinerary and its pins into a new editable
 // itinerary owned by the caller, linked back via sourceItineraryId.
@@ -439,6 +453,7 @@ export {
   bookmarkItinerary,
   removeBookmark,
   markVisited,
+  unmarkVisited,
   copyItinerary,
   uploadItineraryCover,
 }

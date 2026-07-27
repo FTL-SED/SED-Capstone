@@ -6,5 +6,4 @@
 .visited-button--on {
   border-color: var(--accent);
   color: var(--accent-strong);
-  cursor: default;
 }
