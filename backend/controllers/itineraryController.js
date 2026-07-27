@@ -1,6 +1,7 @@
 import * as itineraries from '../models/itineraries.js'
 import * as likes from '../models/likes.js'
 import * as bookmarks from '../models/bookmarks.js'
+import * as visited from '../models/visited.js'
 import { parseIdParam, parseDate, loadOrNotFound, loadOwned } from './helpers.js'
 import { uploadItineraryCoverImage } from '../lib/supabase.js'
 
@@ -311,6 +312,25 @@ async function removeBookmark(req, res) {
   return res.status(204).send()
 }
 
+// POST /itineraries/:id/visited
+// Marks a public (or the caller's own) itinerary as visited. Idempotent — a
+// repeat call just refreshes visitedAt. Same public-or-owner guard as like, so
+// a private draft can't be marked by a stranger and leak into their dashboard.
+async function markVisited(req, res) {
+  const id = parseIdParam(req, res, 'itinerary id')
+  if (id === null) return
+
+  const itinerary = await loadOrNotFound(res, itineraries.findByIdBasic, id, 'Itinerary')
+  if (!itinerary) return
+  if (!itinerary.isPublic && itinerary.userId !== req.user.id) {
+    return res.status(403).json({ error: 'Only public itineraries can be marked as visited' })
+  }
+
+  await visited.upsert(req.user.id, id)
+
+  return res.status(204).send()
+}
+
 // POST /itineraries/:id/copy
 // Deep-duplicates a public (or owned) itinerary and its pins into a new editable
 // itinerary owned by the caller, linked back via sourceItineraryId.
@@ -418,6 +438,7 @@ export {
   unlikeItinerary,
   bookmarkItinerary,
   removeBookmark,
+  markVisited,
   copyItinerary,
   uploadItineraryCover,
 }
