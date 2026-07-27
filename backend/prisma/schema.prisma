@@ -42,6 +42,7 @@ model User {
   createdItineraries Itinerary[] @relation("CreatedItineraries")
   likes              Like[]
   bookmarks          Bookmark[]
+  visited            Visited[]
 }
 
 model Itinerary {
@@ -73,6 +74,7 @@ model Itinerary {
   creator           User              @relation("CreatedItineraries", fields: [userId], references: [id], onDelete: Cascade)
   likes             Like[]
   bookmarks         Bookmark[]
+  visited           Visited[]
   members           ItineraryMember[]
   sourceItinerary   Itinerary?        @relation("ForkedItinerary", fields: [sourceItineraryId], references: [id], onDelete: SetNull)
   savedCopies       Itinerary[]       @relation("ForkedItinerary")
@@ -133,6 +135,21 @@ model Bookmark {
   itinerary   Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
 
   @@id([userId, itineraryId])
+}
+
+model Visited {
+  userId      Int
+  itineraryId Int
+  // Updatable, unlike Like/Bookmark: re-marking an itinerary as visited refreshes
+  // this via @updatedAt (Prisma writes it on every update, incl. no-op updates).
+  visitedAt   DateTime  @default(now()) @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itinerary   Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+
+  @@id([userId, itineraryId])
+  // Composite PK is ordered by userId, so an itineraryId-only lookup can't use
+  // it. Mirrors Like's index; backs the cascade delete from Itinerary.
+  @@index([itineraryId])
 }
 
 model ItineraryStop {
