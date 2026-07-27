@@ -94,19 +94,20 @@ test('stopsToStops throws if a stop references a pinId not in the shortlist', ()
 
 test('memberRows maps group members onto ItineraryMember rows', () => {
   const members = [
-    { name: 'Ana', startLocation: { latitude: 37.78, longitude: -122.41, label: 'SoMa, SF' }, interestTags: ['art'], foodPrefs: ['sushi'], diet: ['vegan'] },
+    { name: 'Ana', startLocation: { latitude: 37.78, longitude: -122.41, label: 'SoMa, SF' }, interestTags: ['art'], foodPrefs: ['sushi'], diet: ['vegan'], email: 'ana@example.com' },
     { name: '  ', startLocation: { latitude: 37.76, longitude: -122.42 }, interestTags: [], foodPrefs: [] },
   ]
   const rows = memberRows(members)
   assert.equal(rows.length, 2)
   assert.deepEqual(rows[0], {
     name: 'Ana', startLabel: 'SoMa, SF', startLat: 37.78, startLng: -122.41,
-    interestTags: ['art'], foodPrefs: ['sushi'], diets: ['vegan'],
+    interestTags: ['art'], foodPrefs: ['sushi'], diets: ['vegan'], email: 'ana@example.com',
   })
-  // Blank name falls back; missing label/diet default cleanly.
+  // Blank name falls back; missing label/diet/email default cleanly.
   assert.equal(rows[1].name, 'Member')
   assert.equal(rows[1].startLabel, null)
   assert.deepEqual(rows[1].diets, [])
+  assert.equal(rows[1].email, null)
 })
 
 test('memberRows returns [] for missing/empty members', () => {

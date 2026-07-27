@@ -59,6 +59,13 @@ export async function copyItinerary(id) {
   return data
 }
 
+// POST /itineraries/:id/export/email — owner-only. Emails a PDF of the itinerary to
+// its group members (BCC). Returns { sent: [{name,email}], skipped: [{name}] }.
+export async function emailItinerary(id) {
+  const { data } = await api.post(`/itineraries/${id}/export/email`)
+  return data
+}
+
 // GET /users/:id — the owner's dashboard, including createdItineraries plus
 // likedItineraries / bookmarkedItineraries (owner-only; the backend 403s for
 // another user's id). Used to hydrate the home page's liked/bookmarked state.

@@ -14,6 +14,7 @@ function ItineraryPanel({
   activeTab, onTabChange,
   onToggleLike, onToggleBookmark, onTogglePrivacy,
   onDelete, onCopy, copied, onMarkVisited,
+  onCopyText, onEmail,
   onRemoveStop, onEditStop, onAddStop, meetingPoint, radiusMi, onReorderStops,
   onEditItinerary, actionBusy,
 }) {
@@ -208,6 +209,8 @@ function ItineraryPanel({
         onSaveEdit={saveEdit}
         onCancelEdit={cancelEdit}
         editBusy={actionBusy}
+        onCopyText={onCopyText}
+        onEmail={onEmail}
       />
       {/* Written / Visual tabs — shown only on narrow screens (CSS-hidden on
           desktop, where the written timeline and the map show side by side).

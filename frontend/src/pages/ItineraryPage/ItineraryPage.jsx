@@ -17,8 +17,10 @@ import {
   updateItinerary,
   uploadItineraryCover,
   reorderStops,
+  emailItinerary,
 } from '../../api/itinerary.js'
 import { getCurrentUser } from '../../lib/currentUser.js'
+import { buildItinerarySummaryText } from '../../utils/itinerarySummary.js'
 
 // While the itinerary is being fetched (and if the fetch fails) the page shows
 // the same golden-hour city scene the traveller saw on the Create + Loading
@@ -357,6 +359,38 @@ function ItineraryPage() {
   // to the written view; ignored on desktop, where both show side by side.
   const [activeTab, setActiveTab] = useState('written');
 
+  // Any viewer: copy the itinerary as plain text. Uses the Clipboard API with a
+  // hidden-textarea fallback for non-HTTPS / older browsers.
+  const handleCopyText = async () => {
+    const text = buildItinerarySummaryText(itinerary)
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text)
+      } else {
+        const ta = document.createElement('textarea')
+        ta.value = text
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+      }
+    } catch (err) {
+      console.error('Copy failed:', err)
+      window.alert('Could not copy. Here is the text:\n\n' + text)
+    }
+  }
+
+  // Owner-only: email the itinerary PDF to the group. Returns a status string for
+  // the ExportButton to show.
+  const handleEmail = async () => {
+    const res = await emailItinerary(id)
+    const sent = res.sent?.length ?? 0
+    const skipped = res.skipped?.length ?? 0
+    return skipped > 0
+      ? `Sent to ${sent} member${sent === 1 ? '' : 's'}, ${skipped} skipped — no email on file`
+      : `Sent to ${sent} member${sent === 1 ? '' : 's'}`
+  }
+
   // Owner-only: add a catalog venue as a new stop, appended at the end. The
   // backend has no auto-scheduler, so we assign the next order slot and default
   // times (right after the last stop, 90-min visit) which the user can adjust.
@@ -462,6 +496,8 @@ function ItineraryPage() {
         onCopy={handleCopy}
         copied={copied}
         onMarkVisited={() => toggleVisited(numId, itinerary)}
+        onCopyText={handleCopyText}
+        onEmail={handleEmail}
         onRemoveStop={handleRemoveStop}
         onEditStop={handleEditStop}
         onAddStop={handleAddStop}

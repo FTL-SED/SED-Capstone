@@ -128,6 +128,18 @@ function remove(id) {
   return prisma.itinerary.delete({ where: { id } })
 }
 
+// Full record for the email export: the owner shape (stops+pins for the PDF) plus
+// members WITH their emails (the recipient list). Returns the reshaped itinerary
+// (pins[] flattened) with `members` included (email is a scalar, so `members: true`
+// carries it). Caller must have already confirmed ownership.
+async function findByIdForExport(id) {
+  const itinerary = await prisma.itinerary.findUnique({
+    where: { id },
+    include: detailInclude(true),
+  })
+  return reshapeItinerary(itinerary, { forOwner: true })
+}
+
 export {
   reshapeItinerary,
   create,
@@ -135,6 +147,7 @@ export {
   findById,
   findByIdBasic,
   findByIdWithStops,
+  findByIdForExport,
   update,
   remove,
 }

@@ -4,6 +4,7 @@
 // member) can share it without tripping react-refresh's component-only rule.
 export const newMember = () => ({
   name: '',
+  email: '', // optional; used by the itinerary email export
   location: null, // { label, latitude, longitude }
   interestTags: [],
   foodPrefs: [],

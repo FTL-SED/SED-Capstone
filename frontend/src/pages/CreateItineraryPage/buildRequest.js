@@ -31,8 +31,10 @@ export function buildRecommendationBody(form) {
     // drives diet-safety filtering. Route each tag to the right field so a
     // dietary need (vegan/halal/…) isn't mis-sent as a cuisine (and dropped).
     const prefs = m.foodPrefs ?? [];
+    const email = m.email?.trim();
     return {
       name: m.name?.trim() || `Member ${i + 1}`,
+      ...(email ? { email } : {}),
       startLocation: {
         latitude: m.location.latitude,
         longitude: m.location.longitude,
