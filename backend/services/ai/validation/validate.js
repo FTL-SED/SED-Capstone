@@ -6,7 +6,7 @@
 // Returns { valid, errors } — errors is a list of plain-English problems, handy
 // for debugging. Note: a well-formed { feasible: false, reason } is a valid
 // answer (the AI correctly saying "no itinerary fits"), not a failure.
-import { MEAL_TIME_WINDOWS, CATEGORY } from '../../../config/ai.js'
+import { MEAL_TIME_WINDOWS, CATEGORY, isInMealBlock } from '../../../config/ai.js'
 import { toMinutes, minutesFromStart, windowLengthMinutes } from '../../../utils/time.js'
 
 const HHMM_RE = /^([01][0-9]|2[0-3]):[0-5][0-9]$/
@@ -21,8 +21,6 @@ const isHHMM = (v) => typeof v === 'string' && HHMM_RE.test(v)
 // MEAL blocks, by contrast, are absolute daytime windows (breakfast 07:00–10:45
 // etc., none cross midnight), so they're matched in plain wall-clock minutes —
 // anchoring them to the trip start would wrap a block that straddles the start.
-const inMealBlock = (t, block) =>
-  toMinutes(t) >= toMinutes(block.start) && toMinutes(t) <= toMinutes(block.end)
 
 // Per-stop shape check (mirrors STOP_SCHEMA in config/ai.js). Pushes a labelled
 // error for each malformed field so the log points at the exact stop.
@@ -108,7 +106,7 @@ const checkBusinessRules = (stops, shortlist, constraints, errors) => {
   const isMeal = (s) => s.mealType !== undefined || byId.get(s.pinId)?.category === CATEGORY.restaurant
   for (const [name, block] of Object.entries(MEAL_TIME_WINDOWS)) {
     const inBlock = stops.filter(
-      (s) => isMeal(s) && (s.mealType === name || (s.mealType === undefined && inMealBlock(s.arriveTime, block)))
+      (s) => isMeal(s) && (s.mealType === name || (s.mealType === undefined && isInMealBlock(toMinutes(s.arriveTime), block)))
     )
     if (inBlock.length > 1) {
       errors.push(`${inBlock.length} stops fall in the ${name} block (max 1)`)
@@ -118,7 +116,7 @@ const checkBusinessRules = (stops, shortlist, constraints, errors) => {
   // A declared mealType should land in its own window (a museum labelled
   // "lunch" at 3pm is wrong even if it's the only "lunch").
   for (const [i, stop] of stops.entries()) {
-    if (stop.mealType && !inMealBlock(stop.arriveTime, MEAL_TIME_WINDOWS[stop.mealType])) {
+    if (stop.mealType && !isInMealBlock(toMinutes(stop.arriveTime), MEAL_TIME_WINDOWS[stop.mealType])) {
       errors.push(`stops[${i}] mealType "${stop.mealType}" but arriveTime ${stop.arriveTime} is outside that block`)
     }
   }

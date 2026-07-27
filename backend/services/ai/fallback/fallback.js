@@ -10,6 +10,7 @@
 import {
   AVG_STOP_DURATION_MIN,
   MEAL_TIME_WINDOWS,
+  mealBlockAt,
   travelMinutesFor,
   CATEGORY,
 } from '../../../config/ai.js'
@@ -47,14 +48,6 @@ const nearestNeighborOrder = (pins, anchor) => {
   }
 
   return ordered
-}
-
-// Which meal block (if any) a given minute-of-day falls in.
-const mealBlockAt = (mins) => {
-  for (const [name, block] of Object.entries(MEAL_TIME_WINDOWS)) {
-    if (mins >= toMinutes(block.start) && mins <= toMinutes(block.end)) return name
-  }
-  return null
 }
 
 // Build the deterministic itinerary. Returns the same shape the AI would:

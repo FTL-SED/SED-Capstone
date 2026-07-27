@@ -39,6 +39,41 @@ export const MEAL_TIME_WINDOWS = {
   dinner: { start: '17:00', end: '20:30' },
 }
 
+// Minute-of-day helpers over MEAL_TIME_WINDOWS, shared by the fallback,
+// scheduler, and validator so the meal-window vocabulary lives in one place.
+// Windows are absolute daytime (Pacific wall-clock, none cross midnight), so
+// callers pass a plain minute-of-day (0–1439), not an elapsed-from-start value.
+const hhmmToMinutes = (hhmm) => {
+  const [h, m] = hhmm.split(':').map(Number)
+  return h * 60 + m
+}
+
+// True when a minute-of-day is inside a block, inclusive of both edges.
+export function isInMealBlock(minsOfDay, block) {
+  return minsOfDay >= hhmmToMinutes(block.start) && minsOfDay <= hhmmToMinutes(block.end)
+}
+
+// The meal block a minute-of-day falls in (breakfast/lunch/dinner), else null.
+export function mealBlockAt(minsOfDay) {
+  for (const [name, block] of Object.entries(MEAL_TIME_WINDOWS)) {
+    if (isInMealBlock(minsOfDay, block)) return name
+  }
+  return null
+}
+
+// Meal block names whose absolute daytime window intersects a SAME-DAY trip
+// window [start, end]. Returns [] for an overnight or zero-length window
+// (end <= start) — meal enforcement intentionally applies only to same-day
+// trips, the overwhelming common case.
+export function blocksOverlappingWindow(startHHMM, endHHMM) {
+  const start = hhmmToMinutes(startHHMM)
+  const end = hhmmToMinutes(endHHMM)
+  if (end <= start) return []
+  return Object.entries(MEAL_TIME_WINDOWS)
+    .filter(([, block]) => hhmmToMinutes(block.start) <= end && hhmmToMinutes(block.end) >= start)
+    .map(([name]) => name)
+}
+
 // Travel-time model, used by the scheduler to turn the straight-line distance
 // between two stops into a realistic travel-time estimate.
 //
