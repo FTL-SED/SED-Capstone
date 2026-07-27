@@ -2,14 +2,14 @@
 // reshaped shape) into a plain-text summary for the clipboard. Kept separate from
 // the backend's copy (which feeds the PDF) — each side already has the data, so a
 // small duplicated pure function avoids a network round-trip just to copy. Times
-// are ISO in Pacific wall-clock; shown as HH:MM in that zone (matches WrittenItinerary).
+// are ISO in Pacific wall-clock; shown in 12-hour am/pm in that zone.
 
 const TIME_ZONE = 'America/Los_Angeles'
 
 function fmtTime(iso) {
   if (!iso) return ''
   return new Date(iso).toLocaleTimeString('en-US', {
-    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TIME_ZONE,
+    hour: 'numeric', minute: '2-digit', hour12: true, timeZone: TIME_ZONE,
   })
 }
 

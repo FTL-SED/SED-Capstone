@@ -2,16 +2,16 @@
 // into structured text data. Consumers own final formatting: the PDF service draws
 // each line; a clipboard consumer would join them with "\n". Missing fields are
 // omitted rather than rendered as "undefined" (matches the engine's don't-punish
-// convention). Stop times are ISO in Pacific wall-clock, shown as HH:MM in that zone.
+// convention). Stop times are ISO in Pacific wall-clock, shown in 12-hour am/pm.
 
 const TIME_ZONE = 'America/Los_Angeles'
 
 function fmtTime(iso) {
   if (!iso) return ''
   return new Date(iso).toLocaleTimeString('en-US', {
-    hour: '2-digit',
+    hour: 'numeric',
     minute: '2-digit',
-    hour12: false,
+    hour12: true,
     timeZone: TIME_ZONE,
   })
 }
