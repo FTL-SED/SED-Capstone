@@ -14,8 +14,9 @@ import {
   travelMinutesFor,
   CATEGORY,
 } from '../../../config/ai.js'
-import { haversineMiles, milesToMeters } from '../../../utils/geo.js'
+import { haversineMiles } from '../../../utils/geo.js'
 import { toMinutes, toHHMM, windowLengthMinutes, MINUTES_PER_DAY } from '../../../utils/time.js'
+import { backfillTravelLegs } from './travelLegs.js'
 
 const isRestaurant = (pin) => pin.category === CATEGORY.restaurant
 
@@ -132,13 +133,8 @@ const fallbackSequence = (shortlist, constraints) => {
     return { feasible: false, reason: 'No places fit the trip time window and budget.' }
   }
 
-  // Backfill travel legs now that the visit order is fixed: each stop stores
-  // travel to the NEXT stop (last stop has none).
-  for (let i = 0; i < stops.length - 1; i++) {
-    const miles = haversineMiles(stops[i].pin, stops[i + 1].pin)
-    stops[i].travelTimeToNextMinutes = travelMinutes(stops[i].pin, stops[i + 1].pin, transport)
-    stops[i].distanceToNextMeters = Math.round(milesToMeters(miles))
-  }
+  // Backfill travel legs now that the visit order is fixed (last stop has none).
+  backfillTravelLegs(stops, (stop) => stop.pin, transport)
 
   // Strip the internal `pin` reference — the returned stops match the schema
   // (pinId only; name/coords are re-hydrated downstream from the shortlist).

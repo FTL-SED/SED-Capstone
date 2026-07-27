@@ -71,7 +71,8 @@ test('backfills travel legs on all but the last stop', () => {
     assert.equal(typeof stops[i].distanceToNextMeters, 'number')
   }
   const last = stops[stops.length - 1]
-  assert.equal(last.travelTimeToNextMinutes, undefined)
+  assert.equal(last.travelTimeToNextMinutes, null)
+  assert.equal(last.distanceToNextMeters, null)
 })
 
 test('respects the per-person budget cap', () => {

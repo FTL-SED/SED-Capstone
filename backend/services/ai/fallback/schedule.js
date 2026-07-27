@@ -4,8 +4,9 @@
 // clock forward, adding travel time between stops. Meal stops are held until
 // their meal window opens (we wait rather than show up early).
 import { MEAL_TIME_WINDOWS, travelMinutesFor } from '../../../config/ai.js'
-import { haversineMiles, milesToMeters } from '../../../utils/geo.js'
+import { haversineMiles } from '../../../utils/geo.js'
 import { toMinutes, toHHMM, minutesFromStart, MINUTES_PER_DAY } from '../../../utils/time.js'
+import { backfillTravelLegs } from './travelLegs.js'
 
 // stops   = ordered stops, each with arriveTime/departTime (for dwell) + pinId
 // coordOf = (stop) => { latitude, longitude }
@@ -66,23 +67,7 @@ const rescheduleStops = (stops, coordOf, startTime, transport) => {
   }
 
   // Backfill travel legs from the recomputed order (last stop has none).
-  for (let i = 0; i < out.length - 1; i++) {
-    const a = coordOf(stops[i])
-    const b = coordOf(stops[i + 1])
-    if (a && b) {
-      const miles = haversineMiles(a, b)
-      out[i].travelTimeToNextMinutes = travelMinutes(miles)
-      out[i].distanceToNextMeters = Math.round(milesToMeters(miles))
-    } else {
-      out[i].travelTimeToNextMinutes = null
-      out[i].distanceToNextMeters = null
-    }
-  }
-  if (out.length > 0) {
-    const last = out[out.length - 1]
-    last.travelTimeToNextMinutes = null
-    last.distanceToNextMeters = null
-  }
+  backfillTravelLegs(out, (stop, i) => coordOf(stops[i]), transport)
 
   return out
 }
