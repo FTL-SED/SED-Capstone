@@ -151,3 +151,26 @@ test('tight budget / wide window does NOT throw (C2 fix)', { skip: dbReason }, a
   assert.ok(result.itinerary.stops.length > 0, 'expected at least one stop')
   assert.equal(result.source, 'fallback', 'should use fallback for tight budget')
 })
+
+test('fallback meals respect budget cap (budget-aware meal reservation)', { skip: dbReason }, async () => {
+  // Reproduces budget-500: 8-pin shortlist, meals ON, tight budget where the
+  // top-RATED restaurant per enforceable block exceeds budget but cheaper ones fit.
+  // Before fix: fallback picks Nopalito ($28) + Tacolicious ($25) = $53 > $50 → throw
+  // After fix: picks cheaper meals within budget → resolves with valid itinerary
+  const tightMealConstraints = {
+    timeWindow: { startTime: '10:00', endTime: '20:30' }, // enforces lunch + dinner
+    maxBudgetPerPerson: 50, // tight: top-rated meals ($28 + $25) exceed, but cheaper options fit
+    groupSize: 2,
+    includeMeals: true,
+    foodBelowMin: false, // meals are wanted
+  }
+  const result = await generateItinerary(shortlist, tightMealConstraints)
+  // Must RESOLVE (not throw) and the itinerary must be within budget
+  assert.notEqual(result.feasible, false, 'expected a feasible itinerary')
+  const byId = new Map(shortlist.map((p) => [p.id, p]))
+  const total = result.itinerary.stops.reduce((s, stop) => s + (byId.get(stop.pinId)?.pricePerPerson ?? 0), 0)
+  assert.ok(total <= 50, `total ${total} exceeds budget 50`)
+  // Should include meals (at least one restaurant stop)
+  const meals = result.itinerary.stops.filter((s) => byId.get(s.pinId)?.category === 'restaurant')
+  assert.ok(meals.length > 0, 'expected at least one meal')
+})

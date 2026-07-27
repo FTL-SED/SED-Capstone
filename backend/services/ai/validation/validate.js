@@ -123,15 +123,35 @@ const checkBusinessRules = (stops, shortlist, constraints, errors, options = {})
   // enforceable when a full AVG_STOP_DURATION_MIN stop can be seated inside
   // BOTH the trip window AND the block's hours — so validation + fallback agree
   // on which blocks to require/reserve (C1 fix).
+  // Budget-feasibility gate: only require meals when the budget can afford one
+  // DISTINCT restaurant per enforceable block. Take the N cheapest distinct
+  // restaurants (where N = number of blocks); if their sum exceeds budget, meals
+  // are infeasible → don't require them. This aligns with fallback's budget-aware
+  // reservation — neither requires nor reserves meals the budget cannot afford
+  // (budget-500 fix).
   const wantMeals = includeMeals !== false && !foodBelowMin
   const hasRestaurant = shortlist.some((p) => p.category === CATEGORY.restaurant)
   if (wantMeals && hasRestaurant && timeWindow?.startTime && timeWindow?.endTime) {
-    for (const name of enforceableMealBlocks(timeWindow.startTime, timeWindow.endTime, AVG_STOP_DURATION_MIN)) {
-      const block = MEAL_TIME_WINDOWS[name]
-      const filled = stops.some(
-        (s) => isMeal(s) && (s.mealType === name || (s.mealType === undefined && isInMealBlock(toMinutes(s.arriveTime), block)))
-      )
-      if (!filled) errors.push(`missing a meal in the ${name} block`)
+    const enf = enforceableMealBlocks(timeWindow.startTime, timeWindow.endTime, AVG_STOP_DURATION_MIN)
+    // Compute the minimum meal-set cost: sum of the N cheapest distinct restaurants,
+    // where N = number of enforceable blocks. If that sum exceeds budget, meals
+    // are budget-infeasible → don't require them (budget wins, like foodBelowMin).
+    const restaurants = shortlist
+      .filter((p) => p.category === CATEGORY.restaurant)
+      .map((p) => (typeof p.pricePerPerson === 'number' ? p.pricePerPerson : 0))
+      .sort((a, b) => a - b)
+    const minMealSetCost = restaurants.slice(0, enf.length).reduce((sum, cost) => sum + cost, 0)
+    const budgetFeasible =
+      typeof maxBudgetPerPerson !== 'number' ||
+      (restaurants.length >= enf.length && minMealSetCost <= maxBudgetPerPerson)
+    if (budgetFeasible) {
+      for (const name of enf) {
+        const block = MEAL_TIME_WINDOWS[name]
+        const filled = stops.some(
+          (s) => isMeal(s) && (s.mealType === name || (s.mealType === undefined && isInMealBlock(toMinutes(s.arriveTime), block)))
+        )
+        if (!filled) errors.push(`missing a meal in the ${name} block`)
+      }
     }
   }
 

@@ -80,16 +80,32 @@ const fallbackSequence = (shortlist, constraints) => {
   const wantMeals = includeMeals !== false && !foodBelowMin
   const targetBlocks = wantMeals ? enforceableMealBlocks(startHHMM, endHHMM, AVG_STOP_DURATION_MIN) : []
 
-  // Reserve one best-rated, distinct restaurant per target block. Each becomes
-  // a fixed anchor at its block's open time (elapsed from start, clamped ≥0).
+  // Reserve one restaurant per target block, picking the best-rated option that
+  // keeps the cumulative meal budget within budgetCap. Each becomes a fixed
+  // anchor at its block's open time (elapsed from start, clamped ≥0).
+  // Budget-aware selection (fix for budget-500): prefer highest-rated but skip
+  // picks that would make the total reserved-meal cost exceed the budget.
   const usedIds = new Set()
   const anchors = []
+  let mealBudgetSpent = 0
   for (const block of targetBlocks) {
-    const pick = shortlist
+    const candidates = shortlist
       .filter((p) => isRestaurant(p) && !usedIds.has(p.id))
-      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))[0]
+      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
+    // Pick the best-rated restaurant whose cost fits the remaining budget.
+    // If none fit, skip this block (validation's meal requirement will only
+    // fire when affordable meals exist — see validate.js budget-feasibility).
+    let pick = null
+    for (const candidate of candidates) {
+      const cost = typeof candidate.pricePerPerson === 'number' ? candidate.pricePerPerson : 0
+      if (mealBudgetSpent + cost <= budgetCap) {
+        pick = candidate
+        break
+      }
+    }
     if (!pick) continue
     usedIds.add(pick.id)
+    mealBudgetSpent += typeof pick.pricePerPerson === 'number' ? pick.pricePerPerson : 0
     const openElapsed = Math.max(0, toMinutes(MEAL_TIME_WINDOWS[block].start) - startWall)
     if (openElapsed + AVG_STOP_DURATION_MIN <= windowLen) {
       anchors.push({ block, pin: pick, arrive: openElapsed })

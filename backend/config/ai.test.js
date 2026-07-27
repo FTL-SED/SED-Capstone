@@ -54,9 +54,9 @@ test('enforceableMealBlocks: 08:00–20:30 with 90min stops includes all three',
   assert.deepEqual(blocks, ['breakfast', 'lunch', 'dinner'])
 })
 
-test('enforceableMealBlocks: 11:30–13:00 with 90min stops excludes lunch (too short)', () => {
+test('enforceableMealBlocks: 11:30–13:00 with 90min stops includes lunch (exactly fits)', () => {
   // Lunch 11:00–13:45: earliest arrival max(11:00,11:30) = 11:30, +90min = 13:00 exactly fits
-  // BUT must also depart before block close: 13:00 <= 13:45 ✓ so lunch IS enforceable
+  // Depart 13:00 <= window end 13:00 ✓ AND <= block close 13:45 ✓ so lunch IS enforceable
   const blocks = enforceableMealBlocks('11:30', '13:00', AVG_STOP_DURATION_MIN)
   assert.deepEqual(blocks, ['lunch'])
 })

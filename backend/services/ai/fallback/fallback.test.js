@@ -229,3 +229,41 @@ test('fallback: 11:30-start trip does NOT include breakfast (block no longer ove
   assert.ok(mealTypes.has('lunch'), 'expected a lunch meal')
   assert.ok(mealTypes.has('dinner'), 'expected a dinner meal')
 })
+
+test('fallback meals respect budget cap (picks best-rated within cumulative budget)', () => {
+  // Two enforceable blocks (lunch + dinner) with restaurants available. The
+  // top-RATED pair ($30 + $28 = $58) exceeds budget, but greedily picking the
+  // best-rated per block that keeps the running total within budget produces a
+  // valid in-budget combination. Fallback picks Pricey Lunch ($30, 4.9★) first,
+  // then must downgrade dinner to Affordable Dinner ($18, 4.6★) to stay under $50.
+  const shortlist = [
+    { id: 1, name: 'Museum', category: 'activity', pricePerPerson: 5, latitude: 37.785, longitude: -122.401, rating: 4.6, address: 'SF' },
+    { id: 2, name: 'Park', category: 'activity', pricePerPerson: 0, latitude: 37.769, longitude: -122.456, rating: 4.8, address: 'SF' },
+    { id: 10, name: 'Pricey Lunch', category: 'restaurant', pricePerPerson: 30, latitude: 37.795, longitude: -122.394, rating: 4.9, address: 'SF' },
+    { id: 11, name: 'Affordable Lunch', category: 'restaurant', pricePerPerson: 22, latitude: 37.751, longitude: -122.418, rating: 4.7, address: 'SF' },
+    { id: 12, name: 'Pricey Dinner', category: 'restaurant', pricePerPerson: 28, latitude: 37.785, longitude: -122.432, rating: 4.8, address: 'SF' },
+    { id: 13, name: 'Affordable Dinner', category: 'restaurant', pricePerPerson: 18, latitude: 37.775, longitude: -122.420, rating: 4.6, address: 'SF' },
+  ]
+  const constraints = {
+    timeWindow: { startTime: '10:00', endTime: '20:30' },
+    maxBudgetPerPerson: 50,
+    transport: 'driving',
+    includeMeals: true,
+    foodBelowMin: false,
+  }
+  const result = fallbackSequence(shortlist, constraints)
+  assert.equal(result.feasible, true)
+  // Total per-person cost must not exceed budget
+  const priceById = new Map(shortlist.map((p) => [p.id, p.pricePerPerson]))
+  const total = result.stops.reduce((s, x) => s + (priceById.get(x.pinId) ?? 0), 0)
+  assert.ok(total <= 50, `total ${total} exceeds cap 50`)
+  // Greedy picks the highest-rated lunch (Pricey Lunch), then must pick Affordable Dinner
+  const usedIds = new Set(result.stops.map((s) => s.pinId))
+  assert.ok(usedIds.has(10), 'should pick Pricey Lunch (best-rated, fits budget)')
+  assert.ok(!usedIds.has(12), 'should NOT pick Pricey Dinner (would exceed budget with Pricey Lunch)')
+  assert.ok(usedIds.has(13), 'should pick Affordable Dinner (keeps total under cap)')
+  // Should still seat both meals
+  const mealTypes = new Set(result.stops.filter((s) => s.mealType).map((s) => s.mealType))
+  assert.ok(mealTypes.has('lunch'), 'expected a lunch meal')
+  assert.ok(mealTypes.has('dinner'), 'expected a dinner meal')
+})
