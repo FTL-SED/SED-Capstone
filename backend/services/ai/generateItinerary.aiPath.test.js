@@ -19,6 +19,7 @@ const CONSTRAINTS = {
   maxBudgetPerPerson: 90,
   groupSize: 2,
   transport: 'walking',
+  includeMeals: false,
 }
 
 // A well-formed AI reply that sequences two shortlist pins within the window.

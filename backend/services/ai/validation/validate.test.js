@@ -18,6 +18,7 @@ const shortlist = [
 const constraints = {
   timeWindow: { startTime: '09:00', endTime: '21:00' },
   maxBudgetPerPerson: 100,
+  includeMeals: false,
 }
 
 // A clean, feasible itinerary that satisfies every rule — the baseline the
@@ -193,4 +194,50 @@ test('rejects a malformed stop (bad time string) without crashing', () => {
 test('skips window/budget checks gracefully when constraints are absent', () => {
   const { valid } = validateItinerary(goodItinerary, shortlist, {})
   assert.equal(valid, true) // no timeWindow/budget → those rules just don't run
+})
+
+test('validate: rejects a wanted meal missing when food is available', () => {
+  const shortlist = [
+    { id: 1, category: 'activity', pricePerPerson: 0 },
+    { id: 2, category: 'activity', pricePerPerson: 0 },
+    { id: 10, category: 'restaurant', pricePerPerson: 15 },
+  ]
+  const result = {
+    feasible: true, title: 'T', location: 'L', description: 'D',
+    stops: [
+      { pinId: 1, arriveTime: '11:00', departTime: '12:30' },
+      { pinId: 2, arriveTime: '13:00', departTime: '14:30' },
+    ],
+  }
+  const constraints = {
+    timeWindow: { startTime: '10:00', endTime: '14:30' }, // overlaps lunch only
+    maxBudgetPerPerson: 100,
+    includeMeals: true,
+    foodBelowMin: false,
+  }
+  const { valid, errors } = validateItinerary(result, shortlist, constraints)
+  assert.equal(valid, false)
+  assert.ok(errors.some((e) => /missing a meal in the lunch block/.test(e)), errors.join('; '))
+})
+
+test('validate: does NOT require meals when includeMeals is false', () => {
+  const shortlist = [{ id: 1, category: 'activity', pricePerPerson: 0 }, { id: 10, category: 'restaurant', pricePerPerson: 15 }]
+  const result = {
+    feasible: true, title: 'T', location: 'L', description: 'D',
+    stops: [{ pinId: 1, arriveTime: '11:00', departTime: '12:30' }],
+  }
+  const constraints = { timeWindow: { startTime: '10:00', endTime: '14:30' }, maxBudgetPerPerson: 100, includeMeals: false }
+  const { valid } = validateItinerary(result, shortlist, constraints)
+  assert.equal(valid, true)
+})
+
+test('validate: does NOT require meals when food is scarce (foodBelowMin)', () => {
+  const shortlist = [{ id: 1, category: 'activity', pricePerPerson: 0 }]
+  const result = {
+    feasible: true, title: 'T', location: 'L', description: 'D',
+    stops: [{ pinId: 1, arriveTime: '11:00', departTime: '12:30' }],
+  }
+  const constraints = { timeWindow: { startTime: '10:00', endTime: '14:30' }, maxBudgetPerPerson: 100, includeMeals: true, foodBelowMin: true }
+  const { valid } = validateItinerary(result, shortlist, constraints)
+  assert.equal(valid, true)
 })

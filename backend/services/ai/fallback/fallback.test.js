@@ -17,6 +17,7 @@ const constraints = {
   timeWindow: { startTime: '09:00', endTime: '21:00' },
   maxBudgetPerPerson: 100,
   groupSize: 2, // cap = 200
+  includeMeals: false,
 }
 
 test('produces a feasible itinerary that PASSES validation (same-schema promise)', () => {

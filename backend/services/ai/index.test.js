@@ -54,6 +54,7 @@ const constraints = {
   timeWindow: { startTime: '09:00', endTime: '21:00' },
   maxBudgetPerPerson: 100,
   groupSize: 2,
+  includeMeals: false,
 }
 
 test('generates, persists, and reads back a full itinerary', { skip: dbReason }, async () => {

@@ -6,7 +6,7 @@
 // Returns { valid, errors } — errors is a list of plain-English problems, handy
 // for debugging. Note: a well-formed { feasible: false, reason } is a valid
 // answer (the AI correctly saying "no itinerary fits"), not a failure.
-import { MEAL_TIME_WINDOWS, CATEGORY, isInMealBlock } from '../../../config/ai.js'
+import { MEAL_TIME_WINDOWS, CATEGORY, isInMealBlock, blocksOverlappingWindow } from '../../../config/ai.js'
 import { toMinutes, minutesFromStart, windowLengthMinutes } from '../../../utils/time.js'
 
 const HHMM_RE = /^([01][0-9]|2[0-3]):[0-5][0-9]$/
@@ -42,7 +42,7 @@ const checkStopShape = (stop, i, errors) => {
 // Business rules across the whole itinerary. Assumes stops already passed the
 // shape check (times are valid HH:MM, pinId is an integer, etc.).
 const checkBusinessRules = (stops, shortlist, constraints, errors) => {
-  const { timeWindow, maxBudgetPerPerson } = constraints ?? {}
+  const { timeWindow, maxBudgetPerPerson, includeMeals, foodBelowMin } = constraints ?? {}
   const byId = new Map(shortlist.map((p) => [p.id, p]))
 
   // Anchor for all time math: the trip start (elapsed minutes from here). When
@@ -110,6 +110,23 @@ const checkBusinessRules = (stops, shortlist, constraints, errors) => {
     )
     if (inBlock.length > 1) {
       errors.push(`${inBlock.length} stops fall in the ${name} block (max 1)`)
+    }
+  }
+
+  // Meal REQUIREMENT (lower bound): when the group wants meals and food isn't
+  // scarce, every meal block the trip window overlaps must have a meal stop.
+  // Gated so an opt-out group or a genuine food desert can't force an endless
+  // AI→fallback rejection. Only enforced when a shortlist restaurant exists to
+  // fill the block at all.
+  const wantMeals = includeMeals !== false && !foodBelowMin
+  const hasRestaurant = shortlist.some((p) => p.category === CATEGORY.restaurant)
+  if (wantMeals && hasRestaurant && timeWindow?.startTime && timeWindow?.endTime) {
+    for (const name of blocksOverlappingWindow(timeWindow.startTime, timeWindow.endTime)) {
+      const block = MEAL_TIME_WINDOWS[name]
+      const filled = stops.some(
+        (s) => isMeal(s) && (s.mealType === name || (s.mealType === undefined && isInMealBlock(toMinutes(s.arriveTime), block)))
+      )
+      if (!filled) errors.push(`missing a meal in the ${name} block`)
     }
   }
 
