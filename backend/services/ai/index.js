@@ -34,6 +34,8 @@ const tryAi = async (shortlist, constraints, callAiFn) => {
   const messages = buildMessages(shortlist, constraints)
   const result = await callAiFn(messages)
 
+  // AI output validated with enforceCoverage=true (default) — the coverage
+  // backstop routes a short AI day to the fallback.
   const { valid, errors } = validateItinerary(result, shortlist, constraints)
   if (!valid) {
     // Surface WHY the AI output was rejected — this is the signal for tuning
@@ -68,8 +70,10 @@ const generateItinerary = async (shortlist, constraints, callAiFn = callAI) => {
     // The fallback can itself declare the trip infeasible (empty shortlist,
     // impossible window). Validate it too so a bug there can't ship a broken
     // itinerary — if even the fallback is invalid, that's a real error.
+    // Pass enforceCoverage:false so the coverage backstop doesn't reject the
+    // fallback's own greedy-maximal day (C2 fix). Still enforces meals.
     if (result.feasible !== false) {
-      const { valid, errors } = validateItinerary(result, shortlist, constraints)
+      const { valid, errors } = validateItinerary(result, shortlist, constraints, { enforceCoverage: false })
       if (!valid) {
         throw new Error(`Fallback itinerary failed validation: ${errors.join('; ')}`)
       }
@@ -83,9 +87,10 @@ const generateItinerary = async (shortlist, constraints, callAiFn = callAI) => {
   // Optimize the route (shortest travel, meals anchored) + re-walk the clock.
   // Re-validate: reordering/rescheduling must never break a rule (e.g. push a
   // stop outside the window). If it somehow does, keep the pre-optimization
-  // result rather than ship an invalid one.
+  // result rather than ship an invalid one. When source is fallback, pass
+  // enforceCoverage:false so the backstop doesn't trip here either (C2 fix).
   const optimized = optimizeItinerary(result, shortlist, constraints)
-  const { valid } = validateItinerary(optimized, shortlist, constraints)
+  const { valid } = validateItinerary(optimized, shortlist, constraints, source === 'fallback' ? { enforceCoverage: false } : {})
   const itinerary = valid ? optimized : result
 
   return { itinerary, source }

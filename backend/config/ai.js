@@ -74,6 +74,30 @@ export function blocksOverlappingWindow(startHHMM, endHHMM) {
     .map(([name]) => name)
 }
 
+// Meal block names where a stop of `stopDurationMin` can actually BE SEATED
+// (arrive + dwell fits within BOTH the trip window AND the block's open hours).
+// This is the SHARED predicate validation + fallback use to agree on which
+// blocks are ENFORCEABLE. A block can overlap the window (required by validation
+// before this fix) yet be unfillable (e.g. dinner 17:00–20:30 vs trip 10:00–18:00:
+// earliest possible arrival is max(17:00,10:00)=17:00, +90min dwell = 18:30 >
+// 18:00 window end → can't fit). Returns [] for degenerate windows.
+export function enforceableMealBlocks(startHHMM, endHHMM, stopDurationMin) {
+  const start = hhmmToMinutes(startHHMM)
+  const end = hhmmToMinutes(endHHMM)
+  if (end <= start) return []
+  return Object.entries(MEAL_TIME_WINDOWS)
+    .filter(([, block]) => {
+      const blockStart = hhmmToMinutes(block.start)
+      const blockEnd = hhmmToMinutes(block.end)
+      // Earliest we could arrive at this block (trip start or block open, whichever is later)
+      const arrivalMin = Math.max(blockStart, start)
+      // Does a full stop fit? Must depart before both window end AND block close.
+      const departTime = arrivalMin + stopDurationMin
+      return arrivalMin <= blockEnd && departTime <= end && departTime <= blockEnd
+    })
+    .map(([name]) => name)
+}
+
 // Travel-time model, used by the scheduler to turn the straight-line distance
 // between two stops into a realistic travel-time estimate.
 //

@@ -6,7 +6,7 @@
 // Returns { valid, errors } — errors is a list of plain-English problems, handy
 // for debugging. Note: a well-formed { feasible: false, reason } is a valid
 // answer (the AI correctly saying "no itinerary fits"), not a failure.
-import { MEAL_TIME_WINDOWS, CATEGORY, isInMealBlock, blocksOverlappingWindow, AVG_STOP_DURATION_MIN } from '../../../config/ai.js'
+import { MEAL_TIME_WINDOWS, CATEGORY, isInMealBlock, enforceableMealBlocks, AVG_STOP_DURATION_MIN } from '../../../config/ai.js'
 import { toMinutes, minutesFromStart, windowLengthMinutes } from '../../../utils/time.js'
 
 const HHMM_RE = /^([01][0-9]|2[0-3]):[0-5][0-9]$/
@@ -41,7 +41,12 @@ const checkStopShape = (stop, i, errors) => {
 
 // Business rules across the whole itinerary. Assumes stops already passed the
 // shape check (times are valid HH:MM, pinId is an integer, etc.).
-const checkBusinessRules = (stops, shortlist, constraints, errors) => {
+// `options.enforceCoverage` defaults true; when false, skips ONLY the coverage
+// backstop (still enforces all other rules including meals) — used for fallback
+// re-validation so the backstop's "day ends early" rule doesn't reject the
+// fallback's own greedy-maximal output (C2 fix).
+const checkBusinessRules = (stops, shortlist, constraints, errors, options = {}) => {
+  const { enforceCoverage = true } = options
   const { timeWindow, maxBudgetPerPerson, includeMeals, foodBelowMin } = constraints ?? {}
   const byId = new Map(shortlist.map((p) => [p.id, p]))
 
@@ -114,14 +119,14 @@ const checkBusinessRules = (stops, shortlist, constraints, errors) => {
   }
 
   // Meal REQUIREMENT (lower bound): when the group wants meals and food isn't
-  // scarce, every meal block the trip window overlaps must have a meal stop.
-  // Gated so an opt-out group or a genuine food desert can't force an endless
-  // AI→fallback rejection. Only enforced when a shortlist restaurant exists to
-  // fill the block at all.
+  // scarce, every ENFORCEABLE meal block must have a meal stop. A block is
+  // enforceable when a full AVG_STOP_DURATION_MIN stop can be seated inside
+  // BOTH the trip window AND the block's hours — so validation + fallback agree
+  // on which blocks to require/reserve (C1 fix).
   const wantMeals = includeMeals !== false && !foodBelowMin
   const hasRestaurant = shortlist.some((p) => p.category === CATEGORY.restaurant)
   if (wantMeals && hasRestaurant && timeWindow?.startTime && timeWindow?.endTime) {
-    for (const name of blocksOverlappingWindow(timeWindow.startTime, timeWindow.endTime)) {
+    for (const name of enforceableMealBlocks(timeWindow.startTime, timeWindow.endTime, AVG_STOP_DURATION_MIN)) {
       const block = MEAL_TIME_WINDOWS[name]
       const filled = stops.some(
         (s) => isMeal(s) && (s.mealType === name || (s.mealType === undefined && isInMealBlock(toMinutes(s.arriveTime), block)))
@@ -142,7 +147,9 @@ const checkBusinessRules = (stops, shortlist, constraints, errors) => {
   // unused shortlist pins remain is under-filled. Rejecting it routes the AI's
   // short day to the deterministic fallback, which packs the window. Slack of
   // one stop's duration avoids nagging over a reasonable early finish.
-  if (timeWindow?.startTime && timeWindow?.endTime && stops.length > 0) {
+  // ONLY applied when enforceCoverage is true (default); fallback re-validation
+  // passes false so its greedy-maximal day isn't rejected (C2 fix).
+  if (enforceCoverage && timeWindow?.startTime && timeWindow?.endTime && stops.length > 0) {
     const windowEnd = windowLengthMinutes(timeWindow.startTime, timeWindow.endTime)
     const lastDepart = fromStart(stops[stops.length - 1].departTime)
     const usedIds = new Set(stops.map((s) => s.pinId))
@@ -157,7 +164,11 @@ const checkBusinessRules = (stops, shortlist, constraints, errors) => {
 //   result      = parsed JSON, either { feasible:true, ... } or { feasible:false, reason }
 //   shortlist   = the pins the itinerary was built from (each with .id + pricePerPerson)
 //   constraints = { timeWindow?, maxBudgetPerPerson, ... }
-const validateItinerary = (result, shortlist, constraints) => {
+//   options     = { enforceCoverage?: boolean } — defaults true; when false, skips
+//                 ONLY the coverage backstop (still runs all other rules including
+//                 meals). Used for fallback re-validation so the backstop doesn't
+//                 reject the fallback's own greedy-maximal day (C2 fix).
+const validateItinerary = (result, shortlist, constraints, options = {}) => {
   const errors = []
 
   if (!result || typeof result !== 'object') {
@@ -187,7 +198,7 @@ const validateItinerary = (result, shortlist, constraints) => {
   const shapeOk = result.stops.every((stop, i) => checkStopShape(stop, i, errors))
   // Only run business rules if every stop is structurally sound — otherwise
   // toMinutes/reduce could choke on malformed data.
-  if (shapeOk) checkBusinessRules(result.stops, shortlist, constraints, errors)
+  if (shapeOk) checkBusinessRules(result.stops, shortlist, constraints, errors, options)
 
   return { valid: errors.length === 0, errors }
 }

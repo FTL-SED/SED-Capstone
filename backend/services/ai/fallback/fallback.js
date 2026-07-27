@@ -10,7 +10,7 @@
 import {
   AVG_STOP_DURATION_MIN,
   MEAL_TIME_WINDOWS,
-  blocksOverlappingWindow,
+  enforceableMealBlocks,
   travelMinutesFor,
   CATEGORY,
 } from '../../../config/ai.js'
@@ -74,11 +74,11 @@ const fallbackSequence = (shortlist, constraints) => {
   const wallAt = (elapsed) => (startWall + elapsed) % MINUTES_PER_DAY
   const budgetCap = typeof maxBudgetPerPerson === 'number' ? maxBudgetPerPerson : Infinity
 
-  // Which meal blocks to guarantee: same-day blocks overlapping the window,
-  // but only when the group wants meals and food isn't scarce (best-effort
-  // otherwise — the greedy walk can still land a restaurant in a window).
+  // Which meal blocks to guarantee: only blocks where a full
+  // AVG_STOP_DURATION_MIN stop can be seated. Uses the SAME predicate as
+  // validation so they can't drift (C1 fix).
   const wantMeals = includeMeals !== false && !foodBelowMin
-  const targetBlocks = wantMeals ? blocksOverlappingWindow(startHHMM, endHHMM) : []
+  const targetBlocks = wantMeals ? enforceableMealBlocks(startHHMM, endHHMM, AVG_STOP_DURATION_MIN) : []
 
   // Reserve one best-rated, distinct restaurant per target block. Each becomes
   // a fixed anchor at its block's open time (elapsed from start, clamped ≥0).

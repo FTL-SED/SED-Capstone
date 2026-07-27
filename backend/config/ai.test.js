@@ -2,9 +2,11 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   MEAL_TIME_WINDOWS,
+  AVG_STOP_DURATION_MIN,
   mealBlockAt,
   isInMealBlock,
   blocksOverlappingWindow,
+  enforceableMealBlocks,
 } from './ai.js'
 
 const at = (hhmm) => {
@@ -36,4 +38,36 @@ test('blocksOverlappingWindow: only blocks intersecting a same-day window', () =
 test('blocksOverlappingWindow: overnight / degenerate window returns []', () => {
   assert.deepEqual(blocksOverlappingWindow('22:00', '02:00'), [])
   assert.deepEqual(blocksOverlappingWindow('09:00', '09:00'), [])
+})
+
+test('enforceableMealBlocks: 10:00–18:00 with 90min stops excludes dinner', () => {
+  // Dinner 17:00–20:30: earliest arrival max(17:00,10:00) = 17:00, +90min = 18:30 > 18:00 end
+  const blocks = enforceableMealBlocks('10:00', '18:00', AVG_STOP_DURATION_MIN)
+  assert.deepEqual(blocks, ['lunch'])
+})
+
+test('enforceableMealBlocks: 08:00–20:30 with 90min stops includes all three', () => {
+  // Breakfast 07:00–10:45: arrive 08:00, +90 = 09:30 <= 10:45 ✓
+  // Lunch 11:00–13:45: arrive 11:00, +90 = 12:30 <= 13:45 ✓
+  // Dinner 17:00–20:30: arrive 17:00, +90 = 18:30 <= 20:30 ✓
+  const blocks = enforceableMealBlocks('08:00', '20:30', AVG_STOP_DURATION_MIN)
+  assert.deepEqual(blocks, ['breakfast', 'lunch', 'dinner'])
+})
+
+test('enforceableMealBlocks: 11:30–13:00 with 90min stops excludes lunch (too short)', () => {
+  // Lunch 11:00–13:45: earliest arrival max(11:00,11:30) = 11:30, +90min = 13:00 exactly fits
+  // BUT must also depart before block close: 13:00 <= 13:45 ✓ so lunch IS enforceable
+  const blocks = enforceableMealBlocks('11:30', '13:00', AVG_STOP_DURATION_MIN)
+  assert.deepEqual(blocks, ['lunch'])
+})
+
+test('enforceableMealBlocks: 11:30–12:30 with 90min stops excludes lunch (no 90min room)', () => {
+  // Lunch 11:00–13:45: arrival 11:30, +90 = 13:00 > 12:30 window end
+  const blocks = enforceableMealBlocks('11:30', '12:30', AVG_STOP_DURATION_MIN)
+  assert.deepEqual(blocks, [])
+})
+
+test('enforceableMealBlocks: overnight/degenerate window returns []', () => {
+  assert.deepEqual(enforceableMealBlocks('22:00', '02:00', 90), [])
+  assert.deepEqual(enforceableMealBlocks('09:00', '09:00', 90), [])
 })

@@ -112,3 +112,42 @@ test('respects the budget cap end-to-end', { skip: dbReason }, async () => {
   const total = fetched.pins.reduce((sum, p) => sum + p.pricePerPerson, 0)
   assert.ok(total <= 30, `total ${total} exceeds cap 30`)
 })
+
+// C1/C2 regression tests: prove the two 500s are fixed
+test('10:00–18:00 with includeMeals does NOT throw (C1 fix)', { skip: dbReason }, async () => {
+  // Reproduces C1: dinner 17:00–20:30 overlaps the window but can't be filled
+  // (earliest arrival 17:00, +90min = 18:30 > 18:00 end). Before the fix,
+  // validation required dinner (blocksOverlappingWindow), fallback couldn't
+  // seat it → validation rejects fallback → generateItinerary throws.
+  const c1Constraints = {
+    timeWindow: { startTime: '10:00', endTime: '18:00' },
+    maxBudgetPerPerson: 120,
+    groupSize: 2,
+    includeMeals: true, // or omit — default is true
+  }
+  const result = await generateItinerary(shortlist, c1Constraints)
+  // Must RESOLVE (not throw), and if feasible, must have stops
+  assert.notEqual(result.feasible, false, 'expected a feasible itinerary')
+  assert.ok(result.itinerary.stops.length > 0, 'expected at least one stop')
+})
+
+test('tight budget / wide window does NOT throw (C2 fix)', { skip: dbReason }, async () => {
+  // Reproduces C2: tight budget + wide window → fallback greedy-maximal day
+  // ends short of 20:30 with unused pins → coverage backstop trips → throw.
+  // After C2, fallback re-validation skips coverage backstop.
+  // Use a budget that allows SOME stops but not all, so the fallback produces
+  // a short day (not infeasible).
+  const c2Constraints = {
+    timeWindow: { startTime: '10:00', endTime: '20:30' },
+    maxBudgetPerPerson: 35, // allows Golden Gate Park (free) + Tacolicious (25) = 25, leaves Nopalito out
+    groupSize: 2,
+    includeMeals: false, // isolate coverage from meals
+  }
+  const result = await generateItinerary(shortlist, c2Constraints)
+  // Must RESOLVE (not throw). The fallback may produce a short day OR declare
+  // infeasible if the budget is genuinely too tight — both are valid; the key
+  // is that it doesn't throw (no uncaught validation error).
+  if (result.feasible === false) return // tight budget may be infeasible — valid
+  assert.ok(result.itinerary.stops.length > 0, 'expected at least one stop')
+  assert.equal(result.source, 'fallback', 'should use fallback for tight budget')
+})
