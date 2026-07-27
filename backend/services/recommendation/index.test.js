@@ -203,5 +203,7 @@ test(
     // seat a meal in each — this is the combination that reliably gets food in.
     const meals = stops.filter((s) => s.mealType !== undefined || pinById.get(s.pinId)?.category === 'restaurant')
     assert.ok(meals.length >= 2, `expected at least 2 meal stops on a full day, got ${meals.length}`)
+    const mealTypes = new Set(stops.filter((s) => s.mealType).map((s) => s.mealType))
+    assert.ok(mealTypes.has('lunch') && mealTypes.has('dinner'), `expected lunch+dinner, got ${[...mealTypes].join(',')}`)
   }
 )
