@@ -14,9 +14,18 @@ import assert from 'node:assert/strict'
 
 import prisma from '../../lib/prisma.js'
 import { getRecommendations } from './index.js'
+import { generateItinerary } from '../ai/index.js'
 import { memberLikes } from './score/score.js'
 import { estPricePerPerson } from './helpers/helpers.js'
 import { FOOD_MAX } from '../../config/recommendation.js'
+
+// The catalog is SF-only (see the seed data + scripts/enrich BBOX). Every
+// recommended pin and every sequenced stop must fall inside this box, or we've
+// somehow leaked a non-SF place into a demo itinerary.
+const SF_BBOX = { minLat: 37.70, maxLat: 37.83, minLon: -122.52, maxLon: -122.35 }
+const inSF = ({ latitude, longitude }) =>
+  latitude >= SF_BBOX.minLat && latitude <= SF_BBOX.maxLat &&
+  longitude >= SF_BBOX.minLon && longitude <= SF_BBOX.maxLon
 
 let dbReason // stays undefined (must NOT be null - node:test's `skip` treats null as truthy) when the DB is reachable and seeded
 try {
@@ -135,5 +144,64 @@ test(
       hikingOrScenic.length > 0,
       'Shortlist should include at least one hiking or scenic venue for this member'
     )
+  }
+)
+
+// The "good demo" combination (see the demo recipe): a 3-member SF group on a
+// full day that spans both the lunch and dinner meal windows, generous budget +
+// radius, driving. This runs the ENTIRE pipeline against the real seeded
+// catalog — recommend() -> generateItinerary() -> a finished day — and proves
+// the places you'd actually demo are all in San Francisco.
+const DEMO_TRIP = {
+  startTime: '10:00',
+  endTime: '20:30',
+  maxBudgetPerPerson: 120,
+  travelRadius: 12,
+  transport: 'driving',
+}
+const DEMO_MEMBERS = [
+  { name: 'Ana', startLocation: { latitude: 37.7857, longitude: -122.4011 }, interestTags: ['art', 'museum'], foodPrefs: ['italian'] }, // SoMa
+  { name: 'Ben', startLocation: { latitude: 37.7694, longitude: -122.4862 }, interestTags: ['nature', 'scenic_views'], foodPrefs: ['american'] }, // Sunset
+  { name: 'Cy', startLocation: { latitude: 37.8020, longitude: -122.4058 }, interestTags: ['landmark'], foodPrefs: ['mexican'] }, // North Beach
+]
+
+test(
+  'demo combination: every recommended pin is inside the SF bounding box',
+  { skip: dbReason },
+  async () => {
+    const { shortlist } = await getRecommendations(DEMO_TRIP, DEMO_MEMBERS)
+    assert.ok(shortlist.length > 0, 'expected a non-empty shortlist for the demo group')
+    for (const pin of shortlist) {
+      assert.ok(
+        inSF(pin),
+        `${pin.name} (${pin.latitude}, ${pin.longitude}) is outside San Francisco`
+      )
+    }
+  }
+)
+
+test(
+  'demo combination: the full pipeline builds an SF day with both meals covered',
+  { skip: dbReason },
+  async () => {
+    const { shortlist, constraints } = await getRecommendations(DEMO_TRIP, DEMO_MEMBERS)
+    const result = await generateItinerary(shortlist, constraints)
+
+    assert.ok(result.itinerary, `expected a feasible itinerary, got: ${result.reason ?? 'none'}`)
+    const stops = result.itinerary.stops
+    assert.ok(stops.length >= 4, `expected a substantive day (>=4 stops), got ${stops.length}`)
+
+    // Every sequenced stop resolves to a real shortlist pin, and that pin is in SF.
+    const pinById = new Map(shortlist.map((p) => [p.id, p]))
+    for (const stop of stops) {
+      const pin = pinById.get(stop.pinId)
+      assert.ok(pin, `stop pinId ${stop.pinId} is not in the shortlist`)
+      assert.ok(inSF(pin), `${pin.name} (${pin.latitude}, ${pin.longitude}) is outside San Francisco`)
+    }
+
+    // A full day spanning lunch (11:00-13:45) and dinner (17:00-20:30) should
+    // seat a meal in each — this is the combination that reliably gets food in.
+    const meals = stops.filter((s) => s.mealType !== undefined || pinById.get(s.pinId)?.category === 'restaurant')
+    assert.ok(meals.length >= 2, `expected at least 2 meal stops on a full day, got ${meals.length}`)
   }
 )
