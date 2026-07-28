@@ -5,13 +5,9 @@ import ItineraryPanel from './ItineraryPanel/ItineraryPanel.jsx'
 import MapView from './MapView/MapView.jsx'
 import ErrorMessage from '../../components/ErrorMessage/ErrorMessage.jsx'
 import LoadingSection from '../LoadingPage/LoadingSection/LoadingSection.jsx'
+import { useLikeBookmark } from '../../hooks/useLikeBookmark.js'
 import {
   getItinerary,
-  getUserDashboard,
-  likeItinerary,
-  unlikeItinerary,
-  bookmarkItinerary,
-  removeBookmark,
   deleteItinerary,
   copyItinerary,
   addStop,
@@ -177,23 +173,26 @@ function ItineraryPage() {
   // Guards against double-firing the delete/copy network calls on rapid clicks.
   const [actionBusy, setActionBusy] = useState(false);
 
-  // Like/bookmark UI state. likeCount comes from the itinerary; whether *I've*
-  // liked/bookmarked it isn't in GET /itineraries/:id, so we hydrate it from my
-  // dashboard (GET /users/:id) — the same source the home page uses.
-  const [liked, setLiked] = useState(false);
-  const [bookmarked, setBookmarked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
   const [visited, setVisited] = useState(false);
 
   const currentUserId = getCurrentUser()?.id;
+  const numId = Number(id);
 
-  // Like/bookmark sync: firing one request per click lets concurrent toggles
-  // race at the DB, so the server's final state can disagree with the UI. Track
-  // the user's latest DESIRED state and keep at most one request in flight,
-  // re-sending until the server matches. { desired, running }.
-  const likeSync = useRef({ desired: false, running: false });
-  const bookmarkSync = useRef({ desired: false, running: false });
-  const visitedSync = useRef({ desired: false, running: false });
+  // Like/bookmark membership, the shared like-count map, and race-safe toggling
+  // all live in the shared hook, which owns the ['dashboard', id] cache — the
+  // SAME sources of truth as Home and Discover, so liking here shows up there
+  // (count included) and vice versa. We DERIVE this page's liked/bookmarked
+  // flags AND its count from those shared caches rather than tracking our own.
+  const { dashboard, likedIds, bookmarkedIds, likeCounts, toggleLike, toggleBookmark } =
+    useLikeBookmark({ userId: currentUserId });
+  const liked = likedIds.has(numId);
+  const bookmarked = bookmarkedIds.has(numId);
+  // The shared override wins over the fetched itinerary's baked-in count.
+  const likeCount = likeCounts?.[numId] ?? itinerary?.likeCount ?? 0;
+
+  // Visited isn't part of the hook, so it keeps its own drain-loop ref.
+  const 
+  = useRef({ desired: false, running: false });
 
   useEffect(() => {
     let active = true;
@@ -203,23 +202,7 @@ function ItineraryPage() {
         const data = await getItinerary(id);
         if (!active) return;
         setItinerary(data);
-        setLikeCount(data.likeCount ?? 0);
         setError('');
-
-        // Hydrate my like/bookmark state for this itinerary from my dashboard.
-        // Best-effort: if it fails (e.g. signed out) the buttons just start off.
-        if (currentUserId) {
-          try {
-            const me = await getUserDashboard(currentUserId);
-            if (!active) return;
-            const numId = Number(id);
-            setLiked((me.likedItineraries ?? []).some((it) => it.id === numId));
-            setBookmarked((me.bookmarkedItineraries ?? []).some((it) => it.id === numId));
-            setVisited((me.visitedItineraries ?? []).some((it) => it.id === numId));
-          } catch {
-            /* leave defaults */
-          }
-        }
       } catch (err) {
         if (active) setError(err.response?.data?.error || 'Could not load this itinerary.');
       } finally {
@@ -231,77 +214,7 @@ function ItineraryPage() {
     return () => {
       active = false;
     };
-  }, [id, currentUserId]);
-
-  // Optimistic toggle: flip the UI (and the count) immediately, call the
-  // backend, and revert if it rejects so the button never lies.
-  // Drain loop: send like/unlike until the server matches the user's latest
-  // desired state, with only ONE request in flight (so calls can't race at the
-  // DB). Once settled, reconcile the count with the authoritative value.
-  const syncLike = async () => {
-    const state = likeSync.current;
-    if (state.running) return;
-    state.running = true;
-    try {
-      let sent;
-      while (state.desired !== sent) {
-        sent = state.desired;
-        const res = sent ? await likeItinerary(id) : await unlikeItinerary(id);
-        // The server just confirmed the action we sent, so once this is the
-        // user's final intent `sent` IS the authoritative liked status — pin
-        // both it and the count to the truth (the count comes from res).
-        if (state.desired === sent) {
-          setLiked(sent);
-          if (res && typeof res.likeCount === 'number') setLikeCount(res.likeCount);
-        }
-      }
-    } catch (err) {
-      console.error('Like sync failed:', err);
-
-      // to revert the users last action in case it failed
-      setLiked(!state.desired);
-      setLikeCount((c) => Math.max(0, c + (state.desired ? -1 : 1)));
-    } finally {
-      state.running = false;
-    }
-  };
-
-  // Optimistic toggle in click order (count stays self-consistent), then
-  // converge the server in the background.
-  const toggleLike = () => {
-    const desired = !liked;
-    setLiked(desired);
-    setLikeCount((c) => Math.max(0, c + (desired ? 1 : -1)));
-    likeSync.current.desired = desired;
-    syncLike();
-  };
-
-  // Drain loop mirroring syncLike: one request in flight, converge to desired.
-  // Bookmark returns 204 (no count), so on hard failure we just revert the flag.
-  const syncBookmark = async () => {
-    const state = bookmarkSync.current;
-    if (state.running) return;
-    state.running = true;
-    try {
-      let sent;
-      while (state.desired !== sent) {
-        sent = state.desired;
-        sent ? await bookmarkItinerary(id) : await removeBookmark(id);
-      }
-    } catch (err) {
-      console.error('Bookmark sync failed, reverting:', err);
-      setBookmarked(!state.desired);
-    } finally {
-      state.running = false;
-    }
-  };
-
-  const toggleBookmark = () => {
-    const desired = !bookmarked;
-    setBookmarked(desired);
-    bookmarkSync.current.desired = desired;
-    syncBookmark();
-  };
+  }, [id]);
 
   // Drain loop mirroring syncBookmark: one request in flight, converge to the
   // user's latest desired visited state. Both mark/unmark return 204 (no body),
@@ -323,6 +236,12 @@ function ItineraryPage() {
       state.running = false;
     }
   };
+  
+   // Seed the visited flag from the dashboard the hook already fetched — no extra
+  // request. Re-runs if the dashboard arrives after first render.
+  useEffect(() => {
+    setVisited((dashboard?.visitedItineraries ?? []).some((it) => it.id === numId));
+  }, [dashboard, numId]);
 
   // Toggle "I've been here": flip the UI immediately, then converge the server
   // in the background.
@@ -467,8 +386,8 @@ function ItineraryPage() {
         visited={visited}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onToggleLike={toggleLike}
-        onToggleBookmark={toggleBookmark}
+        onToggleLike={() => toggleLike(numId, { id: numId, likeCount })}
+        onToggleBookmark={() => toggleBookmark(numId, itinerary)}
         onTogglePrivacy={handleTogglePrivacy}
         onDelete={handleDelete}
         onCopy={handleCopy}
