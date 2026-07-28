@@ -76,13 +76,18 @@ function drawStop(doc, stop, y) {
     .fillColor(COLORS.sunset)
     .text(`${stop.index}.`, left, y, { width: numW, align: 'right' })
 
-  // Time chip (if present), then the name in moss.
+  // Time chip (if present), then the name in moss. The name starts after the
+  // time's ACTUAL rendered width (+ a gap) rather than a fixed offset — am/pm
+  // times ("9:00 AM–5:00 PM") are wider than 24-hour ones and would otherwise
+  // be overwritten by the name.
   let lineY = y
+  let nameLeft = contentLeft
   if (stop.time) {
     doc.font(FONTS.bodySemi.name).fontSize(10).fillColor(COLORS.stone).text(stop.time, contentLeft, y + 1.5)
+    const timeWidth = doc.widthOfString(stop.time)
+    nameLeft = contentLeft + timeWidth + 12
     lineY = y
   }
-  const nameLeft = stop.time ? contentLeft + 78 : contentLeft
   doc
     .font(FONTS.bodySemi.name)
     .fontSize(12.5)
