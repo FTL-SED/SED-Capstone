@@ -6,6 +6,27 @@
   margin: 0;
 }
 
+/* When editing, keep the heading's type scale but render as a bordered input on
+   the surface color. The banner retints the read-only title to white for legibility
+   over the photo; while editing it sits on an opaque field, so we force ink text
+   (see the higher-specificity override in ItineraryPanel.css that beats the banner
+   rule). */
+.itinerary-title--editing {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  color: var(--ink);
+  font: inherit;
+}
+
+.itinerary-title--editing:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
 @media (max-width: 640px) {
   .itinerary-title {
     font-size: 1.3rem;

@@ -6,17 +6,6 @@ import PinCost from '../PinCost/PinCost.jsx'
 import PinAddress from '../PinAddress/PinAddress.jsx'
 import AddStopPanel from '../AddStopPanel/AddStopPanel.jsx'
 
-// Pin.startTime/endTime are ISO datetimes stored in Pacific wall-clock; show
-// just the HH:MM in that zone.
-function formatTime(iso) {
-  if (!iso) return '';
-  return new Date(iso).toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'America/Los_Angeles',
-  });
-}
-
 // A meal badge if the stop was tagged breakfast/lunch/dinner (persist.js folds
 // mealType into the pin's tags).
 const MEALS = ['breakfast', 'lunch', 'dinner'];
@@ -62,7 +51,7 @@ function RemoveStopControl({ onConfirm }) {
 // line, each with the stop's details. Reuses the Pin* display components. For
 // the owner (`editable`), each stop shows a remove control and an add-a-stop
 // panel sits at the bottom.
-function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onAddStop }) {
+function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onEditStop, onAddStop }) {
   if (pins.length === 0) {
     return (
       <div className="written-itinerary">
@@ -92,7 +81,16 @@ function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onAddStop
                     <RemoveStopControl onConfirm={() => onRemoveStop(pin.stopId)} />
                   )}
                 </div>
-                <PinTiming startTime={formatTime(pin.startTime)} endTime={formatTime(pin.endTime)} />
+                <PinTiming
+                  startTime={pin.startTime}
+                  endTime={pin.endTime}
+                  editable={editable}
+                  stopId={pin.stopId}
+                  onEditStop={onEditStop}
+                  siblings={pins
+                    .filter((p) => p.stopId !== pin.stopId)
+                    .map((p) => ({ startTime: p.startTime, endTime: p.endTime }))}
+                />
                 {pin.address && <PinAddress address={pin.address} />}
                 {pin.description && <p className="timeline-stop__desc">{pin.description}</p>}
                 <PinCost cost={pin.pricePerPerson} />

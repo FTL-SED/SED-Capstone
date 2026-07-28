@@ -12,6 +12,10 @@ function findByIdWithItinerary(id) {
   })
 }
 
+function findManyByItinerary(itineraryId) {
+  return prisma.itineraryStop.findMany({ where: { itineraryId } })
+}
+
 function update(id, data) {
   return prisma.itineraryStop.update({
     where: { id },
@@ -24,4 +28,4 @@ function remove(id) {
   return prisma.itineraryStop.delete({ where: { id } })
 }
 
-export { create, findByIdWithItinerary, update, remove }
+export { create, findByIdWithItinerary, findManyByItinerary, update, remove }
