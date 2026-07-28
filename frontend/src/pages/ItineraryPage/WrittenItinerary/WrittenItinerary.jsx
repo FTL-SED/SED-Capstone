@@ -1,5 +1,21 @@
 import './WrittenItinerary.css'
 import { useState } from 'react'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import PinName from '../PinName/PinName.jsx'
 import PinTiming from '../PinTiming/PinTiming.jsx'
 import PinCost from '../PinCost/PinCost.jsx'
@@ -47,11 +63,92 @@ function RemoveStopControl({ onConfirm }) {
   );
 }
 
-// Wanderlog-style vertical timeline: a numbered node per stop connected by a
-// line, each with the stop's details. Reuses the Pin* display components. For
-// the owner (`editable`), each stop shows a remove control and an add-a-stop
-// panel sits at the bottom.
-function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onEditStop, onAddStop }) {
+// The inner content of a stop card — shared by the draggable (owner) and static
+// (viewer) rows so the two never drift.
+function StopCard({ pin, index, total, meal, editable, onRemoveStop, onEditStop, siblings, dragHandle }) {
+  return (
+    <>
+      <div className="timeline-stop__rail">
+        <span className="timeline-stop__num">{index + 1}</span>
+        {index < total - 1 && <span className="timeline-stop__line" />}
+      </div>
+
+      <div className="timeline-stop__card">
+        <div className="timeline-stop__head">
+          {dragHandle}
+          <PinName name={pin.name} />
+          {meal && <span className="timeline-stop__meal">{meal}</span>}
+          {editable && pin.stopId != null && (
+            <RemoveStopControl onConfirm={() => onRemoveStop(pin.stopId)} />
+          )}
+        </div>
+        <PinTiming
+          startTime={pin.startTime}
+          endTime={pin.endTime}
+          editable={editable}
+          stopId={pin.stopId}
+          onEditStop={onEditStop}
+          siblings={siblings}
+        />
+        {pin.address && <PinAddress address={pin.address} />}
+        {pin.description && <p className="timeline-stop__desc">{pin.description}</p>}
+        <PinCost cost={pin.pricePerPerson} />
+      </div>
+    </>
+  );
+}
+
+// A draggable timeline row (owner mode). useSortable keys off the stop id; the
+// drag handle carries the listeners so the card body stays interactive (the
+// inline time editor, remove button, etc.).
+function SortableStop({ pin, index, total, meal, onRemoveStop, onEditStop, siblings }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: pin.stopId });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  const handle = (
+    <button
+      type="button"
+      className="timeline-stop__drag"
+      aria-label="Drag to reorder stop"
+      {...attributes}
+      {...listeners}
+    >
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+        <circle cx="9" cy="6" r="1.6" /><circle cx="15" cy="6" r="1.6" />
+        <circle cx="9" cy="12" r="1.6" /><circle cx="15" cy="12" r="1.6" />
+        <circle cx="9" cy="18" r="1.6" /><circle cx="15" cy="18" r="1.6" />
+      </svg>
+    </button>
+  );
+  return (
+    <li ref={setNodeRef} style={style} className="timeline-stop">
+      <StopCard
+        pin={pin}
+        index={index}
+        total={total}
+        meal={meal}
+        editable
+        onRemoveStop={onRemoveStop}
+        onEditStop={onEditStop}
+        siblings={siblings}
+        dragHandle={handle}
+      />
+    </li>
+  );
+}
+
+// Wanderlog-style vertical timeline. For the owner (`editable`) each stop is
+// draggable (dnd-kit) and dropping calls onReorderStops with the new id order.
+function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onEditStop, onAddStop, onReorderStops }) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
   if (pins.length === 0) {
     return (
       <div className="written-itinerary">
@@ -61,45 +158,63 @@ function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onEditSto
     );
   }
 
+  const siblingsFor = (pin) =>
+    pins.filter((p) => p.stopId !== pin.stopId).map((p) => ({ startTime: p.startTime, endTime: p.endTime }));
+
+  // Viewer (read-only) timeline — unchanged behavior, no drag.
+  if (!editable) {
+    return (
+      <ol className="written-itinerary">
+        {pins.map((pin, i) => (
+          <li key={pin.stopId ?? pin.id ?? pin.orderInItinerary} className="timeline-stop">
+            <StopCard
+              pin={pin}
+              index={i}
+              total={pins.length}
+              meal={mealOf(pin.tags)}
+              editable={false}
+              onRemoveStop={onRemoveStop}
+              onEditStop={onEditStop}
+              siblings={siblingsFor(pin)}
+              dragHandle={null}
+            />
+          </li>
+        ))}
+      </ol>
+    );
+  }
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = pins.findIndex((p) => p.stopId === active.id);
+    const newIndex = pins.findIndex((p) => p.stopId === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const newOrder = arrayMove(pins, oldIndex, newIndex).map((p) => p.stopId);
+    onReorderStops(newOrder);
+  };
+
   return (
     <>
-      <ol className="written-itinerary">
-        {pins.map((pin, i) => {
-          const meal = mealOf(pin.tags);
-          return (
-            <li key={pin.stopId ?? pin.id ?? pin.orderInItinerary} className="timeline-stop">
-              <div className="timeline-stop__rail">
-                <span className="timeline-stop__num">{i + 1}</span>
-                {i < pins.length - 1 && <span className="timeline-stop__line" />}
-              </div>
-
-              <div className="timeline-stop__card">
-                <div className="timeline-stop__head">
-                  <PinName name={pin.name} />
-                  {meal && <span className="timeline-stop__meal">{meal}</span>}
-                  {editable && pin.stopId != null && (
-                    <RemoveStopControl onConfirm={() => onRemoveStop(pin.stopId)} />
-                  )}
-                </div>
-                <PinTiming
-                  startTime={pin.startTime}
-                  endTime={pin.endTime}
-                  editable={editable}
-                  stopId={pin.stopId}
-                  onEditStop={onEditStop}
-                  siblings={pins
-                    .filter((p) => p.stopId !== pin.stopId)
-                    .map((p) => ({ startTime: p.startTime, endTime: p.endTime }))}
-                />
-                {pin.address && <PinAddress address={pin.address} />}
-                {pin.description && <p className="timeline-stop__desc">{pin.description}</p>}
-                <PinCost cost={pin.pricePerPerson} />
-              </div>
-            </li>
-          );
-        })}
-      </ol>
-      {editable && <AddStopPanel onAddStop={onAddStop} />}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={pins.map((p) => p.stopId)} strategy={verticalListSortingStrategy}>
+          <ol className="written-itinerary">
+            {pins.map((pin, i) => (
+              <SortableStop
+                key={pin.stopId}
+                pin={pin}
+                index={i}
+                total={pins.length}
+                meal={mealOf(pin.tags)}
+                onRemoveStop={onRemoveStop}
+                onEditStop={onEditStop}
+                siblings={siblingsFor(pin)}
+              />
+            ))}
+          </ol>
+        </SortableContext>
+      </DndContext>
+      <AddStopPanel onAddStop={onAddStop} />
     </>
   );
 }

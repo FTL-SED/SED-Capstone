@@ -15,6 +15,8 @@ import {
   deleteStop,
   updateStop,
   updateItinerary,
+  uploadItineraryCover,
+  reorderStops,
 } from '../../api/itinerary.js'
 import { getCurrentUser } from '../../lib/currentUser.js'
 
@@ -262,8 +264,7 @@ function ItineraryPage() {
   // start/end in place immediately, then PUT; on failure, restore the old times.
   // Only the ItineraryStop's timing changes — the venue Pin is never touched.
   const handleEditStop = async (stopId, { startTime, endTime }) => {
-    const prevPins = itinerary.pins;
-    setItinerary((prev) => ({
+    const previous = patchItinerary((prev) => ({
       ...prev,
       pins: prev.pins.map((p) => (p.stopId === stopId ? { ...p, startTime, endTime } : p)),
     }));
@@ -271,7 +272,7 @@ function ItineraryPage() {
       await updateStop(stopId, { startTime, endTime });
     } catch (err) {
       console.error('Edit stop time failed, reverting:', err);
-      setItinerary((prev) => ({ ...prev, pins: prevPins }));
+      queryClient.setQueryData(itineraryKey, previous);
       window.alert(err.response?.data?.error || 'Could not update the time. Please try again.');
     }
   };
@@ -309,10 +310,10 @@ function ItineraryPage() {
     try {
       if (coverFile) {
         const withCover = await uploadItineraryCover(id, coverFile);
-        setItinerary((prev) => ({ ...prev, coverImageUrl: withCover.coverImageUrl }));
+        patchItinerary((prev) => ({ ...prev, coverImageUrl: withCover.coverImageUrl }));
       }
       const updated = await updateItinerary(id, changes);
-      setItinerary((prev) => ({
+      patchItinerary((prev) => ({
         ...prev,
         title: updated.title,
         description: updated.description,
@@ -363,6 +364,26 @@ function ItineraryPage() {
     }
   };
 
+  // Owner-only: reorder stops by drag. Optimistic — reorder the cached pins
+  // immediately, then PUT the new id order. The backend recomputes times/travel
+  // and returns the authoritative itinerary; on failure we roll back to the
+  // pre-drag cache. Uses setQueryData (NOT the stale setItinerary) per the
+  // React Query cache model.
+  const handleReorderStops = async (stopIds) => {
+    const previous = patchItinerary((prev) => {
+      const byId = new Map(prev.pins.map((p) => [p.stopId, p]));
+      return { ...prev, pins: stopIds.map((sid) => byId.get(sid)).filter(Boolean) };
+    });
+    try {
+      const updated = await reorderStops(id, stopIds);
+      queryClient.setQueryData(itineraryKey, updated);
+    } catch (err) {
+      console.error('Reorder stops failed, reverting:', err);
+      queryClient.setQueryData(itineraryKey, previous);
+      window.alert(err.response?.data?.error || 'Could not reorder the stops. Please try again.');
+    }
+  };
+
   if (loading) return (
     <div className="itinerary-page itinerary-page--message">
       <CreateScene />
@@ -409,6 +430,7 @@ function ItineraryPage() {
         onRemoveStop={handleRemoveStop}
         onEditStop={handleEditStop}
         onAddStop={handleAddStop}
+        onReorderStops={handleReorderStops}
         onEditItinerary={handleEditItinerary}
         actionBusy={actionBusy}
       />

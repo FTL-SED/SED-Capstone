@@ -133,3 +133,32 @@
   color: var(--slate-600);
   line-height: 1.5;
 }
+
+/* Drag handle for owner reorder — a grab affordance on the left of the head row,
+   styled like the other neutral icon controls (matches .timeline-stop__remove). */
+.timeline-stop__drag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--slate-500);
+  cursor: grab;
+  touch-action: none;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+.timeline-stop__drag:hover {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+}
+.timeline-stop__drag:active {
+  cursor: grabbing;
+}
+.timeline-stop__drag:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

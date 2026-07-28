@@ -39,6 +39,37 @@ function toDateTime(dayISO, hhmm, offset) {
   return new Date(`${dayISO}T${hhmm}:00${offset}`)
 }
 
+// Inverse of toDateTime: the Pacific wall-clock "HH:MM" of an instant, DST-safe
+// (same interpretation seed.js / pinsRepository.js store times in). Used by the
+// reorder service to hand stored stops back to the HH:MM scheduler.
+function fromDateTime(date) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(new Date(date))
+  const hh = parts.find((p) => p.type === 'hour')?.value ?? '00'
+  const mm = parts.find((p) => p.type === 'minute')?.value ?? '00'
+  // Intl can render midnight as "24"; normalize to "00" for a valid HH:MM.
+  return `${hh === '24' ? '00' : hh}:${mm}`
+}
+
+// The Pacific calendar day (YYYY-MM-DD) of an instant, DST-safe. Used to anchor
+// a reordered itinerary on its original day when it has no explicit tripDate.
+function pacificDayISO(date) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(date))
+  const y = parts.find((p) => p.type === 'year')?.value
+  const m = parts.find((p) => p.type === 'month')?.value
+  const d = parts.find((p) => p.type === 'day')?.value
+  return `${y}-${m}-${d}`
+}
+
 // Build ItineraryStop.create rows from the itinerary's stops. Array index becomes
 // orderInItinerary; each stop references its catalog venue pin by pinId.
 //
@@ -182,4 +213,4 @@ async function persistItinerary(itinerary, shortlist, { userId, tripDate, isPubl
   })
 }
 
-export { persistItinerary, stopsToStops, toDateTime, pacificOffset, memberRows, constraintColumns }
+export { persistItinerary, stopsToStops, toDateTime, fromDateTime, pacificDayISO, pacificOffset, memberRows, constraintColumns }
