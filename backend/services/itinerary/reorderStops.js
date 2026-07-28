@@ -28,20 +28,23 @@ function computeReorder(orderedStops, { dayStart, transport, tripDate } = {}) {
     departTime: fromDateTime(s.endTime),
   }))
 
-  const startTime = dayStart || schedIn[0].arriveTime
+  // The itinerary's EARLIEST existing start — a stable anchor for both the
+  // day's start time and its calendar day. It must NOT depend on the dragged
+  // order: anchoring on schedIn[0] (the new first stop) would re-clock the whole
+  // day to whatever stop was dragged to the top (drag a 3pm stop up and the day
+  // jumps to starting at 3pm), which reads as "the swap didn't work".
+  const earliestStart = orderedStops.reduce(
+    (min, s) => (new Date(s.startTime) < new Date(min) ? s.startTime : min),
+    orderedStops[0].startTime
+  )
+
+  const startTime = dayStart || fromDateTime(earliestStart)
   // Re-walk the clock only: no windowEndElapsed => no day-fill.
   const scheduled = rescheduleStops(schedIn, (s) => s.pin, startTime, transport ?? undefined)
 
   // Anchor the calendar day: the explicit tripDate, else the Pacific day of the
   // earliest existing stop (keeps the itinerary on its original day).
-  const dayISO =
-    tripDate ||
-    pacificDayISO(
-      orderedStops.reduce(
-        (min, s) => (new Date(s.startTime) < new Date(min) ? s.startTime : min),
-        orderedStops[0].startTime
-      )
-    )
+  const dayISO = tripDate || pacificDayISO(earliestStart)
 
   // Re-attach mealType/note so the persisted row keeps them (only the SCHEDULING
   // input dropped mealType), then convert HH:MM -> ISO with stopsToStops (which

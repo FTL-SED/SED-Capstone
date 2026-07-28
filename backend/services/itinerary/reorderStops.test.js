@@ -64,3 +64,19 @@ test('falls back to the earliest stop time when dayStart is null', () => {
   const rows = computeReorder(ordered, { dayStart: null, transport: null, tripDate: '2026-07-15' })
   assert.equal(fromDateTime(rows[0].startTime), '10:00')
 })
+
+test('anchors on the EARLIEST existing start, not the dragged-to-front stop (dayStart null)', () => {
+  // Regression: with no dayStart, dragging a LATER stop to the front must keep
+  // the day anchored at the earliest original time (09:00) — not re-clock the
+  // whole day to the dragged stop's time (which made swaps look like no-ops).
+  const ordered = [
+    stop(30, pinC, '12:00', '13:00'), // dragged to front (was last)
+    stop(10, pinA, '09:00', '10:00'), // the true earliest start
+    stop(20, pinB, '10:30', '11:30'),
+  ]
+  const rows = computeReorder(ordered, { dayStart: null, transport: 'walking', tripDate: '2026-07-15' })
+  // Order still follows the drag...
+  assert.deepEqual(rows.map((r) => r.id), [30, 10, 20])
+  // ...but the day starts at 09:00 (earliest), NOT 12:00 (the dragged stop).
+  assert.equal(fromDateTime(rows[0].startTime), '09:00')
+})

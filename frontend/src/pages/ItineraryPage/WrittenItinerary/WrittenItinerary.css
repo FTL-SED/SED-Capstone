@@ -134,31 +134,21 @@
   line-height: 1.5;
 }
 
-/* Drag handle for owner reorder — a grab affordance on the left of the head row,
-   styled like the other neutral icon controls (matches .timeline-stop__remove). */
-.timeline-stop__drag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--slate-500);
-  cursor: grab;
+/* Owner reorder: the whole row is the drag surface. Grab affordance on the card,
+   and touch-action:none so a touch-drag reorders instead of scrolling. The card's
+   own interactive controls (remove, time editor) stopPropagation so they still
+   click/type normally without starting a drag. */
+.timeline-stop--draggable {
   touch-action: none;
-  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
 }
-.timeline-stop__drag:hover {
-  color: var(--accent-strong);
-  border-color: var(--accent);
+.timeline-stop--draggable .timeline-stop__card {
+  cursor: grab;
 }
-.timeline-stop__drag:active {
+.timeline-stop--draggable:active .timeline-stop__card {
   cursor: grabbing;
 }
-.timeline-stop__drag:focus-visible {
+.timeline-stop--draggable:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+  border-radius: var(--radius);
 }

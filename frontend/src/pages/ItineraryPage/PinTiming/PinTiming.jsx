@@ -53,7 +53,10 @@ function laWallClockToISO(baseIso, timeStr) {
 // time inputs (start/end) with save/cancel — the same inline pattern as the
 // remove control. Only the ItineraryStop's start/end change; the venue is never
 // touched. `startTime`/`endTime` are raw ISO instants.
-function PinTiming({ startTime, endTime, editable = false, stopId, onEditStop, siblings = [] }) {
+// `controlProps` (owner mode) is spread onto every interactive control so a
+// click/keypress here stops propagating to the draggable card and never starts
+// a drag. Undefined for the read-only viewer path.
+function PinTiming({ startTime, endTime, editable = false, stopId, onEditStop, siblings = [], controlProps }) {
   const [editing, setEditing] = useState(false);
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
@@ -103,6 +106,7 @@ function PinTiming({ startTime, endTime, editable = false, stopId, onEditStop, s
             aria-label="Start time"
             value={start}
             onChange={(e) => setStart(e.target.value)}
+            {...controlProps}
           />
           <span aria-hidden="true">–</span>
           <input
@@ -111,11 +115,12 @@ function PinTiming({ startTime, endTime, editable = false, stopId, onEditStop, s
             aria-label="End time"
             value={end}
             onChange={(e) => setEnd(e.target.value)}
+            {...controlProps}
           />
-          <button type="button" className="pin-timing__save" onClick={save}>
+          <button type="button" className="pin-timing__save" onClick={save} {...controlProps}>
             Save
           </button>
-          <button type="button" className="pin-timing__cancel" onClick={() => setEditing(false)}>
+          <button type="button" className="pin-timing__cancel" onClick={() => setEditing(false)} {...controlProps}>
             Cancel
           </button>
         </div>
@@ -133,6 +138,7 @@ function PinTiming({ startTime, endTime, editable = false, stopId, onEditStop, s
           className="pin-timing__edit"
           aria-label="Edit time"
           onClick={beginEdit}
+          {...controlProps}
         >
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M12 20h9" />

@@ -29,6 +29,15 @@ function mealOf(tags = []) {
   return tags.find((t) => MEALS.includes(t));
 }
 
+// The whole stop card is the drag surface (owner mode), so any interactive
+// control inside it must keep pointer/keyboard events from bubbling up to the
+// card's drag sensor — otherwise pressing "remove", the time pencil, or a time
+// input would start a drag instead of doing its job.
+const noDrag = {
+  onPointerDown: (e) => e.stopPropagation(),
+  onKeyDown: (e) => e.stopPropagation(),
+};
+
 // A stop's remove control: a trash button that flips to an inline "Remove?"
 // confirm so a delete always takes two deliberate clicks (never one).
 function RemoveStopControl({ onConfirm }) {
@@ -36,7 +45,7 @@ function RemoveStopControl({ onConfirm }) {
 
   if (confirming) {
     return (
-      <div className="timeline-stop__confirm">
+      <div className="timeline-stop__confirm" {...noDrag}>
         <span>Remove?</span>
         <button type="button" className="timeline-stop__confirm-yes" onClick={onConfirm}>
           Remove
@@ -54,6 +63,7 @@ function RemoveStopControl({ onConfirm }) {
       className="timeline-stop__remove"
       aria-label="Remove stop"
       onClick={() => setConfirming(true)}
+      {...noDrag}
     >
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M3 6h18" />
@@ -65,7 +75,7 @@ function RemoveStopControl({ onConfirm }) {
 
 // The inner content of a stop card — shared by the draggable (owner) and static
 // (viewer) rows so the two never drift.
-function StopCard({ pin, index, total, meal, editable, onRemoveStop, onEditStop, siblings, dragHandle }) {
+function StopCard({ pin, index, total, meal, editable, onRemoveStop, onEditStop, siblings }) {
   return (
     <>
       <div className="timeline-stop__rail">
@@ -75,7 +85,6 @@ function StopCard({ pin, index, total, meal, editable, onRemoveStop, onEditStop,
 
       <div className="timeline-stop__card">
         <div className="timeline-stop__head">
-          {dragHandle}
           <PinName name={pin.name} />
           {meal && <span className="timeline-stop__meal">{meal}</span>}
           {editable && pin.stopId != null && (
@@ -89,6 +98,7 @@ function StopCard({ pin, index, total, meal, editable, onRemoveStop, onEditStop,
           stopId={pin.stopId}
           onEditStop={onEditStop}
           siblings={siblings}
+          controlProps={editable ? noDrag : undefined}
         />
         {pin.address && <PinAddress address={pin.address} />}
         {pin.description && <p className="timeline-stop__desc">{pin.description}</p>}
@@ -99,8 +109,9 @@ function StopCard({ pin, index, total, meal, editable, onRemoveStop, onEditStop,
 }
 
 // A draggable timeline row (owner mode). useSortable keys off the stop id; the
-// drag handle carries the listeners so the card body stays interactive (the
-// inline time editor, remove button, etc.).
+// whole row carries the drag listeners so the card itself is the drag surface.
+// Interactive controls inside (remove, time editor) stopPropagation via `noDrag`
+// so they still work without starting a drag.
 function SortableStop({ pin, index, total, meal, onRemoveStop, onEditStop, siblings }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: pin.stopId });
@@ -109,23 +120,14 @@ function SortableStop({ pin, index, total, meal, onRemoveStop, onEditStop, sibli
     transition,
     opacity: isDragging ? 0.6 : 1,
   };
-  const handle = (
-    <button
-      type="button"
-      className="timeline-stop__drag"
-      aria-label="Drag to reorder stop"
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className="timeline-stop timeline-stop--draggable"
       {...attributes}
       {...listeners}
     >
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-        <circle cx="9" cy="6" r="1.6" /><circle cx="15" cy="6" r="1.6" />
-        <circle cx="9" cy="12" r="1.6" /><circle cx="15" cy="12" r="1.6" />
-        <circle cx="9" cy="18" r="1.6" /><circle cx="15" cy="18" r="1.6" />
-      </svg>
-    </button>
-  );
-  return (
-    <li ref={setNodeRef} style={style} className="timeline-stop">
       <StopCard
         pin={pin}
         index={index}
@@ -135,7 +137,6 @@ function SortableStop({ pin, index, total, meal, onRemoveStop, onEditStop, sibli
         onRemoveStop={onRemoveStop}
         onEditStop={onEditStop}
         siblings={siblings}
-        dragHandle={handle}
       />
     </li>
   );
