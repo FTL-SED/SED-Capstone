@@ -3,6 +3,7 @@ import { useState } from 'react'
 import DateField from '../DateField/DateField.jsx'
 import TimeRangeField from '../TimeRangeField/TimeRangeField.jsx'
 import TransportField from '../TransportField/TransportField.jsx'
+import MealsField from '../MealsField/MealsField.jsx'
 import TravelRadiusField from '../TravelRadiusField/TravelRadiusField.jsx'
 import BudgetField from '../BudgetField/BudgetField.jsx'
 import NextButton from '../../../components/Inputs/NextButton/NextButton.jsx'
@@ -44,6 +45,7 @@ function Step1_TripBasics({ form, update, onNext }) {
         <TimeRangeField form={form} update={update} />
       </div>
       <TransportField form={form} update={update} />
+      <MealsField form={form} update={update} />
       <div className="step1-trip-basics__column">
         <TravelRadiusField form={form} update={update} />
         <BudgetField form={form} update={update} />

@@ -77,7 +77,7 @@ test('holds a meal that would arrive early until its window opens', () => {
   // Only stop, day starts 09:00 — without a hold, a dinner would arrive 09:00,
   // outside the dinner window. It should be delayed to the window's start
   // (17:00) instead.
-  const stops = [stop(1, '18:00', '19:30', { mealType: 'dinner' })]
+  const stops = [stop(1, '18:30', '20:00', { mealType: 'dinner' })]
   const out = rescheduleStops(stops, coordOf, '09:00')
   assert.equal(out[0].arriveTime, '17:00', 'dinner should wait for its window to open')
   assert.equal(out[0].departTime, '18:30', 'dwell (90m) is preserved from the delayed arrival')
@@ -95,4 +95,38 @@ test('does not delay a meal that already arrives within its window', () => {
   // pushed to the block start (11:30).
   assert.ok(out[1].arriveTime >= '11:30' && out[1].arriveTime <= '13:30')
   assert.notEqual(out[1].arriveTime, '11:30')
+})
+
+test('fill: no single stop is stretched more than STOP_STRETCH_MAX_MIN over its baseline', () => {
+  // 3 short (60-min baseline) stops in a 300-min window with fill on. Each may
+  // grow at most baseline(60)+STOP_STRETCH_MAX_MIN(30) = 90 min. So no stop
+  // should exceed 90, and the day should NOT reach the end by inflating one stop.
+  const stops = [
+    stop(1, '12:00', '13:00'), // 60 min
+    stop(2, '13:00', '14:00'), // 60 min
+    stop(3, '14:00', '15:00'), // 60 min
+  ]
+  const out = rescheduleStops(stops, coordOf, '12:00', 'driving', { windowEndElapsed: 300 })
+  const dur = (s) => {
+    const t = (x) => Number(x.slice(0, 2)) * 60 + Number(x.slice(3))
+    return t(s.departTime) - t(s.arriveTime)
+  }
+  for (const s of out) {
+    assert.ok(dur(s) <= 90, `stop dwell ${dur(s)} exceeds baseline+30 cap`)
+  }
+})
+
+test('fill: distributes growth across stops rather than piling onto the first', () => {
+  const stops = [
+    stop(1, '12:00', '13:00'),
+    stop(2, '13:00', '14:00'),
+    stop(3, '14:00', '15:00'),
+  ]
+  const out = rescheduleStops(stops, coordOf, '12:00', 'driving', { windowEndElapsed: 300 })
+  const dur = (s) => {
+    const t = (x) => Number(x.slice(0, 2)) * 60 + Number(x.slice(3))
+    return t(s.departTime) - t(s.arriveTime)
+  }
+  const grown = out.filter((s) => dur(s) > 60).length
+  assert.ok(grown >= 2, `expected growth spread across ≥2 stops, only ${grown} grew`)
 })

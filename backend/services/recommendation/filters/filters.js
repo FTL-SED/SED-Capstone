@@ -32,15 +32,13 @@ const hasCoords = (m) =>
 //   pins  = normalized pin objects (see helpers.js for the shape)
 //   members = [ { interestTags[], foodPrefs[], diet[]? }, ... ]
 //   trip    = { startTime, endTime, maxBudgetPerPerson, ... }
-// Returns { candidates, flags, meetingPoint, memberCoords }: candidates are
+// Returns { candidates, meetingPoint, memberCoords }: candidates are
 // shallow copies carrying per-pin `priceUnknown` / `hoursUnknown` booleans;
-// flags aggregates the names of pins with missing data for visibility;
 // meetingPoint is the fair group anchor (or null when it can't be computed);
 // memberCoords is the list of usable member coordinates (reused downstream for
 // the fairness metric, so recommend() doesn't re-derive it).
 function hardFilter(pins, members, trip, groupTags = new Set(members.flatMap((m) => m.interestTags ?? []))) {
   const candidates = []
-  const flags = { priceUnknown: [], hoursUnknown: [] }
 
   // If the group expressed no interests at all, there's nothing to judge
   // activity relevance against — so keep all activities and let quality (rating)
@@ -98,13 +96,11 @@ function hardFilter(pins, members, trip, groupTags = new Set(members.flatMap((m)
     }
 
     const priceUnknown = estPricePerPerson(pin) == null
-    if (priceUnknown) flags.priceUnknown.push(pin.name)
-    if (hoursUnknown) flags.hoursUnknown.push(pin.name)
 
     candidates.push({ ...pin, priceUnknown, hoursUnknown })
   }
 
-  return { candidates, flags, meetingPoint, memberCoords }
+  return { candidates, meetingPoint, memberCoords }
 }
 
 export { hardFilter }

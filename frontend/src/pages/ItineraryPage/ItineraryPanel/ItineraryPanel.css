@@ -131,6 +131,22 @@
   padding: 14px 22px 16px;
 }
 
+/* Per-person budget summary under the description. Neutral by default; turns
+   into a warm "over budget" note when the day sits above the set budget. */
+.itinerary-panel__budget {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  color: #6b6257;
+}
+
+.itinerary-panel__budget--over {
+  color: #9a4a2f;
+}
+
+.itinerary-panel__budget-badge {
+  font-weight: 600;
+}
+
 /* The title reads as an editorial heading — same Fraunces display face, weight
    and warm ink as the Create page + Discover headings. */
 .itinerary-panel .itinerary-title {

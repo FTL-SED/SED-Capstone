@@ -456,6 +456,7 @@ function ItineraryPage() {
       <ItineraryPanel
         isOwner={isOwner}
         pins={itinerary.pins}
+        maxBudgetPerPerson={itinerary.maxBudgetPerPerson}
         title={itinerary.title}
         description={itinerary.description}
         author={itinerary.creator?.username}

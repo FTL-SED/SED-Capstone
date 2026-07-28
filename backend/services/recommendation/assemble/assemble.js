@@ -9,12 +9,35 @@ import {
   FOOD_MAX,
   AVG_STOP_DURATION_MIN,
   SHORTLIST_MULTIPLIER,
+  VALUE_FALLBACK_SHARE,
 } from '../../../config/recommendation.js'
 import { toMinutes, pinIdentity, isRestaurant } from '../helpers/helpers.js'
 
 // Only category === "restaurant" counts against the food quota. Treats
 // (coffee/dessert/boba) live under other categories (e.g. "cafe") and are
 // treated as ordinary activities the user explicitly picked.
+
+// How many ~AVG_STOP_DURATION_MIN stops fit the trip's time window. 0 for a
+// missing/inverted window. Shared by the shortlist sizer and the per-stop budget.
+function estimatedStops(trip) {
+  const start = toMinutes(trip?.startTime)
+  const end = toMinutes(trip?.endTime)
+  const windowMinutes = start == null || end == null ? 0 : Math.max(0, end - start)
+  return windowMinutes / AVG_STOP_DURATION_MIN
+}
+
+// The fair per-person price for ONE stop: the budget spread evenly across the
+// day's stops (budget ÷ estimatedStops). This is what the value score aims each
+// pin at, so the day picks ~budget/N-priced places instead of grabbing one that
+// eats most of the budget. Falls back to VALUE_FALLBACK_SHARE × budget when the
+// window (hence stop count) is unknown. Null when budget isn't a positive number.
+function perStopBudget(trip) {
+  const budget = trip?.maxBudgetPerPerson
+  if (typeof budget !== 'number' || budget <= 0) return null
+  const stops = estimatedStops(trip)
+  if (stops >= 1) return budget / stops
+  return budget * VALUE_FALLBACK_SHARE
+}
 
 // Estimate how many stops fit the trip's time window, then give the AI a
 // multiple of that many options to choose from (see AVG_STOP_DURATION_MIN /
@@ -25,16 +48,7 @@ import { toMinutes, pinIdentity, isRestaurant } from '../helpers/helpers.js'
 // the candidate pool is thin — e.g. Stage 0's travel-radius drop, a sparse
 // catalog, or narrow group interests leave fewer eligible pins than this target.
 function computeShortlistSize(trip) {
-  const start = toMinutes(trip.startTime)
-  const end = toMinutes(trip.endTime)
-  // Missing/unparseable times (toMinutes ⇒ null) or a non-positive window
-  // (end ≤ start, e.g. an overnight/inverted range the engine doesn't model)
-  // collapse to 0 usable minutes — we still return the FOOD_MIN floor so the
-  // shortlist is never empty for a bad window.
-  const windowMinutes =
-    start == null || end == null ? 0 : Math.max(0, end - start)
-  const stops = windowMinutes / AVG_STOP_DURATION_MIN
-  return Math.max(FOOD_MIN, Math.round(stops * SHORTLIST_MULTIPLIER))
+  return Math.max(FOOD_MIN, Math.round(estimatedStops(trip) * SHORTLIST_MULTIPLIER))
 }
 
 // Walk the ranked (score-descending) list, taking pins up to shortlistSize
@@ -71,4 +85,4 @@ function assembleWithFoodQuota(ranked, candidates, shortlistSize) {
   return shortlist
 }
 
-export { computeShortlistSize, assembleWithFoodQuota }
+export { computeShortlistSize, assembleWithFoodQuota, estimatedStops, perStopBudget }

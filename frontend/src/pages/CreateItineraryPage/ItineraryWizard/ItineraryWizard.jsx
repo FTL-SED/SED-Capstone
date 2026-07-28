@@ -21,6 +21,7 @@ const INITIAL_FORM = {
   transport: '',
   travelRadius: '',
   budget: '25', // slider default; budget is required, so start at a real value
+  includeMeals: true, // default: schedule breakfast/lunch/dinner where the window allows
   members: [newMember()],
   isPublic: false,
   title: '',

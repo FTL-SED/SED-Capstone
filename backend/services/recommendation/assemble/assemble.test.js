@@ -1,7 +1,24 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { computeShortlistSize, assembleWithFoodQuota } from './assemble.js'
+import { computeShortlistSize, assembleWithFoodQuota, perStopBudget } from './assemble.js'
+
+test('perStopBudget divides the budget across the window\'s stops', () => {
+  // 09:00–18:00 = 540 min / 90 = 6 stops; $120 / 6 = $20 per stop.
+  assert.equal(perStopBudget({ startTime: '09:00', endTime: '18:00', maxBudgetPerPerson: 120 }), 20)
+  // Shorter window ⇒ fewer stops ⇒ larger per-stop share.
+  assert.equal(perStopBudget({ startTime: '12:00', endTime: '15:00', maxBudgetPerPerson: 120 }), 60) // 3h/90=2 stops
+})
+
+test('perStopBudget falls back to a share of budget when the window is unknown', () => {
+  // No/short window ⇒ <1 stop ⇒ VALUE_FALLBACK_SHARE (0.2) × budget.
+  assert.equal(perStopBudget({ maxBudgetPerPerson: 100 }), 20)
+})
+
+test('perStopBudget is null when budget is absent or non-positive', () => {
+  assert.equal(perStopBudget({ startTime: '09:00', endTime: '18:00' }), null)
+  assert.equal(perStopBudget({ startTime: '09:00', endTime: '18:00', maxBudgetPerPerson: 0 }), null)
+})
 
 test('computeShortlistSize scales with the trip window (stops * multiplier)', () => {
   // 9 hours / 90 min avg stop = 6 stops * 3x multiplier = 18.

@@ -2,6 +2,11 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
 import { softScore } from './score.js'
+import { WEIGHTS, QUALITY_DEFAULT, VALUE_NEUTRAL } from '../../../config/recommendation.js'
+
+// A pin with no coverage/intensity match, no rating, and no price/budget:
+// scores only the neutral quality + neutral value terms.
+const NEUTRAL_ONLY = WEIGHTS.quality * QUALITY_DEFAULT + WEIGHTS.value * VALUE_NEUTRAL
 
 test('a whole-group-liked pin outranks a niche one', () => {
   const members = [
@@ -71,9 +76,39 @@ test('returns 0 coverage/intensity (not a crash) when interests/cuisine are miss
   const bareActivity = { category: 'park' } // no interests at all
   const bareRestaurant = { category: 'restaurant' } // no cuisine at all
 
-  // Should not throw, and should fall back to the neutral quality default only.
-  assert.equal(softScore(bareActivity, members, groupTags, groupFood), 0.2 * 0.6)
-  assert.equal(softScore(bareRestaurant, members, groupTags, groupFood), 0.2 * 0.6)
+  // Should not throw, and falls back to the neutral quality + neutral value
+  // terms only (no coverage/intensity match, no rating, no price/budget).
+  assert.equal(softScore(bareActivity, members, groupTags, groupFood), NEUTRAL_ONLY)
+  assert.equal(softScore(bareRestaurant, members, groupTags, groupFood), NEUTRAL_ONLY)
+})
+
+test('value term: a right-priced venue outranks a $0 one when relevance is equal', () => {
+  const members = [{ name: 'A', interestTags: ['art'] }]
+  const groupTags = new Set(['art'])
+  const groupFood = new Set()
+  // Same interest match + same (missing) rating; differ only in price. The 5th
+  // arg is now the PER-STOP target (budget ÷ stops), e.g. $30.
+  const free = { category: 'museum', interests: ['art'], pricePerPerson: 0 }
+  const atTarget = { category: 'museum', interests: ['art'], pricePerPerson: 30 }
+  const perStopTarget = 30
+  const scoreFree = softScore(free, members, groupTags, groupFood, perStopTarget)
+  const scoreAt = softScore(atTarget, members, groupTags, groupFood, perStopTarget)
+  assert.ok(scoreAt > scoreFree, `on-target ${scoreAt} should outrank free ${scoreFree}`)
+})
+
+test('value term: penalizes a budget-hogging pin far above the per-stop target', () => {
+  const members = [{ name: 'A', interestTags: ['art'] }]
+  const groupTags = new Set(['art'])
+  const groupFood = new Set()
+  // Per-stop target $30. A $30 pin is right-sized; a $120 pin (4× the target)
+  // tries to eat the whole budget in one stop and must score LOWER on value —
+  // this is the fix for "we get pins that are the max budget".
+  const atTarget = { category: 'museum', interests: ['art'], pricePerPerson: 30 }
+  const hog = { category: 'museum', interests: ['art'], pricePerPerson: 120 }
+  const perStopTarget = 30
+  const scoreAt = softScore(atTarget, members, groupTags, groupFood, perStopTarget)
+  const scoreHog = softScore(hog, members, groupTags, groupFood, perStopTarget)
+  assert.ok(scoreAt > scoreHog, `right-sized ${scoreAt} should outrank budget-hog ${scoreHog}`)
 })
 
 test('score stays within [0, 1] for a maximally-liked, top-rated pin', () => {
@@ -119,5 +154,5 @@ test('activity pin whose only overlap was a food word is NOT matched', () => {
 
   // Should NOT match because 'italian' is not in interests
   const score = softScore(activityPin, members, groupTags, groupFood)
-  assert.equal(score, 0.2 * 0.6, 'activity pin should only match on interests, not cuisine')
+  assert.equal(score, NEUTRAL_ONLY, 'activity pin should only match on interests, not cuisine')
 })

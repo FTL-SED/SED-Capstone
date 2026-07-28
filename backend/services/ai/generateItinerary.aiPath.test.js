@@ -14,11 +14,14 @@ const SHORTLIST = [
   { id: 2, name: 'Golden Gate Park', category: 'activity', interests: ['nature'], pricePerPerson: 0, latitude: 37.7694, longitude: -122.4562, openingHours: [{ open: '09:00', close: '18:00' }] },
   { id: 10, name: 'La Taqueria', category: 'restaurant', cuisine: ['mexican'], pricePerPerson: 14, latitude: 37.7509, longitude: -122.4180, openingHours: [{ open: '11:00', close: '21:00' }] },
 ]
+// Tight window (10:00-13:30) matching GOOD_REPLY's 2 stops so the coverage
+// backstop doesn't trip. Test intent is "AI path works", not day-filling.
 const CONSTRAINTS = {
-  timeWindow: { startTime: '09:00', endTime: '18:00' },
+  timeWindow: { startTime: '10:00', endTime: '13:30' },
   maxBudgetPerPerson: 90,
   groupSize: 2,
   transport: 'walking',
+  includeMeals: false,
 }
 
 // A well-formed AI reply that sequences two shortlist pins within the window.
@@ -47,7 +50,11 @@ test('AI path: a hallucinated pinId is rejected and falls back', async () => {
     ...GOOD_REPLY,
     stops: [{ pinId: 9999, arriveTime: '10:00', departTime: '11:00' }],
   }
-  const out = await generateItinerary(SHORTLIST, CONSTRAINTS, async () => hallucinated)
+  // Fallback needs a wider window for walking between these spread-out pins (~70-87
+  // min travel). Tight CONSTRAINTS would trip coverage backstop. Test intent is
+  // "hallucinated pinId → fallback works", not minimal-window edge case.
+  const wideConstraints = { ...CONSTRAINTS, timeWindow: { startTime: '09:00', endTime: '18:00' } }
+  const out = await generateItinerary(SHORTLIST, wideConstraints, async () => hallucinated)
   assert.equal(out.source, 'fallback')
   // The fallback only uses real shortlist pins.
   const ids = new Set(SHORTLIST.map((p) => p.id))
@@ -55,11 +62,58 @@ test('AI path: a hallucinated pinId is rejected and falls back', async () => {
 })
 
 test('AI path: a thrown call (e.g. malformed JSON upstream) falls back', async () => {
-  const out = await generateItinerary(SHORTLIST, CONSTRAINTS, async () => {
+  // Fallback needs room for walking; use wide window so coverage backstop doesn't trip.
+  const wideConstraints = { ...CONSTRAINTS, timeWindow: { startTime: '09:00', endTime: '18:00' } }
+  const out = await generateItinerary(SHORTLIST, wideConstraints, async () => {
     throw new Error('AI response had no message content')
   })
   assert.equal(out.source, 'fallback')
   assert.ok(out.itinerary.stops.length >= 1)
+})
+
+test('AI path: an over-budget reply is retried with feedback, then accepted', async () => {
+  // Budget $15, grace $5 → limit $20. First reply totals $24 (past the grace so
+  // it IS rejected → retry); the corrective retry returns a $14 day. Should end
+  // as source "ai" with callAiFn invoked twice (original + corrective).
+  const overBudget = {
+    feasible: true, title: 'T', location: 'SF', description: 'D',
+    stops: [
+      { pinId: 1, arriveTime: '10:00', departTime: '11:30' }, // $10
+      { pinId: 10, arriveTime: '12:00', departTime: '13:00', mealType: 'lunch' }, // $14 -> total 24 > 20 (past grace)
+    ],
+  }
+  const inBudget = {
+    feasible: true, title: 'T', location: 'SF', description: 'D',
+    stops: [
+      { pinId: 2, arriveTime: '10:00', departTime: '11:30' }, // $0
+      { pinId: 10, arriveTime: '12:00', departTime: '13:00', mealType: 'lunch' }, // $14 -> total 14 <= 15
+    ],
+  }
+  let calls = 0
+  const callAiFn = async () => { calls++; return calls === 1 ? overBudget : inBudget }
+  const tightBudget = { ...CONSTRAINTS, maxBudgetPerPerson: 15 }
+  const out = await generateItinerary(SHORTLIST, tightBudget, callAiFn)
+  assert.equal(calls, 2, 'should retry once with corrective feedback')
+  assert.equal(out.source, 'ai')
+  const ids = out.itinerary.stops.map((s) => s.pinId)
+  assert.ok(!ids.includes(1), 'the $10 activity should be gone after the corrective retry')
+})
+
+test('AI path: if the corrective retry still fails, it falls back', async () => {
+  const overBudget = {
+    feasible: true, title: 'T', location: 'SF', description: 'D',
+    stops: [
+      { pinId: 1, arriveTime: '10:00', departTime: '11:30' },
+      { pinId: 10, arriveTime: '12:00', departTime: '13:00', mealType: 'lunch' },
+    ],
+  }
+  let calls = 0
+  const callAiFn = async () => { calls++; return overBudget } // $24, never fixes it
+  const tightBudget = { ...CONSTRAINTS, maxBudgetPerPerson: 15 } // grace $5 → limit $20 < 24
+  const out = await generateItinerary(SHORTLIST, tightBudget, callAiFn)
+  // 1 original + AI_VALIDATION_RETRIES corrective rounds (default 2) = 3 calls.
+  assert.equal(calls, 3, 'tries original + corrective retries, then falls back')
+  assert.equal(out.source, 'fallback')
 })
 
 test('AI path: an AI-declared infeasible result is returned as infeasible', async () => {

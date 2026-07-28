@@ -133,3 +133,17 @@ test('Group C: over-budget fine dining is dropped, and treats never count agains
   const foodCount = shortlist.filter((p) => p.category === 'restaurant').length
   assert.ok(foodCount <= FOOD_MAX, 'treats should not have inflated the food count past FOOD_MAX')
 })
+
+test('recommend: constraints.includeMeals defaults true and echoes false', () => {
+  const catalog = [
+    { id: 1, name: 'Park', category: 'activity', interests: ['nature'], pricePerPerson: 0, latitude: 37.77, longitude: -122.45, openingHours: [{ open: '08:00', close: '20:00' }] },
+    { id: 2, name: 'Diner', category: 'restaurant', cuisine: ['american'], pricePerPerson: 15, latitude: 37.78, longitude: -122.44, openingHours: [{ open: '08:00', close: '21:00' }] },
+  ]
+  const members = [{ name: 'A', startLocation: { latitude: 37.77, longitude: -122.45 }, interestTags: ['nature'], foodPrefs: ['american'] }]
+
+  const withDefault = recommend({ startTime: '10:00', endTime: '20:30', maxBudgetPerPerson: 100 }, members, catalog)
+  assert.equal(withDefault.constraints.includeMeals, true)
+
+  const optedOut = recommend({ startTime: '10:00', endTime: '20:30', maxBudgetPerPerson: 100, includeMeals: false }, members, catalog)
+  assert.equal(optedOut.constraints.includeMeals, false)
+})

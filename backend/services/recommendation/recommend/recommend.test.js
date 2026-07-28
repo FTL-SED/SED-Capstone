@@ -126,6 +126,21 @@ test('food count stays within [FOOD_MIN, FOOD_MAX] on a well-stocked catalog', (
   assert.ok(foodCount >= 6 && foodCount <= 10, `foodCount was ${foodCount}`)
 })
 
+test('includeMeals:false excludes restaurants from the shortlist', () => {
+  // When the group opts out of meals, the engine must NOT stuff the shortlist
+  // with restaurants (the food quota + diet/food-pref coverage are meal logic).
+  const { shortlist, constraints } = recommend({ ...trip, includeMeals: false }, members, pins)
+  const foodCount = shortlist.filter((p) => p.category === 'restaurant').length
+  assert.equal(foodCount, 0, `expected no restaurants, got ${foodCount}`)
+  assert.equal(constraints.includeMeals, false)
+  assert.ok(shortlist.length > 0, 'still returns activities')
+})
+
+test('includeMeals:false still runs interest fairness (non-food coverage)', () => {
+  const { shortlist } = recommend({ ...trip, includeMeals: false }, members, pins)
+  assert.ok(shortlist.some((p) => p.name === 'Stamp Museum'), 'niche interest still covered')
+})
+
 test('fairness guarantee still holds end-to-end: a niche member gets covered even if their match ranks low', () => {
   const { shortlist } = recommend(trip, members, pins)
   assert.ok(shortlist.some((p) => p.name === 'Stamp Museum'))

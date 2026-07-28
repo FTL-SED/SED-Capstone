@@ -6,7 +6,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { callAI, stripCodeFence, worthRetrying } from './client.js'
+import { callAI, stripCodeFence, worthRetrying, extractJson } from './client.js'
 import { toPromptPin } from './prompt.js'
 
 test('stripCodeFence: unwraps a ```json fence', () => {
@@ -20,6 +20,37 @@ test('stripCodeFence: unwraps a bare ``` fence', () => {
 
 test('stripCodeFence: returns plain text unchanged', () => {
   assert.equal(stripCodeFence('{"a":1}'), '{"a":1}')
+})
+
+test('extractJson: parses clean JSON', () => {
+  assert.deepEqual(extractJson('{"feasible":true,"stops":[]}'), { feasible: true, stops: [] })
+})
+
+test('extractJson: unwraps a ```json fence', () => {
+  assert.deepEqual(extractJson('```json\n{"a":1}\n```'), { a: 1 })
+})
+
+test('extractJson: recovers JSON when the model prepends prose', () => {
+  // The exact failure mode reported: "Looking at the shortlist, here is ... {json}".
+  const reply = 'Looking at the shortlist, here is a good day:\n{"feasible":true,"stops":[{"pinId":1,"arriveTime":"10:00","departTime":"11:00"}]}'
+  const out = extractJson(reply)
+  assert.equal(out.feasible, true)
+  assert.equal(out.stops[0].pinId, 1)
+})
+
+test('extractJson: recovers JSON with trailing prose after the object', () => {
+  const reply = '{"feasible":true,"stops":[]}\n\nHope this helps!'
+  assert.deepEqual(extractJson(reply), { feasible: true, stops: [] })
+})
+
+test('extractJson: throws when there is no JSON object at all', () => {
+  assert.throws(() => extractJson('I cannot help with that.'))
+})
+
+test('callAI: recovers when the model wraps JSON in prose (no crash to fallback)', async () => {
+  const request = async () => 'Looking at the options:\n{"feasible":true,"stops":[]}'
+  const result = await callAI([{ role: 'user', content: 'hi' }], request)
+  assert.deepEqual(result, { feasible: true, stops: [] })
 })
 
 test('worthRetrying: 5xx and network (no status) retry, 4xx does not', () => {

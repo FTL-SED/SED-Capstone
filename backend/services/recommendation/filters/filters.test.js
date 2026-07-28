@@ -63,12 +63,12 @@ test('drops a pin whose per-person price alone exceeds the budget', () => {
 })
 
 test('keeps a pin with unknown price and flags it (missing data)', () => {
-  const { candidates, flags } = run([
+  const { candidates } = run([
     { name: 'Mystery Cafe', category: 'coffee', interests: ['coffee'] },
   ])
   assert.equal(candidates.length, 1)
   assert.equal(candidates[0].priceUnknown, true)
-  assert.deepEqual(flags.priceUnknown, ['Mystery Cafe'])
+  assert.ok(candidates.some((p) => p.priceUnknown === true))
 })
 
 test('drops a pin whose known hours fall entirely outside the window', () => {
@@ -88,21 +88,21 @@ test('keeps a pin whose known hours overlap the window without flagging', () => 
 })
 
 test('keeps a pin with unknown hours and flags it (missing data)', () => {
-  const { candidates, flags } = run([
+  const { candidates } = run([
     { name: 'Old Museum', category: 'museum', interests: ['art'], priceLevel: 2 },
   ])
   assert.equal(candidates.length, 1)
   assert.equal(candidates[0].hoursUnknown, true)
-  assert.deepEqual(flags.hoursUnknown, ['Old Museum'])
+  assert.ok(candidates.some((p) => p.hoursUnknown === true))
 })
 
 test('keeps a pin with malformed hours and flags it as unknown (not silently dropped)', () => {
-  const { candidates, flags } = run([
+  const { candidates } = run([
     { name: 'Glitchy Gallery', category: 'museum', interests: ['art'], priceLevel: 2, openingHours: [{ open: '25:99', close: 'zz:zz' }] },
   ])
   assert.equal(candidates.length, 1)
   assert.equal(candidates[0].hoursUnknown, true)
-  assert.deepEqual(flags.hoursUnknown, ['Glitchy Gallery'])
+  assert.ok(candidates.some((p) => p.hoursUnknown === true))
 })
 
 test('with no group interests, activities are kept (not filtered out as noise)', () => {
@@ -118,11 +118,10 @@ test('with no group interests, activities are kept (not filtered out as noise)',
   assert.equal(candidates.length, 2) // both kept — nothing to judge relevance against
 })
 
-test('returns { candidates, flags } and does not mutate the input pins', () => {
+test('returns { candidates } and does not mutate the input pins', () => {
   const pins = [{ name: 'MoMA', category: 'museum', interests: ['art'] }]
   const result = run(pins)
   assert.ok(Array.isArray(result.candidates))
-  assert.ok(result.flags && Array.isArray(result.flags.priceUnknown))
   assert.equal('priceUnknown' in pins[0], false) // original untouched
 })
 
@@ -186,19 +185,19 @@ test('travelRadius set but no member coords => radius filter is a no-op', () => 
 })
 
 test('drops a pin explicitly closed on the trip day (openingHours: null)', () => {
-  const { candidates, flags } = run([
+  const { candidates } = run([
     { name: 'Closed Today', category: 'museum', interests: ['art'], priceLevel: 1, openingHours: null },
   ])
   assert.equal(candidates.length, 0) // hard drop, not kept
-  assert.equal(flags.hoursUnknown.includes('Closed Today'), false) // not flagged as unknown
+  assert.ok(!candidates.some((p) => p.name === 'Closed Today')) // not in candidates
 })
 
 test('keeps a pin with unknown hours (openingHours: undefined) and flags it', () => {
-  const { candidates, flags } = run([
+  const { candidates } = run([
     { name: 'Unknown Hours', category: 'museum', interests: ['art'], priceLevel: 1, openingHours: undefined },
   ])
   assert.equal(candidates.length, 1)
   assert.equal(candidates[0].name, 'Unknown Hours')
   assert.equal(candidates[0].hoursUnknown, true)
-  assert.ok(flags.hoursUnknown.includes('Unknown Hours'))
+  assert.ok(candidates.some((p) => p.hoursUnknown === true))
 })

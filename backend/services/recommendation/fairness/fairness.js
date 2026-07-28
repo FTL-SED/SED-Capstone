@@ -6,7 +6,7 @@
 // returns a new array, never mutates `shortlist` or `candidates`.
 
 import { memberLikes } from '../score/score.js'
-import { memberCanEat, pinIdentity, isRestaurant } from '../helpers/helpers.js'
+import { memberCanEat, overlap, pinIdentity, isRestaurant } from '../helpers/helpers.js'
 
 // Single-pass best-scoring candidate satisfying `matches`, skipping any already
 // in `coveredIds`. Replaces a `.filter().sort()[0]` (which sorts the whole match
@@ -79,4 +79,38 @@ function ensureEveryDietCovered(shortlist, members, candidates) {
   return covered
 }
 
-export { ensureEveryMemberCovered, ensureEveryDietCovered }
+// Cuisine coverage: every member with food preferences needs ≥1 restaurant in
+// the shortlist whose cuisine they asked for AND that they can eat at. This is
+// SEPARATE from ensureEveryMemberCovered because that pass keys off memberLikes,
+// which treats an INTEREST match as covering the member — so someone who likes
+// "nightlife" (an activity) and "mexican" (food) is marked covered by the
+// nightlife stop and never gets a mexican restaurant. Cuisine, like diet, needs
+// its own guarantee. Injects the member's best-scoring matching+edible
+// restaurant when the shortlist has none; a no-match anywhere is a real data/
+// vocab gap this can't fix.
+function ensureEveryFoodPrefCovered(shortlist, members, candidates) {
+  const covered = [...shortlist]
+  const coveredIds = new Set(covered.map(pinIdentity))
+
+  for (const member of members) {
+    const prefs = member.foodPrefs ?? []
+    if (prefs.length === 0) continue // no cuisine preference ⇒ any meal works
+
+    // A restaurant matches when its cuisine overlaps the member's prefs AND the
+    // member can actually eat there (diet). Unknown diet stays permissive-keep.
+    const matches = (pin) =>
+      isRestaurant(pin) && overlap(pin.cuisine, member) && memberCanEat(pin, member)
+
+    if (covered.some(matches)) continue
+
+    const best = bestUncovered(candidates, coveredIds, matches)
+    if (!best) continue
+
+    covered.push(best)
+    coveredIds.add(pinIdentity(best))
+  }
+
+  return covered
+}
+
+export { ensureEveryMemberCovered, ensureEveryDietCovered, ensureEveryFoodPrefCovered }
