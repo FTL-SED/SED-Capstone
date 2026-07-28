@@ -71,6 +71,51 @@ test('AI path: a thrown call (e.g. malformed JSON upstream) falls back', async (
   assert.ok(out.itinerary.stops.length >= 1)
 })
 
+test('AI path: an over-budget reply is retried with feedback, then accepted', async () => {
+  // Budget $15, grace $5 → limit $20. First reply totals $24 (past the grace so
+  // it IS rejected → retry); the corrective retry returns a $14 day. Should end
+  // as source "ai" with callAiFn invoked twice (original + corrective).
+  const overBudget = {
+    feasible: true, title: 'T', location: 'SF', description: 'D',
+    stops: [
+      { pinId: 1, arriveTime: '10:00', departTime: '11:30' }, // $10
+      { pinId: 10, arriveTime: '12:00', departTime: '13:00', mealType: 'lunch' }, // $14 -> total 24 > 20 (past grace)
+    ],
+  }
+  const inBudget = {
+    feasible: true, title: 'T', location: 'SF', description: 'D',
+    stops: [
+      { pinId: 2, arriveTime: '10:00', departTime: '11:30' }, // $0
+      { pinId: 10, arriveTime: '12:00', departTime: '13:00', mealType: 'lunch' }, // $14 -> total 14 <= 15
+    ],
+  }
+  let calls = 0
+  const callAiFn = async () => { calls++; return calls === 1 ? overBudget : inBudget }
+  const tightBudget = { ...CONSTRAINTS, maxBudgetPerPerson: 15 }
+  const out = await generateItinerary(SHORTLIST, tightBudget, callAiFn)
+  assert.equal(calls, 2, 'should retry once with corrective feedback')
+  assert.equal(out.source, 'ai')
+  const ids = out.itinerary.stops.map((s) => s.pinId)
+  assert.ok(!ids.includes(1), 'the $10 activity should be gone after the corrective retry')
+})
+
+test('AI path: if the corrective retry still fails, it falls back', async () => {
+  const overBudget = {
+    feasible: true, title: 'T', location: 'SF', description: 'D',
+    stops: [
+      { pinId: 1, arriveTime: '10:00', departTime: '11:30' },
+      { pinId: 10, arriveTime: '12:00', departTime: '13:00', mealType: 'lunch' },
+    ],
+  }
+  let calls = 0
+  const callAiFn = async () => { calls++; return overBudget } // $24, never fixes it
+  const tightBudget = { ...CONSTRAINTS, maxBudgetPerPerson: 15 } // grace $5 → limit $20 < 24
+  const out = await generateItinerary(SHORTLIST, tightBudget, callAiFn)
+  // 1 original + AI_VALIDATION_RETRIES corrective rounds (default 2) = 3 calls.
+  assert.equal(calls, 3, 'tries original + corrective retries, then falls back')
+  assert.equal(out.source, 'fallback')
+})
+
 test('AI path: an AI-declared infeasible result is returned as infeasible', async () => {
   const out = await generateItinerary(SHORTLIST, CONSTRAINTS, async () => ({
     feasible: false,

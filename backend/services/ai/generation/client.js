@@ -2,7 +2,7 @@
 // The prompt (what we ask) lives in prompt.js; the client + its env/cert wiring
 // live in lib/aiClient.js. This file only handles the network call, retries,
 // and JSON parsing — no process.env access.
-import { AI_TIMEOUT_MS, AI_MAX_RETRIES, AI_MAX_OUTPUT_TOKENS } from '../../../config/ai.js'
+import { AI_TIMEOUT_MS, AI_MAX_RETRIES, AI_MAX_OUTPUT_TOKENS, AI_OPENAI_REASONING_EFFORT } from '../../../config/ai.js'
 import { getAiClient } from '../../../lib/aiClient.js'
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -12,6 +12,25 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 export const stripCodeFence = (text) => {
   const match = text.match(/^\s*```(?:json)?\s*\n?([\s\S]*?)\n?\s*```\s*$/)
   return match ? match[1] : text
+}
+
+// Parse the model's reply into a JS object, tolerating the ways a chatty model
+// wraps its JSON. Order: (1) strip a code fence and parse; (2) if that fails,
+// the model likely prepended/appended prose ("Looking at the shortlist, here
+// is... {json}") — slice from the first "{" to the last "}" and parse that.
+// Throws if no JSON object can be recovered (caller turns it into the fallback).
+export const extractJson = (text) => {
+  const stripped = stripCodeFence(text)
+  try {
+    return JSON.parse(stripped)
+  } catch {
+    const start = stripped.indexOf('{')
+    const end = stripped.lastIndexOf('}')
+    if (start === -1 || end === -1 || end <= start) {
+      throw new Error('AI reply contained no JSON object')
+    }
+    return JSON.parse(stripped.slice(start, end + 1))
+  }
 }
 
 // Some errors are worth retrying (the server was briefly busy or the network
@@ -26,17 +45,21 @@ export const worthRetrying = (err) => {
 // Send the messages to the model and return the reply text. `messages` is the
 // array of chat messages built by prompt.js.
 const requestOnce = async (messages) => {
-  const { client, model } = getAiClient()
+  const { client, model, provider } = getAiClient()
   const response = await client.chat.completions.create(
     {
       model,
       messages,
       // Cap generated tokens as a cost guardrail — one itinerary JSON is well
-      // under this, but for a reasoning model (gpt-5-nano) this also bounds the
+      // under this, but for a reasoning model (e.g. gpt-5) this also bounds the
       // billed reasoning tokens so a runaway generation can't drain the budget.
       // max_completion_tokens is the current param (max_tokens is deprecated and
       // rejected by reasoning models); the gateway accepts it too.
       max_completion_tokens: AI_MAX_OUTPUT_TOKENS,
+      // reasoning_effort is an OpenAI-only param — send it ONLY on the OpenAI
+      // path (the Salesforce gateway rejects unknown params). 'low' roughly
+      // halves gpt-5's latency for this shallow sequencing task.
+      ...(provider === 'openai' ? { reasoning_effort: AI_OPENAI_REASONING_EFFORT } : {}),
       // No response_format: forcing JSON mode makes this gateway's model return
       // an empty {}. We ask for JSON in the prompt instead, then parse it here.
     },
@@ -60,7 +83,7 @@ const callAI = async (messages, request = requestOnce) => {
     try {
       const reply = await request(messages)
       if (typeof reply !== 'string') throw new Error('AI response had no message content')
-      return JSON.parse(stripCodeFence(reply))
+      return extractJson(reply)
     } catch (err) {
       lastError = err
       if (!worthRetrying(err)) break

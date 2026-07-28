@@ -24,10 +24,13 @@ let cached
 export function getAiClient() {
   if (cached) return cached
 
-  // Prefer the internal gateway (AI_KEY); fall back to OpenAI.
+  // Prefer the internal gateway (AI_KEY); fall back to OpenAI. `provider` lets
+  // the caller send provider-specific params (e.g. OpenAI's reasoning_effort)
+  // only to the provider that accepts them.
   if (process.env.AI_KEY) {
     if (!process.env.NODE_EXTRA_CA_CERTS) throw new Error('NODE_EXTRA_CA_CERTS is not set')
     cached = {
+      provider: 'gateway',
       model: AI_MODEL,
       client: new OpenAI({
         apiKey: process.env.AI_KEY,
@@ -43,6 +46,7 @@ export function getAiClient() {
     // OpenAI's default base URL + a public certificate Node already trusts, so
     // no baseURL override, no custom httpAgent, no NODE_EXTRA_CA_CERTS needed.
     cached = {
+      provider: 'openai',
       model: AI_OPENAI_MODEL,
       client: new OpenAI({
         apiKey: process.env.OPEN_AI_API_KEY,

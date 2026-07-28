@@ -199,7 +199,7 @@ test(
       assert.ok(inSF(pin), `${pin.name} (${pin.latitude}, ${pin.longitude}) is outside San Francisco`)
     }
 
-    // A full day spanning lunch (11:00-13:45) and dinner (17:00-20:30) should
+    // A full day spanning lunch (12:00-16:00) and dinner (17:00-22:00) should
     // seat a meal in each — this is the combination that reliably gets food in.
     const meals = stops.filter((s) => s.mealType !== undefined || pinById.get(s.pinId)?.category === 'restaurant')
     assert.ok(meals.length >= 2, `expected at least 2 meal stops on a full day, got ${meals.length}`)

@@ -40,14 +40,20 @@ const SYSTEM_PROMPT = [
   '',
   'Rules:',
   '- Do NOT invent new places. Use ONLY the pinId values from the provided shortlist.',
+  '- Use each place AT MOST ONCE — never repeat a pinId (a repeated place double-counts its cost and wastes the day).',
   "- Do NOT remove places unless they don't fit the time window or budget.",
   '- Anchor the day near the provided meetingPoint when given: the first stop should be at or close to it so the group converges fairly.',
   '- openingHours is a WEAK hint (the window a place happened to be scheduled in, not verified business hours). Treat it as soft guidance, not a hard constraint.',
   '- Order stops geographically to minimize backtracking, and place meals at natural meal times.',
+  '- Size each stop\'s dwell time (departTime − arriveTime) to the VENUE TYPE, and START from the SHORT end of the natural range — you can lengthen later to fill the day, so pick a lean baseline first. Typical baselines: coffee/dessert ~30 min; sit-down café or photo stop ~45 min; bar, scenic spot, landmark, shop/market, gallery, art/history site, nightlife venue, fitness/class, park or general activity ~60 min; a live-music set ~90 min; a museum ~120 min; lunch ~60–75 min; dinner ~90–120 min. Most stops are NOT 90-minute events — a record store, viewpoint, or gallery is ~60 min, a coffee ~30, not an hour-plus by default.',
+  '- HARD caps (never exceed, even to fill time): quick coffee/dessert stops 45 min; bar/scenic/landmark/shop/gallery/nightlife/general activity 90 min; live music and museums 120 min. A short stop may be stretched a little to fill the day, but do not balloon a ~60-min stop toward its cap just to pad time — reach for another place instead.',
+  '- To fill the day, prefer ADDING another shortlist place over lengthening an existing stop. Only if you run out of places should you extend stops, spreading the extra time across several (a little each) rather than inflating one, and never past its hard cap.',
   '- When a transport mode is given, account for its pace: walking/biking cover less ground than transit/driving, so keep stops closer together and allow more travel time on foot.',
   '- When foodBelowMin is true, meal options in range are scarce — prioritise keeping the few restaurants you do have rather than dropping them.',
   `- Meal windows (Pacific, HH:MM): breakfast ${MEAL_TIME_WINDOWS.breakfast.start}-${MEAL_TIME_WINDOWS.breakfast.end}, lunch ${MEAL_TIME_WINDOWS.lunch.start}-${MEAL_TIME_WINDOWS.lunch.end}, dinner ${MEAL_TIME_WINDOWS.dinner.start}-${MEAL_TIME_WINDOWS.dinner.end}. Tag a meal stop with the matching mealType.`,
   "- The chosen stops' combined pricePerPerson must not exceed maxBudgetPerPerson. Drop stops to stay within it; you don't output cost, we read each place's price from the shortlist.",
+  '- Budget is a HARD cap, NOT a target to minimize: before finalizing, SUM the pricePerPerson of every chosen stop and confirm the total is ≤ maxBudgetPerPerson. Aim to make good USE of the budget — a higher maxBudgetPerPerson means the group is happy to spend on nicer, higher-rated venues, so don\'t leave most of the budget unused when better-matching paid options exist. Only when the total would EXCEED the cap should you swap in cheaper options (a $14 taqueria over a $25 spot; a free park over a paid attraction) to get back under it.',
+  '- Use perStopBudget (when given) as your PER-STOP price guide: it is maxBudgetPerPerson spread across the day\'s stops, so most stops should cost around it or less. A single stop far above perStopBudget eats the whole day\'s budget — allow at most one such splurge (e.g. a nicer dinner) and only if the running total still fits maxBudgetPerPerson. When the budget is tight, lean on free/low-cost places (parks, viewpoints, walks) so you can still fill the day without blowing the cap.',
   '- Keep every arriveTime/departTime inside the trip time window, in chronological order.',
   '',
   'DAY COVERAGE — these are hard requirements, not suggestions:',
@@ -55,13 +61,18 @@ const SYSTEM_PROMPT = [
   '- Aim for the target number of stops given in the constraints (targetStops). Use that many shortlist places unless budget or opening hours genuinely forbid it. More real stops is better than a short day.',
   '- No dead air: the gap between one stop departing and the next arriving is travel time only. Never leave an idle gap larger than ~30 min; if you would, insert another shortlist place instead.',
   '- Do NOT end the day early while unused shortlist places remain and time is left in the window. Prefer adding a place over stopping.',
-  '- When includeMeals is not false, place a meal (a restaurant, tagged with its mealType) in EACH meal window the trip overlaps. Only skip a meal window if no suitable restaurant is provided in the shortlist.',
+  '- When includeMeals is not false, place a meal (a restaurant, tagged with its mealType) in the LUNCH and DINNER windows the trip overlaps. Breakfast is optional — add one only if it fits naturally, never force it. Only skip a required meal window if no suitable restaurant is provided in the shortlist.',
+  '- A non-meal food stop (coffee, a snack) is fine, but do NOT tag it with a mealType — reserve mealType for the actual lunch/dinner so it is not mistaken for a second meal.',
+  `- A mealType tag is ONLY valid when the stop's arriveTime falls INSIDE that meal's window (lunch ${MEAL_TIME_WINDOWS.lunch.start}-${MEAL_TIME_WINDOWS.lunch.end}, dinner ${MEAL_TIME_WINDOWS.dinner.start}-${MEAL_TIME_WINDOWS.dinner.end}). Never tag a stop "lunch" if it arrives after ${MEAL_TIME_WINDOWS.lunch.end} — either move that restaurant EARLIER so it lands in the window, or leave it untagged as a regular food stop. If the trip starts late in a meal window (e.g. a 12:00 start with lunch closing ${MEAL_TIME_WINDOWS.lunch.end}), place the meal as one of the FIRST stops so it fits.`,
+  '- MATCH the group\'s requested cuisines: when foodPreferences is given, prefer restaurants whose tags include one of those cuisines for the meal slots, and try to cover EACH requested cuisine across the day\'s meals before using a restaurant nobody asked for. A generic restaurant is a last resort when no requested-cuisine option fits the budget/time.',
+  '- Likewise prefer activities whose tags match the group\'s interests when choosing among options for a slot.',
   '',
   'Before you output, VERIFY and fix your own draft:',
   '  1. Does the last stop depart within one stop-length of the window end? If not, add stops until it does.',
-  '  2. Is every required meal window filled with a mealType-tagged restaurant? If not, add one.',
+  '  2. Are the lunch and dinner windows each filled with a mealType-tagged restaurant? If not, add one. (Breakfast is optional.)',
   '  3. Are there any idle gaps > ~30 min? If so, fill them with unused shortlist places.',
-  'Only emit the itinerary once all three checks pass (or you have genuinely run out of places/budget).',
+  '  4. ADD UP every stop\'s pricePerPerson. Is the total ≤ maxBudgetPerPerson? If not, replace your priciest stops with cheaper or free shortlist places until it fits — do this BEFORE emitting, not never.',
+  'Only emit the itinerary once all four checks pass (or you have genuinely run out of places/budget).',
   '',
   'Output: a single JSON object, no prose, matching exactly:',
   '{',
@@ -84,19 +95,29 @@ const SYSTEM_PROMPT = [
 // improves once the recommendation engine supplies them.
 const buildUserMessage = (shortlist, constraints) => {
   const {
-    timeWindow, maxBudgetPerPerson, groupSize,
+    timeWindow, maxBudgetPerPerson, perStopBudget, groupSize,
     meetingPoint, travelRadius, transport, maxMemberDistance, foodBelowMin, includeMeals,
+    foodPreferences, interests,
   } = constraints ?? {}
 
   // startingCoordinates are intentionally omitted — the model anchors on
   // meetingPoint (a single fair point), not raw per-member lat/long pairs.
   const details = { maxBudgetPerPerson, groupSize }
+  // The fair spend per stop (budget ÷ stops). Giving the model this number
+  // directly is what keeps a tight budget from being blown — it sizes each
+  // stop's price to it instead of picking pricey pins and summing past the cap.
+  if (typeof perStopBudget === 'number') details.perStopBudget = perStopBudget
   if (timeWindow) details.timeWindow = timeWindow
   if (meetingPoint) details.meetingPoint = meetingPoint
   if (travelRadius != null) details.travelRadius = travelRadius
   if (transport) details.transport = transport
   if (maxMemberDistance != null) details.maxMemberDistance = maxMemberDistance
   if (foodBelowMin) details.foodBelowMin = foodBelowMin
+  // The group's requested cuisines / interests, so the model can prefer meals
+  // and activities that MATCH what the group asked for (the shortlist may carry
+  // extra options; these say which to favor). Omitted when empty.
+  if (Array.isArray(foodPreferences) && foodPreferences.length > 0) details.foodPreferences = foodPreferences
+  if (Array.isArray(interests) && interests.length > 0) details.interests = interests
 
   // Give the model a concrete coverage target: how many ~AVG_STOP_DURATION_MIN
   // stops fit the window. This is what turns "fill the day" from advice into a

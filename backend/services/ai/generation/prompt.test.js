@@ -19,6 +19,13 @@ test('user message includes a computed targetStops for the window', () => {
   assert.match(userMsg.content, /"targetStops":\s*7/)
 })
 
+test('user message includes perStopBudget when the engine supplies it', () => {
+  const shortlist = [{ id: 1, name: 'X', category: 'activity', latitude: 37.78, longitude: -122.4, pricePerPerson: 0 }]
+  const constraints = { timeWindow: { startTime: '10:00', endTime: '20:30' }, maxBudgetPerPerson: 100, perStopBudget: 14, groupSize: 2 }
+  const [, userMsg] = buildMessages(shortlist, constraints)
+  assert.match(userMsg.content, /"perStopBudget":\s*14/)
+})
+
 test('system prompt states the hard day-coverage rules and self-check', () => {
   const [systemMsg] = buildMessages([], {})
   assert.match(systemMsg.content, /DAY COVERAGE/)

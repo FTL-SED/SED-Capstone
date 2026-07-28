@@ -11,13 +11,19 @@ import { validateItinerary } from './validation/validate.js'
 import { fallbackSequence } from './fallback/fallback.js'
 import { rescheduleStops } from './fallback/schedule.js'
 import { optimizeRoute } from '../../utils/route.js'
+import { windowLengthMinutes } from '../../utils/time.js'
+import { AI_VALIDATION_RETRIES } from '../../config/ai.js'
 
 // Reorder a feasible itinerary's stops for the shortest travel route (meals
 // stay anchored), then re-walk the clock so times/travel legs match the new
 // order. Runs on BOTH the AI and fallback output so every itinerary, whatever
 // its source, gets the optimized route. Coords are re-hydrated from the
 // shortlist by pinId (stops themselves only carry pinId).
-const optimizeItinerary = (itinerary, shortlist, constraints) => {
+// `fill` requests the scheduler's window-fill (stretch non-meal dwells so a thin
+// day reaches the window end). Passed for the fallback source only — the AI's
+// day already fills the window, and a short AI day is rejected to the fallback
+// upstream, so re-filling AI output would only distort its deliberate pacing.
+const optimizeItinerary = (itinerary, shortlist, constraints, { fill = false } = {}) => {
   const coordById = new Map(
     shortlist.map((p) => [p.id, { latitude: p.latitude, longitude: p.longitude }])
   )
@@ -25,26 +31,67 @@ const optimizeItinerary = (itinerary, shortlist, constraints) => {
 
   const ordered = optimizeRoute(itinerary.stops, coordOf)
   const startTime = constraints?.timeWindow?.startTime ?? itinerary.stops[0].arriveTime
-  const stops = rescheduleStops(ordered, coordOf, startTime, constraints?.transport)
+
+  // Window-fill needs the window length in elapsed minutes; only meaningful for
+  // a same-day window with both ends known.
+  const { startTime: ws, endTime: we } = constraints?.timeWindow ?? {}
+  const scheduleOpts =
+    fill && ws && we ? { windowEndElapsed: windowLengthMinutes(ws, we) } : {}
+  const stops = rescheduleStops(ordered, coordOf, startTime, constraints?.transport, scheduleOpts)
 
   return { ...itinerary, stops }
 }
 
+// Errors the model can plausibly fix by re-drafting (vs. a hallucinated pin or
+// broken shape, which won't improve on a re-ask). Cross-stop budget arithmetic
+// and coverage/meal placement are exactly the "slipped, try again" kind.
+const isRetryable = (errors) =>
+  errors.some((e) => /budget|day ends too early|missing a meal|outside the trip window|idle|out of order|block/.test(e))
+
 const tryAi = async (shortlist, constraints, callAiFn) => {
   const messages = buildMessages(shortlist, constraints)
-  const result = await callAiFn(messages)
+  let result = await callAiFn(messages)
+  let { valid, errors } = validateItinerary(result, shortlist, constraints)
+  if (valid) return result
 
-  // AI output validated with enforceCoverage=true (default) — the coverage
-  // backstop routes a short AI day to the fallback.
-  const { valid, errors } = validateItinerary(result, shortlist, constraints)
-  if (!valid) {
-    // Surface WHY the AI output was rejected — this is the signal for tuning
-    // the prompt / model choice later.
-    const err = new Error(`AI itinerary failed validation: ${errors.join('; ')}`)
-    err.validationErrors = errors
-    throw err
+  // Corrective retries before giving up to the fallback. LLMs reliably get the
+  // SHAPE right but slip on cross-stop arithmetic (esp. summing each stop's price
+  // against the budget); handing the exact validation errors back lets the model
+  // fix its own draft — much better in quality than dropping to the deterministic
+  // fallback. The model tends to converge over a couple of rounds (e.g. $67 → $55
+  // → in-budget), so we allow AI_VALIDATION_RETRIES rounds, re-asking with each
+  // round's FRESH errors. A conversation transcript (assistant draft + user
+  // correction) accumulates so the model sees its own prior attempts.
+  const transcript = [...messages]
+  for (let attempt = 0; attempt < AI_VALIDATION_RETRIES && isRetryable(errors); attempt++) {
+    transcript.push(
+      { role: 'assistant', content: JSON.stringify(result) },
+      {
+        role: 'user',
+        content:
+          `Your itinerary broke these rules:\n- ${errors.join('\n- ')}\n\n` +
+          'Return the FULL corrected itinerary JSON (same format), fixing these ' +
+          'problems:\n' +
+          '• "mealType ... outside that block": either MOVE that restaurant earlier ' +
+          'so it arrives inside its meal window, or REMOVE the mealType tag (keep it ' +
+          'as a regular food stop). Do not keep a lunch tag on a stop after the lunch window closes.\n' +
+          '• "day ends too early": ADD more shortlist places (or lengthen stops a ' +
+          'little) so the LAST stop departs close to the window end.\n' +
+          '• over budget: SUM every stop\'s pricePerPerson and swap expensive stops ' +
+          'for cheaper shortlist options only until the total is within ' +
+          'maxBudgetPerPerson — you do not need to go below it.',
+      },
+    )
+    result = await callAiFn(transcript)
+    ;({ valid, errors } = validateItinerary(result, shortlist, constraints))
+    if (valid) return result
   }
-  return result
+
+  // Surface WHY the AI output was rejected — this is the signal for tuning the
+  // prompt / model choice later, and the trigger for the deterministic fallback.
+  const err = new Error(`AI itinerary failed validation: ${errors.join('; ')}`)
+  err.validationErrors = errors
+  throw err
 }
 
 // Generate a one-day itinerary from the recommendation engine's output.
@@ -89,8 +136,15 @@ const generateItinerary = async (shortlist, constraints, callAiFn = callAI) => {
   // stop outside the window). If it somehow does, keep the pre-optimization
   // result rather than ship an invalid one. When source is fallback, pass
   // enforceCoverage:false so the backstop doesn't trip here either (C2 fix).
-  const optimized = optimizeItinerary(result, shortlist, constraints)
-  const { valid } = validateItinerary(optimized, shortlist, constraints, source === 'fallback' ? { enforceCoverage: false } : {})
+  // Fill on BOTH paths: stretch existing stops (each capped at baseline +
+  // STOP_STRETCH_MAX_MIN, distributed) so a day that ends short of the window
+  // reaches nearer the end. The AI's raw output already passed the coverage
+  // check in tryAi, so fill only tightens the tail here — it never shortens a
+  // day. Coverage is re-checked with enforceCoverage:false because it was
+  // already enforced upstream (AI) or intentionally exempt (fallback); fill
+  // can't overflow the window (its legality check forbids it).
+  const optimized = optimizeItinerary(result, shortlist, constraints, { fill: true })
+  const { valid } = validateItinerary(optimized, shortlist, constraints, { enforceCoverage: false })
   const itinerary = valid ? optimized : result
 
   return { itinerary, source }

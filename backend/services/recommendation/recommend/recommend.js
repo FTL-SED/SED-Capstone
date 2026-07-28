@@ -7,8 +7,8 @@
 import { hardFilter } from '../filters/filters.js'
 import { softScore } from '../score/score.js'
 import { enrichMissing } from '../enrich/enrich.js'
-import { computeShortlistSize, assembleWithFoodQuota } from '../assemble/assemble.js'
-import { ensureEveryMemberCovered, ensureEveryDietCovered } from '../fairness/fairness.js'
+import { computeShortlistSize, assembleWithFoodQuota, perStopBudget } from '../assemble/assemble.js'
+import { ensureEveryMemberCovered, ensureEveryDietCovered, ensureEveryFoodPrefCovered } from '../fairness/fairness.js'
 import { isRestaurant } from '../helpers/helpers.js'
 import { ENRICHMENT_POOL_SIZE, FOOD_MIN } from '../../../config/recommendation.js'
 import { maxDistanceFrom } from '../../../utils/geo.js'
@@ -18,8 +18,8 @@ import { maxDistanceFrom } from '../../../utils/geo.js'
 // Assigns in place: `pins` here is always hardFilter's own fresh copies
 // (never the caller's input), so there's no need to spread every survivor a
 // second time just to attach the score.
-function scoreAndSort(pins, members, groupTags, groupFood) {
-  for (const pin of pins) pin.score = softScore(pin, members, groupTags, groupFood)
+function scoreAndSort(pins, members, groupTags, groupFood, perStopTarget) {
+  for (const pin of pins) pin.score = softScore(pin, members, groupTags, groupFood, perStopTarget)
   return pins.sort((a, b) => b.score - a.score)
 }
 
@@ -41,8 +41,18 @@ function recommend(trip, members, pins) {
   // members carry no coordinates; memberCoords is reused for the fairness metric.
   const { candidates, meetingPoint, memberCoords } = hardFilter(pins, members, trip, groupTags)
 
-  // Stage 2: soft score + rank the full survivor pool.
-  const scoredCandidates = scoreAndSort(candidates, members, groupTags, groupFood)
+  // Meal opt-out: when the group unchecks meals, restaurants are dropped from
+  // the pool entirely so the shortlist isn't stuffed with food the AI would then
+  // schedule — the food quota, diet coverage, and food-pref coverage are ALL
+  // meal logic and are skipped below. Activities-only day.
+  const wantMeals = trip.includeMeals !== false
+  const pool = wantMeals ? candidates : candidates.filter((p) => !isRestaurant(p))
+
+  // Stage 2: soft score + rank the survivor pool. The value term aims each pin
+  // at the fair PER-STOP budget (budget spread across the day's stops), so the
+  // day favors ~budget/N-priced places instead of one that eats the whole budget.
+  const perStopTarget = perStopBudget(trip)
+  const scoredCandidates = scoreAndSort(pool, members, groupTags, groupFood, perStopTarget)
 
   // Enrichment seam: enrichMissing() gets a shot at the top slice (lazy Google +
   // cache). It's a no-op today, so no re-score is needed — when it's implemented
@@ -50,13 +60,25 @@ function recommend(trip, members, pins) {
   // slice here before assembly.
   const rankedTop = enrichMissing(scoredCandidates.slice(0, ENRICHMENT_POOL_SIZE))
 
-  // Assemble the food-quota'd shortlist from the top slice, floor-filling meals
-  // from the full scored pool, then guarantee every member is represented.
+  // Assemble the shortlist. With meals on, apply the food quota (floor-fill to
+  // FOOD_MIN restaurants) + the two food-coverage passes. With meals off, the
+  // pool has no restaurants, so just take the top `shortlistSize` scored pins and
+  // skip all meal logic — only the interest-fairness pass runs.
   const shortlistSize = computeShortlistSize(trip)
-  const assembled = assembleWithFoodQuota(rankedTop, scoredCandidates, shortlistSize)
-  const covered = ensureEveryMemberCovered(assembled, members, scoredCandidates)
-  // Then guarantee each dieted member has ≥1 restaurant they can actually eat at.
-  const shortlist = ensureEveryDietCovered(covered, members, scoredCandidates)
+  let shortlist
+  if (wantMeals) {
+    const assembled = assembleWithFoodQuota(rankedTop, scoredCandidates, shortlistSize)
+    const covered = ensureEveryMemberCovered(assembled, members, scoredCandidates)
+    // Guarantee each dieted member has ≥1 restaurant they can actually eat at.
+    const dietCovered = ensureEveryDietCovered(covered, members, scoredCandidates)
+    // Guarantee each member with food prefs gets ≥1 cuisine match they can eat
+    // at — memberLikes-based coverage counts an interest match as "covered", so a
+    // member's requested cuisine otherwise falls through (see fairness.js).
+    shortlist = ensureEveryFoodPrefCovered(dietCovered, members, scoredCandidates)
+  } else {
+    const assembled = rankedTop.slice(0, shortlistSize)
+    shortlist = ensureEveryMemberCovered(assembled, members, scoredCandidates)
+  }
 
   // Fairness metric: how far the worst-off member travels to the meeting point.
   // Only meaningful when members carry coordinates (meetingPoint !== null).
@@ -66,14 +88,20 @@ function recommend(trip, members, pins) {
   // Signal when the shortlist has fewer than FOOD_MIN meal options — e.g. a
   // tight travel radius or thin catalog leaves a "food desert" in range. The
   // AI / frontend can then tell the group meal choices are limited, rather than
-  // the shortfall passing silently.
+  // the shortfall passing silently. Meaningless when meals are opted out (no
+  // restaurants by design), so it's false there — not a "food desert".
   const restaurantCount = shortlist.filter(isRestaurant).length
-  const foodBelowMin = restaurantCount < FOOD_MIN
+  const foodBelowMin = wantMeals && restaurantCount < FOOD_MIN
 
   return {
     shortlist,
     constraints: {
       maxBudgetPerPerson: trip.maxBudgetPerPerson,
+      // The fair per-person spend for ONE stop (budget ÷ estimated stops),
+      // rounded. Carried so the AI can size each stop's cost to it and keep the
+      // day's total under budget — instead of picking pricey pins and summing
+      // past the cap. Null when budget isn't set. See perStopBudget / prompt.js.
+      perStopBudget: perStopTarget != null ? Math.round(perStopTarget) : null,
       groupSize: members.length,
       // Each member's start coordinate ({ latitude, longitude } from the
       // frontend's address picker), or undefined for a member without one.

@@ -10,13 +10,14 @@
 import {
   AVG_STOP_DURATION_MIN,
   MEAL_TIME_WINDOWS,
-  enforceableMealBlocks,
+  requiredMealBlocks,
+  stopDurationFor,
   travelMinutesFor,
   CATEGORY,
 } from '../../../config/ai.js'
 import { haversineMiles } from '../../../utils/geo.js'
 import { toMinutes, toHHMM, windowLengthMinutes, MINUTES_PER_DAY } from '../../../utils/time.js'
-import { backfillTravelLegs } from './travelLegs.js'
+import { rescheduleStops } from './schedule.js'
 
 const isRestaurant = (pin) => pin.category === CATEGORY.restaurant
 
@@ -74,38 +75,58 @@ const fallbackSequence = (shortlist, constraints) => {
   const wallAt = (elapsed) => (startWall + elapsed) % MINUTES_PER_DAY
   const budgetCap = typeof maxBudgetPerPerson === 'number' ? maxBudgetPerPerson : Infinity
 
-  // Which meal blocks to guarantee: only blocks where a full
-  // AVG_STOP_DURATION_MIN stop can be seated. Uses the SAME predicate as
-  // validation so they can't drift (C1 fix).
+  // Which meal blocks to guarantee: the REQUIRED blocks (lunch/dinner) where a
+  // full AVG_STOP_DURATION_MIN stop can be seated. Uses the SAME predicate as
+  // validation (requiredMealBlocks) so they can't drift (C1 fix) — and so the
+  // fallback no longer reserves a breakfast the group didn't ask for.
   const wantMeals = includeMeals !== false && !foodBelowMin
-  const targetBlocks = wantMeals ? enforceableMealBlocks(startHHMM, endHHMM, AVG_STOP_DURATION_MIN) : []
+  const targetBlocks = wantMeals ? requiredMealBlocks(startHHMM, endHHMM, AVG_STOP_DURATION_MIN) : []
 
   // Reserve one restaurant per target block, picking the best-rated option that
   // keeps the cumulative meal budget within budgetCap. Each becomes a fixed
   // anchor at its block's open time (elapsed from start, clamped ≥0).
-  // Budget-aware selection (fix for budget-500): prefer highest-rated but skip
-  // picks that would make the total reserved-meal cost exceed the budget.
+  // Budget-aware selection: prefer highest-rated, but a pick must leave enough
+  // budget for the CHEAPEST possible pick of every remaining required block —
+  // otherwise a pricey early meal starves a later required one (e.g. a $25 lunch
+  // on a $25 budget leaves $0 for a required dinner, which validation then
+  // demands → the fallback would fail validation and generateItinerary throws).
+  const costOf = (p) => (typeof p.pricePerPerson === 'number' ? p.pricePerPerson : 0)
   const usedIds = new Set()
   const anchors = []
   let mealBudgetSpent = 0
-  for (const block of targetBlocks) {
+  for (let b = 0; b < targetBlocks.length; b++) {
+    const block = targetBlocks[b]
     const candidates = shortlist
       .filter((p) => isRestaurant(p) && !usedIds.has(p.id))
-      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
-    // Pick the best-rated restaurant whose cost fits the remaining budget.
-    // If none fit, skip this block (validation's meal requirement will only
-    // fire when affordable meals exist — see validate.js budget-feasibility).
+      .sort((a, b2) => (b2.rating ?? 0) - (a.rating ?? 0))
+
+    // Minimum cost to still fill each LATER required block: the cheapest distinct
+    // restaurant available per remaining block (approximated by the N cheapest
+    // unused restaurants, N = blocks left after this one). Reserving this stops a
+    // pricey pick here from making a later required meal unaffordable.
+    const remainingBlocks = targetBlocks.length - b - 1
+
+    // Pick the best-rated restaurant that fits budget AND leaves the cheapest
+    // remaining required meals affordable.
     let pick = null
     for (const candidate of candidates) {
-      const cost = typeof candidate.pricePerPerson === 'number' ? candidate.pricePerPerson : 0
-      if (mealBudgetSpent + cost <= budgetCap) {
+      const cost = costOf(candidate)
+      // Reserve = sum of the `remainingBlocks` cheapest OTHER unused restaurants,
+      // i.e. the minimum it costs to still seat every later required block.
+      const pool = shortlist
+        .filter((p) => isRestaurant(p) && !usedIds.has(p.id) && p.id !== candidate.id)
+        .map(costOf)
+        .sort((x, y) => x - y)
+      const reserve = pool.slice(0, remainingBlocks).reduce((s, c) => s + c, 0)
+      const enoughForRemaining = pool.length >= remainingBlocks
+      if (mealBudgetSpent + cost + reserve <= budgetCap && enoughForRemaining) {
         pick = candidate
         break
       }
     }
     if (!pick) continue
     usedIds.add(pick.id)
-    mealBudgetSpent += typeof pick.pricePerPerson === 'number' ? pick.pricePerPerson : 0
+    mealBudgetSpent += costOf(pick)
     const openElapsed = Math.max(0, toMinutes(MEAL_TIME_WINDOWS[block].start) - startWall)
     if (openElapsed + AVG_STOP_DURATION_MIN <= windowLen) {
       anchors.push({ block, pin: pick, arrive: openElapsed })
@@ -130,8 +151,8 @@ const fallbackSequence = (shortlist, constraints) => {
   const reservedMealBudget = () =>
     anchors.slice(mi).reduce((sum, a) => sum + (a.pin.pricePerPerson ?? 0), 0)
 
-  const emit = (pin, arrive, mealType) => {
-    const depart = arrive + AVG_STOP_DURATION_MIN
+  const emit = (pin, arrive, mealType, durationMin) => {
+    const depart = arrive + durationMin
     stops.push({
       pin,
       pinId: pin.id,
@@ -152,19 +173,27 @@ const fallbackSequence = (shortlist, constraints) => {
     if (ai < ordered.length) {
       const pin = ordered[ai]
       const arrive = prev ? clock + travelMinutes(prev, pin, transport) : clock
-      const depart = arrive + AVG_STOP_DURATION_MIN
+      // Per-type dwell (café 45, museum 120, …) instead of a flat 90, so the
+      // fallback's day looks as realistic as the AI's.
+      const duration = stopDurationFor(pin)
+      const depart = arrive + duration
       const cost = typeof pin.pricePerPerson === 'number' ? pin.pricePerPerson : 0
       const fitsWindow = depart <= windowLen
       const fitsBudget = spent + cost + reservedMealBudget() <= budgetCap
       // Yield to the meal once an activity would run into its open time.
       const beforeMeal = !nextMeal || depart <= nextMeal.arrive
       if (fitsWindow && fitsBudget && beforeMeal) {
-        emit(pin, arrive)
+        emit(pin, arrive, undefined, duration)
         ai++
         continue
       }
+      // Skip an activity we can never afford, whether or not a meal is pending —
+      // retrying the same over-budget pin just stalls the queue and starves the
+      // cheaper (often free) activities behind it in nearest-neighbor order.
+      // (fitsBudget already reserves pending meals' cost, so this never skips an
+      // activity merely to protect a meal it could afford alongside it.)
+      if (fitsWindow && !fitsBudget) { ai++; continue }
       if (!fitsWindow && !nextMeal) break
-      if (fitsWindow && !fitsBudget && !nextMeal) { ai++; continue }
     }
 
     if (nextMeal) {
@@ -173,8 +202,11 @@ const fallbackSequence = (shortlist, constraints) => {
       // as an ordinary stop so validation's "mealType outside its block" rule
       // can't reject the day (rare in SF's short distances / wide blocks).
       const inBlock = arrive <= (toMinutes(MEAL_TIME_WINDOWS[nextMeal.block].end) - startWall)
+      // Meals stay at AVG_STOP_DURATION_MIN: the block-fit math here and the
+      // validator's requiredMealBlocks both reserve exactly this, so a longer
+      // meal could overflow a meal-required window and fail re-validation.
       if (arrive + AVG_STOP_DURATION_MIN <= windowLen) {
-        emit(nextMeal.pin, arrive, inBlock ? nextMeal.block : undefined)
+        emit(nextMeal.pin, arrive, inBlock ? nextMeal.block : undefined, AVG_STOP_DURATION_MIN)
       }
       mi++
       continue
@@ -188,11 +220,17 @@ const fallbackSequence = (shortlist, constraints) => {
   }
 
   // Re-sort by arrival so a held meal never sits out of chronological order,
-  // then backfill travel legs on the final order.
+  // then re-walk the clock through the shared scheduler to normalize times and
+  // backfill travel legs. Window-FILL is intentionally NOT applied here: the
+  // caller (services/ai/index.js optimizeItinerary) runs the single fill pass on
+  // BOTH the AI and fallback output. Filling here too would double-stretch — the
+  // fill's per-stop cap is baseline+STOP_STRETCH_MAX_MIN, and a second pass would
+  // treat the already-stretched dwell as the new baseline and stretch again.
+  // Coords come from each stop's attached pin.
   stops.sort((a, b) => toMinutes(a.arriveTime) - toMinutes(b.arriveTime))
-  backfillTravelLegs(stops, (stop) => stop.pin, transport)
+  const scheduled = rescheduleStops(stops, (stop) => stop.pin, startHHMM, transport)
 
-  const cleanStops = stops.map(({ pin, ...stop }) => stop)
+  const cleanStops = scheduled.map(({ pin, ...stop }) => stop)
   const location = shortlist[0].address ?? 'your destination'
   return {
     feasible: true,

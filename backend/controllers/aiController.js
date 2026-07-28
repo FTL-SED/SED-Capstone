@@ -56,9 +56,24 @@ async function postAiAgent(req, res) {
       members,
     })
 
+    // Budget summary for the frontend: the day may sit slightly over budget
+    // (within the validator's grace band we keep the better AI day rather than
+    // fall back). Surface the per-person total + an overBudget flag so the UI can
+    // show an honest "over budget by $N" badge instead of hiding it.
+    const priceById = new Map(shortlist.map((p) => [p.id, p.pricePerPerson ?? 0]))
+    const totalPerPerson = (result.itinerary.stops ?? []).reduce(
+      (sum, s) => sum + (priceById.get(s.pinId) ?? 0),
+      0,
+    )
+    const cap = constraints?.maxBudgetPerPerson
+    const budget =
+      typeof cap === 'number'
+        ? { totalPerPerson, maxBudgetPerPerson: cap, overBudget: totalPerPerson > cap, overBudgetBy: Math.max(0, totalPerPerson - cap) }
+        : { totalPerPerson, overBudget: false, overBudgetBy: 0 }
+
     // Return the persisted itinerary (with id + ordered pins) so the frontend
     // can render it immediately or fetch it later via GET /itineraries/:id.
-    return res.status(201).json({ itinerary: saved, source: result.source })
+    return res.status(201).json({ itinerary: saved, source: result.source, budget })
   } catch (err) {
     console.error('POST /ai-agent failed:', err)
     return res.status(500).json({ error: 'Failed to generate itinerary' })

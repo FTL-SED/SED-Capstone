@@ -55,7 +55,10 @@ const MEMBERS = [
 // Shortened end time (16:00 vs 18:00) so fallback's greedy budget-constrained
 // packing naturally fills the window, avoiding the coverage backstop. Test intent
 // is handoff contract (engine→AI shapes/validation), not window-filling optimality.
-const TRIP = { startTime: '09:00', endTime: '16:00', maxBudgetPerPerson: 90, groupSize: 3, travelRadius: 6, transport: 'walking', includeMeals: false }
+// Meals ON is the common case these assertions check (they expect a meal stop
+// and a vegan-eatable restaurant). A dedicated opt-out test below covers
+// includeMeals:false separately.
+const TRIP = { startTime: '09:00', endTime: '16:00', maxBudgetPerPerson: 90, groupSize: 3, travelRadius: 6, transport: 'walking', includeMeals: true }
 
 // Run the whole pipeline once and reuse it across assertions.
 async function pipeline(trip = TRIP, members = MEMBERS, catalog = CATALOG) {
@@ -141,6 +144,15 @@ test('handoff: a vegan member still gets a restaurant they can eat at in the sho
     (p) => p.category === 'restaurant' && (!p.diet || p.diet.includes('vegan'))
   )
   assert.ok(eatable.length > 0, 'vegan Ben has no eatable restaurant in the handoff shortlist')
+})
+
+test('handoff: includeMeals:false yields an activities-only day (no restaurants)', async () => {
+  const { shortlist, out } = await pipeline({ ...TRIP, includeMeals: false })
+  const byId = new Map(shortlist.map((p) => [p.id, p]))
+  assert.equal(shortlist.filter((p) => p.category === 'restaurant').length, 0, 'no restaurants in the shortlist')
+  assert.ok(out.itinerary, 'still produces a feasible itinerary')
+  const mealStops = out.itinerary.stops.filter((s) => byId.get(s.pinId)?.category === 'restaurant' || s.mealType)
+  assert.equal(mealStops.length, 0, 'no meal stops when meals are opted out')
 })
 
 test('handoff: an impossibly tight trip surfaces cleanly (no crash, valid shape)', async () => {
