@@ -6,6 +6,8 @@ import {
   unlikeItinerary,
   bookmarkItinerary,
   removeBookmark,
+  markVisited,
+  unmarkVisited,
 } from '../api/itinerary.js'
 
 // Two shared, app-wide sources of truth, both living in the React Query cache so
@@ -57,10 +59,15 @@ export function useLikeBookmark({ userId } = {}) {
     () => new Set((dashboard?.bookmarkedItineraries ?? []).map((it) => it.id)),
     [dashboard],
   )
+  const visitedIds = useMemo(
+    () => new Set((dashboard?.visitedItineraries ?? []).map((it) => it.id)),
+    [dashboard],
+  )
 
   // { desired, running } per itinerary id.
   const likeSync = useRef(new Map())
   const bookmarkSync = useRef(new Map())
+  const visitedSync = useRef(new Map())
 
   // Updates the dashboard query cache to reflect a like/bookmark change immediately.
   // Adds the itinerary for optimistic rendering or removes it by ID.
@@ -162,5 +169,27 @@ export function useLikeBookmark({ userId } = {}) {
     )
   }
 
-  return { dashboard, likedIds, bookmarkedIds, likeCounts, toggleLike, toggleBookmark }
+  const toggleVisited = (id, itinerary) => {
+    const desired = !visitedIds.has(id)
+    setMembership('visitedItineraries', id, desired, itinerary)
+    start(
+      visitedSync,
+      id,
+      desired,
+      (on) => (on ? markVisited(id) : unmarkVisited(id)),
+      undefined,
+      (finalDesired) => setMembership('visitedItineraries', id, !finalDesired, itinerary),
+    )
+  }
+
+  return {
+    dashboard,
+    likedIds,
+    bookmarkedIds,
+    visitedIds,
+    likeCounts,
+    toggleLike,
+    toggleBookmark,
+    toggleVisited,
+  }
 }

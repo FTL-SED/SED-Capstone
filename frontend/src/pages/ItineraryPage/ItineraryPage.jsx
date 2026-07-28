@@ -1,5 +1,6 @@
 import './ItineraryPage.css'
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams, useNavigate } from 'react-router-dom'
 import ItineraryPanel from './ItineraryPanel/ItineraryPanel.jsx'
 import MapView from './MapView/MapView.jsx'
@@ -13,8 +14,6 @@ import {
   addStop,
   deleteStop,
   updateItinerary,
-  markVisited,
-  unmarkVisited,
 } from '../../api/itinerary.js'
 import { getCurrentUser } from '../../lib/currentUser.js'
 
@@ -167,89 +166,50 @@ function CreateScene() {
 function ItineraryPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [itinerary, setItinerary] = useState(null);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  // The itinerary itself is a cached query keyed by id, so revisiting it (e.g.
+  // bouncing back from Discover) is instant. The optimistic edits below write
+  // straight into this cache via setQueryData instead of local state.
+  const itineraryKey = ['itinerary', id];
+  const { data: itinerary, isLoading: loading, error: queryError } = useQuery({
+    queryKey: itineraryKey,
+    queryFn: () => getItinerary(id),
+  });
+  const error = queryError
+    ? queryError.response?.data?.error || 'Could not load this itinerary.'
+    : '';
   // Guards against double-firing the delete/copy network calls on rapid clicks.
   const [actionBusy, setActionBusy] = useState(false);
-
-  const [visited, setVisited] = useState(false);
 
   const currentUserId = getCurrentUser()?.id;
   const numId = Number(id);
 
-  // Like/bookmark membership, the shared like-count map, and race-safe toggling
-  // all live in the shared hook, which owns the ['dashboard', id] cache — the
-  // SAME sources of truth as Home and Discover, so liking here shows up there
-  // (count included) and vice versa. We DERIVE this page's liked/bookmarked
-  // flags AND its count from those shared caches rather than tracking our own.
-  const { dashboard, likedIds, bookmarkedIds, likeCounts, toggleLike, toggleBookmark } =
-    useLikeBookmark({ userId: currentUserId });
+  // Like/bookmark/visited membership, the shared like-count map, and race-safe
+  // toggling all live in the shared hook, which owns the ['dashboard', id] cache
+  // — the SAME sources of truth as Home and Discover, so a toggle here shows up
+  // there (count included) and vice versa. We DERIVE this page's flags AND its
+  // count from those shared caches rather than tracking our own.
+  const {
+    likedIds,
+    bookmarkedIds,
+    visitedIds,
+    likeCounts,
+    toggleLike,
+    toggleBookmark,
+    toggleVisited,
+  } = useLikeBookmark({ userId: currentUserId });
   const liked = likedIds.has(numId);
   const bookmarked = bookmarkedIds.has(numId);
+  const visited = visitedIds.has(numId);
   // The shared override wins over the fetched itinerary's baked-in count.
   const likeCount = likeCounts?.[numId] ?? itinerary?.likeCount ?? 0;
 
-  // Visited isn't part of the hook, so it keeps its own drain-loop ref.
-  const 
-  = useRef({ desired: false, running: false });
-
-  useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      try {
-        const data = await getItinerary(id);
-        if (!active) return;
-        setItinerary(data);
-        setError('');
-      } catch (err) {
-        if (active) setError(err.response?.data?.error || 'Could not load this itinerary.');
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    load();
-    return () => {
-      active = false;
-    };
-  }, [id]);
-
-  // Drain loop mirroring syncBookmark: one request in flight, converge to the
-  // user's latest desired visited state. Both mark/unmark return 204 (no body),
-  // so on hard failure we just revert the flag.
-  const syncVisited = async () => {
-    const state = visitedSync.current;
-    if (state.running) return;
-    state.running = true;
-    try {
-      let sent;
-      while (state.desired !== sent) {
-        sent = state.desired;
-        sent ? await markVisited(id) : await unmarkVisited(id);
-      }
-    } catch (err) {
-      console.error('Visited sync failed, reverting:', err);
-      setVisited(!state.desired);
-    } finally {
-      state.running = false;
-    }
-  };
-  
-   // Seed the visited flag from the dashboard the hook already fetched — no extra
-  // request. Re-runs if the dashboard arrives after first render.
-  useEffect(() => {
-    setVisited((dashboard?.visitedItineraries ?? []).some((it) => it.id === numId));
-  }, [dashboard, numId]);
-
-  // Toggle "I've been here": flip the UI immediately, then converge the server
-  // in the background.
-  const toggleVisited = () => {
-    const desired = !visited;
-    setVisited(desired);
-    visitedSync.current.desired = desired;
-    syncVisited();
+  // Optimistically patch the cached itinerary. Returns the previous value so a
+  // failed request can roll back to it.
+  const patchItinerary = (updater) => {
+    const previous = queryClient.getQueryData(itineraryKey);
+    queryClient.setQueryData(itineraryKey, (prev) => (prev ? updater(prev) : prev));
+    return previous;
   };
 
   // Owner-only: delete this itinerary after confirming, then go home.
@@ -284,13 +244,15 @@ function ItineraryPage() {
   // Owner-only: remove a stop from the itinerary. Optimistic — drop it from the
   // timeline (and map) immediately, then DELETE; on failure, put it back.
   const handleRemoveStop = async (stopId) => {
-    const prevPins = itinerary.pins;
-    setItinerary((prev) => ({ ...prev, pins: prev.pins.filter((p) => p.stopId !== stopId) }));
+    const previous = patchItinerary((prev) => ({
+      ...prev,
+      pins: prev.pins.filter((p) => p.stopId !== stopId),
+    }));
     try {
       await deleteStop(stopId);
     } catch (err) {
       console.error('Remove stop failed, reverting:', err);
-      setItinerary((prev) => ({ ...prev, pins: prevPins }));
+      queryClient.setQueryData(itineraryKey, previous);
       window.alert('Could not remove that stop. Please try again.');
     }
   };
@@ -303,12 +265,12 @@ function ItineraryPage() {
     if (actionBusy) return;
     const desired = !itinerary.isPublic;
     setActionBusy(true);
-    setItinerary((prev) => ({ ...prev, isPublic: desired }));
+    const previous = patchItinerary((prev) => ({ ...prev, isPublic: desired }));
     try {
       await updateItinerary(id, { isPublic: desired });
     } catch (err) {
       console.error('Privacy toggle failed, reverting:', err);
-      setItinerary((prev) => ({ ...prev, isPublic: !desired }));
+      queryClient.setQueryData(itineraryKey, previous);
       window.alert('Could not change the privacy setting. Please try again.');
     } finally {
       setActionBusy(false);
@@ -341,7 +303,7 @@ function ItineraryPage() {
       // Refetch to get the authoritative flattened pin shape (stopId, tags, etc.)
       // rather than reconstruct the reshape on the client.
       const refreshed = await getItinerary(id);
-      setItinerary(refreshed);
+      queryClient.setQueryData(itineraryKey, refreshed);
       return stop;
     } catch (err) {
       console.error('Add stop failed:', err);
@@ -391,7 +353,7 @@ function ItineraryPage() {
         onTogglePrivacy={handleTogglePrivacy}
         onDelete={handleDelete}
         onCopy={handleCopy}
-        onMarkVisited={toggleVisited}
+        onMarkVisited={() => toggleVisited(numId, itinerary)}
         onRemoveStop={handleRemoveStop}
         onAddStop={handleAddStop}
       />
