@@ -1,8 +1,10 @@
 import './ItineraryCard.css'
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import LikeButton from '../../pages/ItineraryPage/LikeButton/LikeButton.jsx'
 import BookmarkButton from '../../pages/ItineraryPage/BookmarkButton/BookmarkButton.jsx'
+import { likeCountsQuery } from '../../hooks/useLikeBookmark.js'
 // Shared, pre-rendered fallback cover: one static SVG (golden-hour gradient +
 // NavQuest diamond) reused across every card and the itinerary banner, so a
 // coverless itinerary reads as intentional/branded. Bundled + browser-cached —
@@ -19,6 +21,12 @@ function ItineraryCard({
   onToggleBookmark,
 }) {
   const { id, title, location, coverImageUrl, likeCount, creator } = itinerary;
+  // The shared, app-wide like-count override map (see useLikeBookmark). If this
+  // itinerary has an entry, it wins over the count baked into the feed — so a
+  // like on ANY page updates this card's number no matter which feed it came
+  // from. `?? likeCount` falls back to the feed value when there's no override.
+  const { data: likeCounts } = useQuery(likeCountsQuery);
+  const displayedLikeCount = likeCounts?.[id] ?? likeCount ?? 0;
   const [imageFailed, setImageFailed] = useState(false);
   const imageSrc = imageFailed || !coverImageUrl ? DEFAULT_COVER_IMAGE : coverImageUrl;
   // Only offer bookmarking on other people's itineraries, not your own.
@@ -27,13 +35,13 @@ function ItineraryCard({
   const handleLike = (event) => {
     event.preventDefault();
     event.stopPropagation();
-    onToggleLike?.(id);
+    onToggleLike?.(id, itinerary);
   };
 
   const handleBookmark = (event) => {
     event.preventDefault();
     event.stopPropagation();
-    onToggleBookmark?.(id);
+    onToggleBookmark?.(id, itinerary);
   };
 
   return (
@@ -54,7 +62,7 @@ function ItineraryCard({
           <h3>{title || "Untitled Itinerary"}</h3>
           <LikeButton
             className="itinerary-card__like"
-            likeCount={likeCount ?? 0}
+            likeCount={displayedLikeCount}
             liked={liked}
             onClick={handleLike}
           />
