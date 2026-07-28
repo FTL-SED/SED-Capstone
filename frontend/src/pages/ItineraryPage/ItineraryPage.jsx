@@ -1,26 +1,20 @@
 import './ItineraryPage.css'
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams, useNavigate } from 'react-router-dom'
 import ItineraryPanel from './ItineraryPanel/ItineraryPanel.jsx'
 import MapView from './MapView/MapView.jsx'
 import ErrorMessage from '../../components/ErrorMessage/ErrorMessage.jsx'
 import LoadingSection from '../LoadingPage/LoadingSection/LoadingSection.jsx'
+import { useLikeBookmark } from '../../hooks/useLikeBookmark.js'
 import {
   getItinerary,
-  getUserDashboard,
-  likeItinerary,
-  unlikeItinerary,
-  bookmarkItinerary,
-  removeBookmark,
   deleteItinerary,
   copyItinerary,
   addStop,
   deleteStop,
   updateStop,
   updateItinerary,
-  uploadItineraryCover,
-  markVisited,
-  unmarkVisited,
 } from '../../api/itinerary.js'
 import { getCurrentUser } from '../../lib/currentUser.js'
 
@@ -173,166 +167,50 @@ function CreateScene() {
 function ItineraryPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [itinerary, setItinerary] = useState(null);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  // The itinerary itself is a cached query keyed by id, so revisiting it (e.g.
+  // bouncing back from Discover) is instant. The optimistic edits below write
+  // straight into this cache via setQueryData instead of local state.
+  const itineraryKey = ['itinerary', id];
+  const { data: itinerary, isLoading: loading, error: queryError } = useQuery({
+    queryKey: itineraryKey,
+    queryFn: () => getItinerary(id),
+  });
+  const error = queryError
+    ? queryError.response?.data?.error || 'Could not load this itinerary.'
+    : '';
   // Guards against double-firing the delete/copy network calls on rapid clicks.
   const [actionBusy, setActionBusy] = useState(false);
 
-  // Like/bookmark UI state. likeCount comes from the itinerary; whether *I've*
-  // liked/bookmarked it isn't in GET /itineraries/:id, so we hydrate it from my
-  // dashboard (GET /users/:id) — the same source the home page uses.
-  const [liked, setLiked] = useState(false);
-  const [bookmarked, setBookmarked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
-  const [visited, setVisited] = useState(false);
-
   const currentUserId = getCurrentUser()?.id;
+  const numId = Number(id);
 
-  // Like/bookmark sync: firing one request per click lets concurrent toggles
-  // race at the DB, so the server's final state can disagree with the UI. Track
-  // the user's latest DESIRED state and keep at most one request in flight,
-  // re-sending until the server matches. { desired, running }.
-  const likeSync = useRef({ desired: false, running: false });
-  const bookmarkSync = useRef({ desired: false, running: false });
-  const visitedSync = useRef({ desired: false, running: false });
+  // Like/bookmark/visited membership, the shared like-count map, and race-safe
+  // toggling all live in the shared hook, which owns the ['dashboard', id] cache
+  // — the SAME sources of truth as Home and Discover, so a toggle here shows up
+  // there (count included) and vice versa. We DERIVE this page's flags AND its
+  // count from those shared caches rather than tracking our own.
+  const {
+    likedIds,
+    bookmarkedIds,
+    visitedIds,
+    likeCounts,
+    toggleLike,
+    toggleBookmark,
+    toggleVisited,
+  } = useLikeBookmark({ userId: currentUserId });
+  const liked = likedIds.has(numId);
+  const bookmarked = bookmarkedIds.has(numId);
+  const visited = visitedIds.has(numId);
+  // The shared override wins over the fetched itinerary's baked-in count.
+  const likeCount = likeCounts?.[numId] ?? itinerary?.likeCount ?? 0;
 
-  useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      try {
-        const data = await getItinerary(id);
-        if (!active) return;
-        setItinerary(data);
-        setLikeCount(data.likeCount ?? 0);
-        setError('');
-
-        // Hydrate my like/bookmark state for this itinerary from my dashboard.
-        // Best-effort: if it fails (e.g. signed out) the buttons just start off.
-        if (currentUserId) {
-          try {
-            const me = await getUserDashboard(currentUserId);
-            if (!active) return;
-            const numId = Number(id);
-            setLiked((me.likedItineraries ?? []).some((it) => it.id === numId));
-            setBookmarked((me.bookmarkedItineraries ?? []).some((it) => it.id === numId));
-            setVisited((me.visitedItineraries ?? []).some((it) => it.id === numId));
-          } catch {
-            /* leave defaults */
-          }
-        }
-      } catch (err) {
-        if (active) setError(err.response?.data?.error || 'Could not load this itinerary.');
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    load();
-    return () => {
-      active = false;
-    };
-  }, [id, currentUserId]);
-
-  // Optimistic toggle: flip the UI (and the count) immediately, call the
-  // backend, and revert if it rejects so the button never lies.
-  // Drain loop: send like/unlike until the server matches the user's latest
-  // desired state, with only ONE request in flight (so calls can't race at the
-  // DB). Once settled, reconcile the count with the authoritative value.
-  const syncLike = async () => {
-    const state = likeSync.current;
-    if (state.running) return;
-    state.running = true;
-    try {
-      let sent;
-      while (state.desired !== sent) {
-        sent = state.desired;
-        const res = sent ? await likeItinerary(id) : await unlikeItinerary(id);
-        // The server just confirmed the action we sent, so once this is the
-        // user's final intent `sent` IS the authoritative liked status — pin
-        // both it and the count to the truth (the count comes from res).
-        if (state.desired === sent) {
-          setLiked(sent);
-          if (res && typeof res.likeCount === 'number') setLikeCount(res.likeCount);
-        }
-      }
-    } catch (err) {
-      console.error('Like sync failed:', err);
-
-      // to revert the users last action in case it failed
-      setLiked(!state.desired);
-      setLikeCount((c) => Math.max(0, c + (state.desired ? -1 : 1)));
-    } finally {
-      state.running = false;
-    }
-  };
-
-  // Optimistic toggle in click order (count stays self-consistent), then
-  // converge the server in the background.
-  const toggleLike = () => {
-    const desired = !liked;
-    setLiked(desired);
-    setLikeCount((c) => Math.max(0, c + (desired ? 1 : -1)));
-    likeSync.current.desired = desired;
-    syncLike();
-  };
-
-  // Drain loop mirroring syncLike: one request in flight, converge to desired.
-  // Bookmark returns 204 (no count), so on hard failure we just revert the flag.
-  const syncBookmark = async () => {
-    const state = bookmarkSync.current;
-    if (state.running) return;
-    state.running = true;
-    try {
-      let sent;
-      while (state.desired !== sent) {
-        sent = state.desired;
-        sent ? await bookmarkItinerary(id) : await removeBookmark(id);
-      }
-    } catch (err) {
-      console.error('Bookmark sync failed, reverting:', err);
-      setBookmarked(!state.desired);
-    } finally {
-      state.running = false;
-    }
-  };
-
-  const toggleBookmark = () => {
-    const desired = !bookmarked;
-    setBookmarked(desired);
-    bookmarkSync.current.desired = desired;
-    syncBookmark();
-  };
-
-  // Drain loop mirroring syncBookmark: one request in flight, converge to the
-  // user's latest desired visited state. Both mark/unmark return 204 (no body),
-  // so on hard failure we just revert the flag.
-  const syncVisited = async () => {
-    const state = visitedSync.current;
-    if (state.running) return;
-    state.running = true;
-    try {
-      let sent;
-      while (state.desired !== sent) {
-        sent = state.desired;
-        sent ? await markVisited(id) : await unmarkVisited(id);
-      }
-    } catch (err) {
-      console.error('Visited sync failed, reverting:', err);
-      setVisited(!state.desired);
-    } finally {
-      state.running = false;
-    }
-  };
-
-  // Toggle "I've been here": flip the UI immediately, then converge the server
-  // in the background.
-  const toggleVisited = () => {
-    const desired = !visited;
-    setVisited(desired);
-    visitedSync.current.desired = desired;
-    syncVisited();
+  // Optimistically patch the cached itinerary. Returns the previous value so a
+  // failed request can roll back to it.
+  const patchItinerary = (updater) => {
+    const previous = queryClient.getQueryData(itineraryKey);
+    queryClient.setQueryData(itineraryKey, (prev) => (prev ? updater(prev) : prev));
+    return previous;
   };
 
   // Owner-only: delete this itinerary after confirming, then go home.
@@ -367,13 +245,15 @@ function ItineraryPage() {
   // Owner-only: remove a stop from the itinerary. Optimistic — drop it from the
   // timeline (and map) immediately, then DELETE; on failure, put it back.
   const handleRemoveStop = async (stopId) => {
-    const prevPins = itinerary.pins;
-    setItinerary((prev) => ({ ...prev, pins: prev.pins.filter((p) => p.stopId !== stopId) }));
+    const previous = patchItinerary((prev) => ({
+      ...prev,
+      pins: prev.pins.filter((p) => p.stopId !== stopId),
+    }));
     try {
       await deleteStop(stopId);
     } catch (err) {
       console.error('Remove stop failed, reverting:', err);
-      setItinerary((prev) => ({ ...prev, pins: prevPins }));
+      queryClient.setQueryData(itineraryKey, previous);
       window.alert('Could not remove that stop. Please try again.');
     }
   };
@@ -404,12 +284,12 @@ function ItineraryPage() {
     if (actionBusy) return;
     const desired = !itinerary.isPublic;
     setActionBusy(true);
-    setItinerary((prev) => ({ ...prev, isPublic: desired }));
+    const previous = patchItinerary((prev) => ({ ...prev, isPublic: desired }));
     try {
       await updateItinerary(id, { isPublic: desired });
     } catch (err) {
       console.error('Privacy toggle failed, reverting:', err);
-      setItinerary((prev) => ({ ...prev, isPublic: !desired }));
+      queryClient.setQueryData(itineraryKey, previous);
       window.alert('Could not change the privacy setting. Please try again.');
     } finally {
       setActionBusy(false);
@@ -474,7 +354,7 @@ function ItineraryPage() {
       // Refetch to get the authoritative flattened pin shape (stopId, tags, etc.)
       // rather than reconstruct the reshape on the client.
       const refreshed = await getItinerary(id);
-      setItinerary(refreshed);
+      queryClient.setQueryData(itineraryKey, refreshed);
       return stop;
     } catch (err) {
       console.error('Add stop failed:', err);
@@ -520,12 +400,12 @@ function ItineraryPage() {
         visited={visited}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onToggleLike={toggleLike}
-        onToggleBookmark={toggleBookmark}
+        onToggleLike={() => toggleLike(numId, { id: numId, likeCount })}
+        onToggleBookmark={() => toggleBookmark(numId, itinerary)}
         onTogglePrivacy={handleTogglePrivacy}
         onDelete={handleDelete}
         onCopy={handleCopy}
-        onMarkVisited={toggleVisited}
+        onMarkVisited={() => toggleVisited(numId, itinerary)}
         onRemoveStop={handleRemoveStop}
         onEditStop={handleEditStop}
         onAddStop={handleAddStop}

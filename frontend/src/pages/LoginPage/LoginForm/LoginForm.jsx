@@ -2,8 +2,9 @@ import TextInput from '../../../components/Inputs/TextInput/TextInput.jsx';
 import PasswordInput from '../../../components/Inputs/PasswordInput/PasswordInput.jsx';
 import SubmitButton from '../../../components/Inputs/SubmitButton/SubmitButton.jsx';
 import ErrorMessage from '../../../components/ErrorMessage/ErrorMessage.jsx'
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import ConfirmationMessage from '../../../components/ConfirmationMessage/ConfirmationMessage.jsx'
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import './LoginForm.css'
 
@@ -15,6 +16,8 @@ function LoginForm({setCurrentUser}) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [success] = useState(location.state?.message || "");
 
   const handleSubmit = async (e) => {
     const userData = { email, password };
@@ -53,6 +56,13 @@ function LoginForm({setCurrentUser}) {
     }
   };
 
+  useEffect(() => {
+    if (location.state?.message) {
+      // Wipe the state so a refresh/back-nav doesn't show the message again.
+      window.history.replaceState({}, "");
+    }
+  }, [location.state]);
+
   return (
     <form className="login-form">
       <TextInput 
@@ -69,6 +79,7 @@ function LoginForm({setCurrentUser}) {
       />
 
       <ErrorMessage message={error}/>
+      <ConfirmationMessage message={success} />
       <SubmitButton 
         label="Log In" 
         onClick={handleSubmit}
