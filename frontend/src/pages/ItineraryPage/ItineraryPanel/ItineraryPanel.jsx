@@ -9,10 +9,10 @@ import WrittenItinerary from '../WrittenItinerary/WrittenItinerary.jsx'
 // CRUD action bar, and the scrolling stop timeline — all in one panel.
 function ItineraryPanel({
   isOwner, pins, maxBudgetPerPerson, title, description, author, coverImageUrl,
-  liked, bookmarked, likeCount, isPublic,
+  liked, bookmarked, likeCount, isPublic, visited,
   activeTab, onTabChange,
   onToggleLike, onToggleBookmark, onTogglePrivacy,
-  onDelete, onCopy,
+  onDelete, onCopy, onMarkVisited,
   onRemoveStop, onAddStop,
 }) {
   // Per-person total from the stops' prices. When it exceeds the trip's budget,
@@ -71,6 +71,8 @@ function ItineraryPanel({
         onTogglePrivacy={onTogglePrivacy}
         onDelete={onDelete}
         onCopy={onCopy}
+        visited={visited}
+        onMarkVisited={onMarkVisited}
       />
       {/* Written / Visual tabs — shown only on narrow screens (CSS-hidden on
           desktop, where the written timeline and the map show side by side).

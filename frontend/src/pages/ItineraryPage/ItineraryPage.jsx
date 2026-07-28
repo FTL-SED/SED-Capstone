@@ -17,6 +17,8 @@ import {
   addStop,
   deleteStop,
   updateItinerary,
+  markVisited,
+  unmarkVisited,
 } from '../../api/itinerary.js'
 import { getCurrentUser } from '../../lib/currentUser.js'
 
@@ -181,6 +183,7 @@ function ItineraryPage() {
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+  const [visited, setVisited] = useState(false);
 
   const currentUserId = getCurrentUser()?.id;
 
@@ -190,6 +193,7 @@ function ItineraryPage() {
   // re-sending until the server matches. { desired, running }.
   const likeSync = useRef({ desired: false, running: false });
   const bookmarkSync = useRef({ desired: false, running: false });
+  const visitedSync = useRef({ desired: false, running: false });
 
   useEffect(() => {
     let active = true;
@@ -211,6 +215,7 @@ function ItineraryPage() {
             const numId = Number(id);
             setLiked((me.likedItineraries ?? []).some((it) => it.id === numId));
             setBookmarked((me.bookmarkedItineraries ?? []).some((it) => it.id === numId));
+            setVisited((me.visitedItineraries ?? []).some((it) => it.id === numId));
           } catch {
             /* leave defaults */
           }
@@ -296,6 +301,36 @@ function ItineraryPage() {
     setBookmarked(desired);
     bookmarkSync.current.desired = desired;
     syncBookmark();
+  };
+
+  // Drain loop mirroring syncBookmark: one request in flight, converge to the
+  // user's latest desired visited state. Both mark/unmark return 204 (no body),
+  // so on hard failure we just revert the flag.
+  const syncVisited = async () => {
+    const state = visitedSync.current;
+    if (state.running) return;
+    state.running = true;
+    try {
+      let sent;
+      while (state.desired !== sent) {
+        sent = state.desired;
+        sent ? await markVisited(id) : await unmarkVisited(id);
+      }
+    } catch (err) {
+      console.error('Visited sync failed, reverting:', err);
+      setVisited(!state.desired);
+    } finally {
+      state.running = false;
+    }
+  };
+
+  // Toggle "I've been here": flip the UI immediately, then converge the server
+  // in the background.
+  const toggleVisited = () => {
+    const desired = !visited;
+    setVisited(desired);
+    visitedSync.current.desired = desired;
+    syncVisited();
   };
 
   // Owner-only: delete this itinerary after confirming, then go home.
@@ -430,6 +465,7 @@ function ItineraryPage() {
         bookmarked={bookmarked}
         likeCount={likeCount}
         isPublic={itinerary.isPublic}
+        visited={visited}
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onToggleLike={toggleLike}
@@ -437,6 +473,7 @@ function ItineraryPage() {
         onTogglePrivacy={handleTogglePrivacy}
         onDelete={handleDelete}
         onCopy={handleCopy}
+        onMarkVisited={toggleVisited}
         onRemoveStop={handleRemoveStop}
         onAddStop={handleAddStop}
       />

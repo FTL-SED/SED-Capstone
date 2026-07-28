@@ -3,6 +3,7 @@ import ExploreSection from './ExploreSection/ExploreSection.jsx'
 import CreatedItinerariesSection from './CreatedItinerariesSection/CreatedItinerariesSection.jsx'
 import LikedItinerariesSection from './LikedItinerariesSection/LikedItinerariesSection.jsx'
 import BookmarkedItinerariesSection from './BookmarkedItinerariesSection/BookmarkedItinerariesSection.jsx'
+import VisitedItinerariesSection from './VisitedItinerariesSection/VisitedItinerariesSection.jsx'
 import { listItineraries, getUserDashboard } from '../../api/itinerary.js'
 import { useLikeBookmark } from '../../hooks/useLikeBookmark.js'
 import { getCurrentUser } from '../../lib/currentUser.js'
@@ -22,6 +23,11 @@ function HomePage() {
   // in the Explore top-10 still shows up after a refresh.
   const [pool, setPool] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Ids the user has marked visited. Plain state (not part of useLikeBookmark)
+  // since there's no same-page visited toggle to keep in sync — marking happens
+  // on ItineraryPage. Reflects the state fetched on load.
+  const [visitedIds, setVisitedIds] = useState(new Set());
 
   const currentUserId = getCurrentUser()?.id;
 
@@ -68,13 +74,15 @@ function HomePage() {
         const created = me.createdItineraries ?? [];
         const liked = me.likedItineraries ?? [];
         const bookmarked = me.bookmarkedItineraries ?? [];
+        const visited = me.visitedItineraries ?? [];
         setCreatedItineraries(created);
         hydrate({ liked: liked.map((it) => it.id), bookmarked: bookmarked.map((it) => it.id) });
+        setVisitedIds(new Set(visited.map((it) => it.id)));
 
         // Merge all sources into one deduped pool (by id) so the bars can show
         // liked/bookmarked items even if they're not in the Explore top-10.
         const byId = new Map();
-        [...explore, ...created, ...liked, ...bookmarked].forEach((it) => byId.set(it.id, it));
+        [...explore, ...created, ...liked, ...bookmarked, ...visited].forEach((it) => byId.set(it.id, it));
         setPool([...byId.values()]);
       } catch (err) {
         console.error('Failed to load home page:', err);
@@ -117,6 +125,14 @@ function HomePage() {
       />
       <BookmarkedItinerariesSection
         itineraries={pool.filter((it) => bookmarkedIds.has(it.id))}
+        loading={loading}
+        likedIds={likedIds}
+        bookmarkedIds={bookmarkedIds}
+        onToggleLike={toggleLike}
+        onToggleBookmark={toggleBookmark}
+      />
+      <VisitedItinerariesSection
+        itineraries={pool.filter((it) => visitedIds.has(it.id))}
         loading={loading}
         likedIds={likedIds}
         bookmarkedIds={bookmarkedIds}

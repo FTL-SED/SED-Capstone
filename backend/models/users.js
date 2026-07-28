@@ -41,6 +41,7 @@ function findDashboardById(id) {
       createdItineraries: { include: dashboardItineraryInclude },
       bookmarks: { include: { itinerary: { include: dashboardItineraryInclude } } },
       likes: { include: { itinerary: { include: dashboardItineraryInclude } } },
+      visited: { include: { itinerary: { include: dashboardItineraryInclude } } },
     },
   })
 }
