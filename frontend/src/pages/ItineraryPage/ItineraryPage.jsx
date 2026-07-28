@@ -16,7 +16,9 @@ import {
   copyItinerary,
   addStop,
   deleteStop,
+  updateStop,
   updateItinerary,
+  uploadItineraryCover,
   markVisited,
   unmarkVisited,
 } from '../../api/itinerary.js'
@@ -376,6 +378,24 @@ function ItineraryPage() {
     }
   };
 
+  // Owner-only: edit a stop's scheduled time. Optimistic — patch the stop's
+  // start/end in place immediately, then PUT; on failure, restore the old times.
+  // Only the ItineraryStop's timing changes — the venue Pin is never touched.
+  const handleEditStop = async (stopId, { startTime, endTime }) => {
+    const prevPins = itinerary.pins;
+    setItinerary((prev) => ({
+      ...prev,
+      pins: prev.pins.map((p) => (p.stopId === stopId ? { ...p, startTime, endTime } : p)),
+    }));
+    try {
+      await updateStop(stopId, { startTime, endTime });
+    } catch (err) {
+      console.error('Edit stop time failed, reverting:', err);
+      setItinerary((prev) => ({ ...prev, pins: prevPins }));
+      window.alert(err.response?.data?.error || 'Could not update the time. Please try again.');
+    }
+  };
+
   // Owner-only: flip the itinerary between public and private. Optimistic — we
   // update the itinerary in place immediately, then persist via PUT and revert
   // if the server rejects, so the toggle never lies. Guarded by actionBusy so a
@@ -391,6 +411,38 @@ function ItineraryPage() {
       console.error('Privacy toggle failed, reverting:', err);
       setItinerary((prev) => ({ ...prev, isPublic: !desired }));
       window.alert('Could not change the privacy setting. Please try again.');
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  // Owner-only: save inline edits to the itinerary's own metadata (title,
+  // description, budget, and optionally a new cover). NOT optimistic — a cover
+  // upload is async and can fail, so we keep the panel in edit mode and only
+  // commit state on success. Coordinated: upload the cover first (if any) so its
+  // URL lands, then PUT the text fields, then merge both results. Guarded by
+  // actionBusy against a double-click. Returns true on success so the panel
+  // knows whether to close the editor.
+  const handleEditItinerary = async (changes, coverFile) => {
+    if (actionBusy) return false;
+    setActionBusy(true);
+    try {
+      if (coverFile) {
+        const withCover = await uploadItineraryCover(id, coverFile);
+        setItinerary((prev) => ({ ...prev, coverImageUrl: withCover.coverImageUrl }));
+      }
+      const updated = await updateItinerary(id, changes);
+      setItinerary((prev) => ({
+        ...prev,
+        title: updated.title,
+        description: updated.description,
+        maxBudgetPerPerson: updated.maxBudgetPerPerson,
+      }));
+      return true;
+    } catch (err) {
+      console.error('Edit itinerary failed:', err);
+      window.alert(err.response?.data?.error || 'Could not save your changes. Please try again.');
+      return false;
     } finally {
       setActionBusy(false);
     }
@@ -475,7 +527,10 @@ function ItineraryPage() {
         onCopy={handleCopy}
         onMarkVisited={toggleVisited}
         onRemoveStop={handleRemoveStop}
+        onEditStop={handleEditStop}
         onAddStop={handleAddStop}
+        onEditItinerary={handleEditItinerary}
+        actionBusy={actionBusy}
       />
       <MapView pins={itinerary.pins} />
     </div>
