@@ -37,4 +37,16 @@ function minutesFromStart(startTime, hhmm) {
   return ((toMinutes(hhmm) - toMinutes(startTime)) + MINUTES_PER_DAY) % MINUTES_PER_DAY
 }
 
-export { toMinutes, toHHMM, windowLengthMinutes, minutesFromStart, MINUTES_PER_DAY }
+// Do the half-open instant ranges [aStart, aEnd) and [bStart, bEnd) overlap?
+// Accepts Date objects or ISO strings. Touching boundaries (aEnd === bStart)
+// do NOT overlap — one stop may end exactly when the next begins. Used to
+// reject a stop-time edit that would collide with another stop's schedule.
+function rangesOverlap(aStart, aEnd, bStart, bEnd) {
+  const a0 = new Date(aStart).getTime()
+  const a1 = new Date(aEnd).getTime()
+  const b0 = new Date(bStart).getTime()
+  const b1 = new Date(bEnd).getTime()
+  return a0 < b1 && a1 > b0
+}
+
+export { toMinutes, toHHMM, windowLengthMinutes, minutesFromStart, MINUTES_PER_DAY, rangesOverlap }

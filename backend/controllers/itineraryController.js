@@ -180,8 +180,8 @@ async function getItinerary(req, res) {
 }
 
 // PUT /itineraries/:id
-// Updates the caller's own itinerary. Only scalar fields are editable here; pins
-// are managed through the /pins endpoints, and likes via the like/unlike routes.
+// Updates the caller's own itinerary. Only scalar fields are editable here; stops
+// are managed through the /stops endpoints, and likes via the like/unlike routes.
 async function updateItinerary(req, res) {
   const id = parseIdParam(req, res, 'itinerary id')
   if (id === null) return
@@ -192,7 +192,7 @@ async function updateItinerary(req, res) {
   })
   if (!itinerary) return
 
-  const { title, location, description, coverImageUrl, isPublic } = req.body
+  const { title, location, description, coverImageUrl, isPublic, maxBudgetPerPerson } = req.body
 
   const data = {}
   if (title !== undefined) {
@@ -224,6 +224,17 @@ async function updateItinerary(req, res) {
       return res.status(400).json({ error: 'isPublic must be a boolean' })
     }
     data.isPublic = isPublic
+  }
+  if (maxBudgetPerPerson !== undefined) {
+    if (
+      maxBudgetPerPerson !== null &&
+      (typeof maxBudgetPerPerson !== 'number' ||
+        !Number.isFinite(maxBudgetPerPerson) ||
+        maxBudgetPerPerson < 0)
+    ) {
+      return res.status(400).json({ error: 'maxBudgetPerPerson must be a non-negative number or null' })
+    }
+    data.maxBudgetPerPerson = maxBudgetPerPerson
   }
 
   const updated = await itineraries.update(id, data)

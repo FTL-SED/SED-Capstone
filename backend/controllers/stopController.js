@@ -3,12 +3,13 @@ import * as itineraryStops from '../models/itineraryStops.js'
 import * as itineraries from '../models/itineraries.js'
 import { addStop } from '../services/itinerary/addStop.js'
 import { parseIdParam, parseDate } from './helpers.js'
+import { rangesOverlap } from '../utils/time.js'
 
-// GET /pins
+// GET /stops
 // Browse/search the shared venue catalog so a user can pick a place to add to
 // their itinerary. Query params: q (name search), category (restaurant|activity),
-// limit, offset. Returns an array of catalog venues. Auth via requireAuth.
-async function browsePins(req, res) {
+// limit, offset. Returns an array of catalog venues (Pins). Auth via requireAuth.
+async function searchCatalog(req, res) {
   const { q, category } = req.query
   const limit = Math.min(Number(req.query.limit) || 20, 50)
   const offset = Math.max(Number(req.query.offset) || 0, 0)
@@ -23,32 +24,32 @@ async function browsePins(req, res) {
   return res.status(200).json(venues)
 }
 
-// GET /pins/:id
+// GET /stops/:id
 // Returns an itinerary stop with its venue. Readable when the parent itinerary
 // is public or owned by the caller. Auth is handled by requireAuth.
-async function getPin(req, res) {
-  const id = parseIdParam(req, res, 'pin id')
+async function getStop(req, res) {
+  const id = parseIdParam(req, res, 'stop id')
   if (id === null) return
 
   const stop = await itineraryStops.findByIdWithItinerary(id)
 
   if (!stop) {
-    return res.status(404).json({ error: 'Pin not found' })
+    return res.status(404).json({ error: 'Stop not found' })
   }
 
   if (!stop.itinerary.isPublic && stop.itinerary.userId !== req.user.id) {
-    return res.status(403).json({ error: 'You do not have access to this pin' })
+    return res.status(403).json({ error: 'You do not have access to this stop' })
   }
 
   const { itinerary, ...stopFields } = stop
   return res.status(200).json(stopFields)
 }
 
-// POST /pins
+// POST /stops
 // Creates an itinerary stop referencing a venue pin. Accepts either an existing
 // pinId (to reference a catalog venue) or inline venue fields (to create a new
 // catalog venue first). The caller must own the target itinerary.
-async function createPin(req, res) {
+async function createStop(req, res) {
   const {
     itineraryId,
     orderInItinerary,
@@ -222,21 +223,21 @@ async function createPin(req, res) {
   }
 }
 
-// PUT /pins/:id
+// PUT /stops/:id
 // Updates an itinerary stop's visit fields (timing, travel, meal, note).
 // Venue fields are NOT editable via this endpoint (they live on the Pin).
 // The caller must own the itinerary.
-async function updatePin(req, res) {
-  const id = parseIdParam(req, res, 'pin id')
+async function updateStop(req, res) {
+  const id = parseIdParam(req, res, 'stop id')
   if (id === null) return
 
   const stop = await itineraryStops.findByIdWithItinerary(id)
 
   if (!stop) {
-    return res.status(404).json({ error: 'Pin not found' })
+    return res.status(404).json({ error: 'Stop not found' })
   }
   if (stop.itinerary.userId !== req.user.id) {
-    return res.status(403).json({ error: 'You can only edit pins on your own itineraries' })
+    return res.status(403).json({ error: 'You can only edit stops on your own itineraries' })
   }
 
   const {
@@ -299,6 +300,22 @@ async function updatePin(req, res) {
     data.note = note
   }
 
+  // Reject a timing edit that would overlap another stop in this itinerary.
+  // Only relevant when start/end is actually changing. Compare the EFFECTIVE
+  // new range (submitted value, else the stop's existing value) against every
+  // other stop on the same itinerary. Boundaries may touch (see rangesOverlap).
+  if (data.startTime !== undefined || data.endTime !== undefined) {
+    const newStart = data.startTime ?? stop.startTime
+    const newEnd = data.endTime ?? stop.endTime
+    const siblings = await itineraryStops.findManyByItinerary(stop.itineraryId)
+    const conflict = siblings.some(
+      (s) => s.id !== id && rangesOverlap(newStart, newEnd, s.startTime, s.endTime),
+    )
+    if (conflict) {
+      return res.status(409).json({ error: 'That time overlaps another stop in this itinerary.' })
+    }
+  }
+
   try {
     const updated = await itineraryStops.update(id, data)
     return res.status(200).json(updated)
@@ -311,19 +328,19 @@ async function updatePin(req, res) {
   }
 }
 
-// DELETE /pins/:id
+// DELETE /stops/:id
 // Deletes an itinerary stop from an itinerary the caller owns.
-async function deletePin(req, res) {
-  const id = parseIdParam(req, res, 'pin id')
+async function deleteStop(req, res) {
+  const id = parseIdParam(req, res, 'stop id')
   if (id === null) return
 
   const stop = await itineraryStops.findByIdWithItinerary(id)
 
   if (!stop) {
-    return res.status(404).json({ error: 'Pin not found' })
+    return res.status(404).json({ error: 'Stop not found' })
   }
   if (stop.itinerary.userId !== req.user.id) {
-    return res.status(403).json({ error: 'You can only delete pins on your own itineraries' })
+    return res.status(403).json({ error: 'You can only delete stops on your own itineraries' })
   }
 
   await itineraryStops.remove(id)
@@ -332,9 +349,9 @@ async function deletePin(req, res) {
 }
 
 export {
-  browsePins,
-  getPin,
-  createPin,
-  updatePin,
-  deletePin,
+  searchCatalog,
+  getStop,
+  createStop,
+  updateStop,
+  deleteStop,
 }
