@@ -64,6 +64,32 @@ test('omits transport when not chosen', () => {
   assert.equal('transport' in trip, false)
 })
 
+test('splits member foodPrefs into cuisines (foodPrefs) and diet tags (diet)', () => {
+  // The MemberCard stores cuisines + dietary needs in one flat foodPrefs array;
+  // the backend wants them separated (foodPrefs = cuisine matching, diet = diet
+  // safety). buildRequest must route diet tags to their own field, or diet-safety
+  // filtering never runs.
+  const form = {
+    ...baseForm,
+    members: [
+      {
+        name: 'Ava',
+        location: { latitude: 37.79, longitude: -122.39 },
+        interestTags: ['art'],
+        foodPrefs: ['italian', 'vegan', 'seafood', 'halal'],
+      },
+    ],
+  }
+  const { members } = buildRecommendationBody(form)
+  assert.deepEqual(members[0].foodPrefs, ['italian', 'seafood'], 'only real cuisines stay in foodPrefs')
+  assert.deepEqual(members[0].diet, ['vegan', 'halal'], 'diet tags routed to diet')
+})
+
+test('member diet is an empty array when no dietary tags are selected', () => {
+  const { members } = buildRecommendationBody(baseForm)
+  assert.deepEqual(members[0].diet, [])
+})
+
 test('includes trip.includeMeals from the form', () => {
   const base = {
     startTime: '10:00', endTime: '20:30', budget: '100', transport: '', travelRadius: '',

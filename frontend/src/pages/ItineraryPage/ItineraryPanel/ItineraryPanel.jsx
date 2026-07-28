@@ -8,13 +8,20 @@ import WrittenItinerary from '../WrittenItinerary/WrittenItinerary.jsx'
 // The left half of the split: the itinerary's title/description/author, the
 // CRUD action bar, and the scrolling stop timeline — all in one panel.
 function ItineraryPanel({
-  isOwner, pins, title, description, author, coverImageUrl,
+  isOwner, pins, maxBudgetPerPerson, title, description, author, coverImageUrl,
   liked, bookmarked, likeCount, isPublic,
   activeTab, onTabChange,
   onToggleLike, onToggleBookmark, onTogglePrivacy,
   onDelete, onCopy,
   onRemoveStop, onAddStop,
 }) {
+  // Per-person total from the stops' prices. When it exceeds the trip's budget,
+  // the day was kept within the generator's grace band (a small overage beats
+  // swapping the AI plan for a worse one) — surface it honestly rather than hide.
+  const totalPerPerson = (pins ?? []).reduce((sum, p) => sum + (p.pricePerPerson ?? 0), 0);
+  const hasBudget = typeof maxBudgetPerPerson === 'number';
+  const overBudgetBy = hasBudget ? totalPerPerson - maxBudgetPerPerson : 0;
+
   return (
     <div className="itinerary-panel">
       {/* Photo banner à la Google Maps' place sidebar: the cover image fills the
@@ -41,9 +48,15 @@ function ItineraryPanel({
             {author && <Author name={author} />}
           </div>
         </div>
-        {description && (
+        {(description || hasBudget) && (
           <div className="itinerary-panel__meta">
-            <Description text={description} />
+            {description && <Description text={description} />}
+            {hasBudget && (
+              <p className={`itinerary-panel__budget${overBudgetBy > 0 ? ' itinerary-panel__budget--over' : ''}`}>
+                ${totalPerPerson}/person of ${maxBudgetPerPerson} budget
+                {overBudgetBy > 0 && <span className="itinerary-panel__budget-badge"> · over by ${overBudgetBy}</span>}
+              </p>
+            )}
           </div>
         )}
       </header>
