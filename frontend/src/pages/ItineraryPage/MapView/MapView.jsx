@@ -34,6 +34,19 @@ function haversineMi(a, b) {
   return 2 * EARTH_RADIUS_MILES * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
+// The lat/lng bounding-box corners of a radius (in miles) around a point, so
+// fitBounds always frames the whole circle — not just its center.
+function circleBoundsPoints(center, radiusMi) {
+  const latDelta = radiusMi / 69;
+  const lonDelta = radiusMi / (69 * Math.cos((center.lat * Math.PI) / 180));
+  return [
+    [center.lat + latDelta, center.lng],
+    [center.lat - latDelta, center.lng],
+    [center.lat, center.lng + lonDelta],
+    [center.lat, center.lng - lonDelta],
+  ];
+}
+
 // Keep Leaflet's internal size in sync with its container. Leaflet caches the
 // container size at init; if the flex layout resolves the real height AFTER
 // that (which left the map showing tiles for only a thin strip), it never
@@ -70,8 +83,10 @@ function MapView({ pins = [], meetingPoint = null, radiusMi = null }) {
   const center = points[0] ?? [37.7749, -122.4194]; // fall back to SF center
 
   const showRadius = meetingPoint != null && radiusMi != null;
-  // Include the meeting point in framing so the whole circle is visible on load.
-  const framePoints = showRadius ? [...points, [meetingPoint.lat, meetingPoint.lng]] : points;
+  // Include the circle's bounding box corners so the whole circle is visible on load.
+  const framePoints = showRadius
+    ? [...points, ...circleBoundsPoints(meetingPoint, radiusMi)]
+    : points;
   const isOutside = (pin) =>
     showRadius && haversineMi({ lat: pin.latitude, lng: pin.longitude }, meetingPoint) > radiusMi;
 

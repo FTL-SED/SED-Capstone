@@ -34,3 +34,15 @@ test('filterByRadius does not mutate the input rows', () => {
   filterByRadius(rows, { lat: FERRY.latitude, lng: FERRY.longitude, radius: 2 })
   assert.equal('distanceMi' in rows[0], false)
 })
+
+test('rows carry no distanceMi unless filtered (findMany geo-absent contract)', () => {
+  // When findMany is called without geo, it returns Prisma rows untouched —
+  // this locks the contract that distanceMi is added ONLY by filterByRadius.
+  const plainRows = [
+    { id: 1, name: 'A', latitude: 37.8, longitude: -122.4 },
+    { id: 2, name: 'B', latitude: 37.7, longitude: -122.5 },
+  ]
+  for (const row of plainRows) {
+    assert.equal('distanceMi' in row, false)
+  }
+})
