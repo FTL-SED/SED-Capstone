@@ -14,6 +14,9 @@
 .map-view__map {
   position: absolute;
   inset: 0;
+  /* Own stacking context so Leaflet's panes (z-index up to 1000) stay confined
+     here, letting the toggle/legend overlays (z-index 1) paint above the map. */
+  z-index: 0;
 }
 
 /* Numbered teal pin (divIcon). Leaflet applies .map-view__marker to the wrapper. */
