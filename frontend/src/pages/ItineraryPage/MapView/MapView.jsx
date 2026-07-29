@@ -82,7 +82,12 @@ function MapView({ pins = [], meetingPoint = null, radiusMi = null }) {
   const points = located.map((p) => [p.latitude, p.longitude]);
   const center = points[0] ?? [37.7749, -122.4194]; // fall back to SF center
 
-  const showRadius = meetingPoint != null && radiusMi != null;
+  // The radius is opt-in: the data exists for the owner, but we only draw the
+  // circle/legend/muting once the user turns it on via the on-map toggle. Off by
+  // default so the map loads clean.
+  const radiusAvailable = meetingPoint != null && radiusMi != null;
+  const [radiusOn, setRadiusOn] = useState(false);
+  const showRadius = radiusAvailable && radiusOn;
   // Include the circle's bounding box corners so the whole circle is visible on load.
   const framePoints = showRadius
     ? [...points, ...circleBoundsPoints(meetingPoint, radiusMi)]
@@ -146,6 +151,17 @@ function MapView({ pins = [], meetingPoint = null, radiusMi = null }) {
         })}
         <MapResizer points={framePoints} />
       </MapContainer>
+      {radiusAvailable && (
+        <button
+          type="button"
+          className={`map-view__radius-toggle${radiusOn ? ' map-view__radius-toggle--on' : ''}`}
+          onClick={() => setRadiusOn((on) => !on)}
+          aria-pressed={radiusOn}
+        >
+          <span className="map-view__legend-dot" aria-hidden="true" />
+          {radiusOn ? 'Hide' : 'Show'} travel radius
+        </button>
+      )}
       {showRadius && (
         <div className="map-view__legend" aria-label={`Travel radius: within ${radiusMi} miles`}>
           <span className="map-view__legend-dot" aria-hidden="true" />
