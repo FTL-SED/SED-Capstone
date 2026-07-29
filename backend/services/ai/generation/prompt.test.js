@@ -15,8 +15,8 @@ test('user message includes a computed targetStops for the window', () => {
   const shortlist = [{ id: 1, name: 'X', category: 'activity', latitude: 37.78, longitude: -122.4, pricePerPerson: 0 }]
   const constraints = { timeWindow: { startTime: '10:00', endTime: '20:30' }, maxBudgetPerPerson: 100, groupSize: 2 }
   const [, userMsg] = buildMessages(shortlist, constraints)
-  // 630-min window / 90-min stops = 7
-  assert.match(userMsg.content, /"targetStops":\s*7/)
+  // 630-min window / 60-min stops = 10
+  assert.match(userMsg.content, /"targetStops":\s*10/)
 })
 
 test('user message includes perStopBudget when the engine supplies it', () => {
