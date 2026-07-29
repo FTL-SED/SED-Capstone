@@ -1,8 +1,8 @@
 import './Footer.css'
 
-function Footer({ variant }) {
+function Footer() {
   return (
-    <footer className={`footer${variant === 'landing' ? ' footer--landing' : ''}`}>
+    <footer className="footer">
       <p>© 2026 NavQuest</p>
     </footer>
   );

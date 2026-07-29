@@ -1,11 +1,12 @@
 import './DiscoverPage.css'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import SearchBar from './SearchBar/SearchBar.jsx'
 import FilterControls from './FilterControls/FilterControls.jsx'
 import SearchResultsSection from './SearchResultsSection/SearchResultsSection.jsx'
 import RecentItinerariesSection from './RecentItinerariesSection/RecentItinerariesSection.jsx'
 import { buildDiscoverParams } from './buildDiscoverParams.js'
-import { listItineraries, getUserDashboard } from '../../api/itinerary.js'
+import { listItineraries } from '../../api/itinerary.js'
 import { useLikeBookmark } from '../../hooks/useLikeBookmark.js'
 import { getCurrentUser } from '../../lib/currentUser.js'
 
@@ -13,32 +14,59 @@ const PAGE_LIMIT = 20
 const DEBOUNCE_MS = 300
 
 function DiscoverPage() {
+
+  // for searching
   const [query, setQuery] = useState('')
   const [interests, setInterests] = useState([])
   const [sort, setSort] = useState('recent')
 
-  const [results, setResults] = useState([])
-  const [offset, setOffset] = useState(0)
-  const [hasMore, setHasMore] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  // `query` updates instantly as you type (so the input stays responsive), but
+  // `debouncedQuery` only catches up 300ms after you stop. The query key uses
+  // the debounced value, so we fetch once you pause — not on every keystroke.
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query), DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [query])
 
   const currentUserId = getCurrentUser()?.id
 
-  // Which itineraries I've liked/bookmarked + race-safe toggling, shared with
-  // HomePage. The like count lives in `results`, so the hook bumps it via these
-  // callbacks (optimistic delta, then the server's authoritative value).
-  const bumpLikeCount = (id, delta) =>
-    setResults((prev) =>
-      prev.map((it) =>
-        it.id === id ? { ...it, likeCount: Math.max(0, (it.likeCount ?? 0) + delta) } : it,
-      ),
-    )
-  const setLikeCount = (id, likeCount) =>
-    setResults((prev) => prev.map((it) => (it.id === id ? { ...it, likeCount } : it)))
-  const { likedIds, bookmarkedIds, toggleLike, toggleBookmark, hydrate } = useLikeBookmark({
-    onLikeDelta: bumpLikeCount,
-    onLikeCount: setLikeCount,
+  // The paginated feed. The query key IS the "identity" of this data: when the
+  // search/filter/sort change, the key changes and TanStack Query fetches the
+  // new feed; when it matches a fresh cache entry (e.g. revisiting the page),
+  // it serves the cache with no network call. This replaces the old debounced
+  // fetch effect, the manual offset/hasMore state, and the loadMore race guards.
+  const queryKey = ['itineraries', { q: debouncedQuery, interests, sort }]
+  const {
+    data,
+    isLoading,
+    isError,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
+    queryKey,
+    queryFn: ({ pageParam }) =>
+      listItineraries(buildDiscoverParams(debouncedQuery, interests, sort, pageParam, PAGE_LIMIT)),
+    initialPageParam: 0,
+    // A full page implies there may be more; return the next offset, else stop.
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length === PAGE_LIMIT ? allPages.length * PAGE_LIMIT : undefined,
+  })
+
+  // The sections want one flat list; the cache stores an array of pages.
+  const results = data?.pages.flat() ?? []
+  const loading = isLoading
+  const error = isError ? 'Something went wrong loading itineraries. Please try again.' : null
+  const hasMore = !!hasNextPage
+  const loadMore = fetchNextPage
+
+  // The hook owns the shared ['dashboard', id] cache (liked/bookmarked
+  // membership) AND the shared like-count override map — the SAME sources of
+  // truth Home and Itinerary read, so a toggle here shows up there and vice
+  // versa, count included. Because it's cached, revisiting Discover returns it
+  // instantly, so the icons appear WITH the cards rather than popping in later.
+  const { likedIds, bookmarkedIds, toggleLike, toggleBookmark } = useLikeBookmark({
+    userId: currentUserId,
   })
 
   // Add/remove a single interest tag (chips are toggles).
@@ -47,88 +75,6 @@ function DiscoverPage() {
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     )
   }, [])
-
-  // Bumps whenever the search/filter/sort inputs change. loadMore reads this at
-  // call time and drops its result if it changes before the request resolves,
-  // so a slow page append can't land on a newer, differently-filtered feed.
-  const generationRef = useRef(0)
-  // Guards against overlapping loadMore calls (e.g. a double-click), which would
-  // otherwise fetch the same page twice and skip the next one.
-  const loadingMoreRef = useRef(false)
-
-  // Debounced fetch of the FIRST page whenever the search/filter/sort inputs
-  // change. `ignore` guards against a slow earlier request overwriting a newer
-  // one (React strict-mode / fast typing).
-  useEffect(() => {
-    generationRef.current += 1
-    let ignore = false
-
-    const timer = setTimeout(async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        const params = buildDiscoverParams(query, interests, sort, 0, PAGE_LIMIT)
-        const data = await listItineraries(params)
-        if (ignore) return
-        setResults(data)
-        setOffset(data.length)
-        setHasMore(data.length === PAGE_LIMIT)
-      } catch (err) {
-        if (ignore) return
-        console.error('Failed to load Discover itineraries:', err)
-        setError('Something went wrong loading itineraries. Please try again.')
-        setResults([])
-        setHasMore(false)
-      } finally {
-        if (!ignore) setLoading(false)
-      }
-    }, DEBOUNCE_MS)
-
-    return () => {
-      ignore = true
-      clearTimeout(timer)
-    }
-  }, [query, interests, sort])
-
-  // Append the next page. Ignores overlapping clicks, and drops its result if
-  // the filters changed while the request was in flight.
-  const loadMore = useCallback(async () => {
-    if (loadingMoreRef.current) return
-    loadingMoreRef.current = true
-    const generation = generationRef.current
-    try {
-      const params = buildDiscoverParams(query, interests, sort, offset, PAGE_LIMIT)
-      const data = await listItineraries(params)
-      if (generation !== generationRef.current) return
-      setResults((prev) => [...prev, ...data])
-      setOffset((prev) => prev + data.length)
-      setHasMore(data.length === PAGE_LIMIT)
-    } catch (err) {
-      if (generation !== generationRef.current) return
-      console.error('Failed to load more itineraries:', err)
-      setError('Something went wrong loading more itineraries. Please try again.')
-    } finally {
-      loadingMoreRef.current = false
-    }
-  }, [query, interests, sort, offset])
-
-  // Hydrate my liked/bookmarked ids once so Discover cards show the right state.
-  useEffect(() => {
-    if (!currentUserId) return
-    let ignore = false
-    getUserDashboard(currentUserId)
-      .then((me) => {
-        if (ignore) return
-        hydrate({
-          liked: (me.likedItineraries ?? []).map((it) => it.id),
-          bookmarked: (me.bookmarkedItineraries ?? []).map((it) => it.id),
-        })
-      })
-      .catch((err) => console.error('Failed to hydrate Discover like/bookmark state:', err))
-    return () => {
-      ignore = true
-    }
-  }, [currentUserId, hydrate])
 
   const hasFilter = query.trim() !== '' || interests.length > 0
 

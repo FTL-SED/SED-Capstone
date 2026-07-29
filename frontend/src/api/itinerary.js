@@ -95,27 +95,34 @@ export async function unmarkVisited(id) {
   await api.delete(`/itineraries/${id}/visited`)
 }
 
-// GET /pins — browse/search the venue catalog to pick a place to add to an
+// GET /stops — browse/search the venue catalog to pick a place to add to an
 // itinerary. params: { q, category, limit, offset }. Returns catalog venues.
 export async function searchCatalog(params = {}) {
-  const { data } = await api.get('/pins', { params })
+  const { data } = await api.get('/stops', { params })
   return data
 }
 
-// POST /pins — add a stop to an itinerary that references an existing catalog
+// POST /stops — add a stop to an itinerary that references an existing catalog
 // venue. body: { itineraryId, pinId, orderInItinerary, startTime, endTime, ... }.
-// (The endpoint operates on ItineraryStop; "pin" in the path is legacy naming.)
 // Returns the created stop (with its venue included).
 export async function addStop(body) {
-  const { data } = await api.post('/pins', body)
+  const { data } = await api.post('/stops', body)
   return data
 }
 
-// DELETE /pins/:stopId — remove a stop from an itinerary (204 No Content). Takes
+// PUT /stops/:stopId — update a stop's timing (owner only). Takes the
+// ItineraryStop id and only edits the visit fields (startTime/endTime); the
+// venue Pin itself is never touched. Returns the updated stop.
+export async function updateStop(stopId, body) {
+  const { data } = await api.put(`/stops/${stopId}`, body)
+  return data
+}
+
+// DELETE /stops/:stopId — remove a stop from an itinerary (204 No Content). Takes
 // the ItineraryStop id (the `stopId` field on each pin in the detail response),
 // NOT the venue pin id. The catalog venue itself is untouched.
 export async function deleteStop(stopId) {
-  await api.delete(`/pins/${stopId}`)
+  await api.delete(`/stops/${stopId}`)
 }
 
 // Upload a cover image for an itinerary the caller owns. `file` is a File; axios
@@ -125,5 +132,13 @@ export async function uploadItineraryCover(id, file) {
   const formData = new FormData()
   formData.append('cover', file)
   const { data } = await api.post(`/itineraries/${id}/cover`, formData)
+  return data
+}
+
+// PUT /itineraries/:id/stops/order — reorder a stop (owner only). Body:
+// { stopIds } — every stop id of the itinerary, in the new order. The backend
+// recomputes each stop's time + travel and returns the updated itinerary.
+export async function reorderStops(itineraryId, stopIds) {
+  const { data } = await api.put(`/itineraries/${itineraryId}/stops/order`, { stopIds })
   return data
 }

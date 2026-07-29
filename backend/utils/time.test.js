@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { toMinutes, toHHMM, windowLengthMinutes, minutesFromStart } from './time.js'
+import { toMinutes, toHHMM, windowLengthMinutes, minutesFromStart, rangesOverlap } from './time.js'
 
 test('toMinutes: HH:MM -> minutes since midnight', () => {
   assert.equal(toMinutes('00:00'), 0)
@@ -41,4 +41,39 @@ test('minutesFromStart: overnight trip sorts after-midnight times AFTER the even
   assert.equal(minutesFromStart('22:00', '02:00'), 240)
   // Ordering holds: a 00:30 stop is later than a 23:00 stop on this trip.
   assert.ok(minutesFromStart('22:00', '00:30') > minutesFromStart('22:00', '23:00'))
+})
+
+test('rangesOverlap: overlapping ranges overlap', () => {
+  assert.equal(
+    rangesOverlap('2026-07-28T10:00:00Z', '2026-07-28T12:00:00Z', '2026-07-28T11:00:00Z', '2026-07-28T13:00:00Z'),
+    true,
+  )
+})
+
+test('rangesOverlap: touching boundaries do not overlap', () => {
+  assert.equal(
+    rangesOverlap('2026-07-28T10:00:00Z', '2026-07-28T12:00:00Z', '2026-07-28T12:00:00Z', '2026-07-28T13:00:00Z'),
+    false,
+  )
+})
+
+test('rangesOverlap: fully disjoint ranges do not overlap', () => {
+  assert.equal(
+    rangesOverlap('2026-07-28T10:00:00Z', '2026-07-28T11:00:00Z', '2026-07-28T14:00:00Z', '2026-07-28T15:00:00Z'),
+    false,
+  )
+})
+
+test('rangesOverlap: one range fully containing another overlaps', () => {
+  assert.equal(
+    rangesOverlap('2026-07-28T09:00:00Z', '2026-07-28T18:00:00Z', '2026-07-28T12:00:00Z', '2026-07-28T13:00:00Z'),
+    true,
+  )
+})
+
+test('rangesOverlap: accepts Date objects as well as ISO strings', () => {
+  assert.equal(
+    rangesOverlap(new Date('2026-07-28T10:00:00Z'), new Date('2026-07-28T12:00:00Z'), new Date('2026-07-28T11:00:00Z'), new Date('2026-07-28T13:00:00Z')),
+    true,
+  )
 })

@@ -17,7 +17,7 @@ test('reshapeItinerary flattens stops+pin into the legacy pins[] shape', () => {
   assert.equal(out.stops, undefined)
   const p = out.pins[0]
   assert.equal(p.name, 'Taqueria')
-  // The stop id (for /pins/:id edit+delete) is distinct from the venue pin id.
+  // The stop id (for /stops/:id edit+delete) is distinct from the venue pin id.
   assert.equal(p.stopId, 55)
   assert.equal(p.pinId, 3)
   assert.equal(p.id, 3) // legacy: id remains the venue id for existing consumers

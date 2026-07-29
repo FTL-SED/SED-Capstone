@@ -1,9 +1,17 @@
-/* Neutral outline over .action-btn (App.css); teal on hover, filled when marked. */
+/* Neutral outline over .action-btn (App.css); teal on hover. When marked visited,
+   it takes the same solid accent fill as the Save button, so the "on" state reads
+   as clearly active and matches the primary-action treatment used elsewhere. */
 .visited-button:hover {
   border-color: var(--accent);
   color: var(--accent-strong);
 }
 .visited-button--on {
+  background: var(--accent);
   border-color: var(--accent);
-  color: var(--accent-strong);
+  color: #fff;
+}
+.visited-button--on:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: #fff;
 }

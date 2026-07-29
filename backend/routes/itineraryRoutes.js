@@ -5,6 +5,7 @@ import {
   listItineraries,
   getItinerary,
   updateItinerary,
+  reorderItineraryStops,
   deleteItinerary,
   likeItinerary,
   unlikeItinerary,
@@ -30,6 +31,7 @@ router.post('/', requireAuth, createItinerary)
 router.get('/', requireAuth, listItineraries)
 router.get('/:id', requireAuth, getItinerary)
 router.put('/:id', requireAuth, updateItinerary)
+router.put('/:id/stops/order', requireAuth, reorderItineraryStops)
 router.delete('/:id', requireAuth, deleteItinerary)
 
 router.post('/:id/like', requireAuth, likeItinerary)

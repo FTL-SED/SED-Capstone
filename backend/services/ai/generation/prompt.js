@@ -6,7 +6,7 @@ import { MEAL_TIME_WINDOWS, AVG_STOP_DURATION_MIN } from '../../../config/ai.js'
 import { windowLengthMinutes } from '../../../utils/time.js'
 
 // Caps on the user-controllable text that reaches the model. Pins can be
-// user-created (POST /pins), so name/tags are untrusted input; length-capping
+// user-created (POST /stops), so name/tags are untrusted input; length-capping
 // bounds any prompt-injection payload (the system prompt + pinId-only output
 // validation already contain the blast radius to "rejected → fallback").
 const MAX_NAME_LEN = 120

@@ -1,9 +1,11 @@
 import * as itineraries from '../models/itineraries.js'
+import * as itineraryStops from '../models/itineraryStops.js'
 import * as likes from '../models/likes.js'
 import * as bookmarks from '../models/bookmarks.js'
 import * as visited from '../models/visited.js'
 import { parseIdParam, parseDate, loadOrNotFound, loadOwned } from './helpers.js'
 import { uploadItineraryCoverImage } from '../lib/supabase.js'
+import { computeReorder } from '../services/itinerary/reorderStops.js'
 
 // POST /itineraries
 // Creates an itinerary owned by the caller, with its stops referencing venue pins.
@@ -180,8 +182,8 @@ async function getItinerary(req, res) {
 }
 
 // PUT /itineraries/:id
-// Updates the caller's own itinerary. Only scalar fields are editable here; pins
-// are managed through the /pins endpoints, and likes via the like/unlike routes.
+// Updates the caller's own itinerary. Only scalar fields are editable here; stops
+// are managed through the /stops endpoints, and likes via the like/unlike routes.
 async function updateItinerary(req, res) {
   const id = parseIdParam(req, res, 'itinerary id')
   if (id === null) return
@@ -192,7 +194,7 @@ async function updateItinerary(req, res) {
   })
   if (!itinerary) return
 
-  const { title, location, description, coverImageUrl, isPublic } = req.body
+  const { title, location, description, coverImageUrl, isPublic, maxBudgetPerPerson } = req.body
 
   const data = {}
   if (title !== undefined) {
@@ -225,10 +227,74 @@ async function updateItinerary(req, res) {
     }
     data.isPublic = isPublic
   }
+  if (maxBudgetPerPerson !== undefined) {
+    if (
+      maxBudgetPerPerson !== null &&
+      (typeof maxBudgetPerPerson !== 'number' ||
+        !Number.isFinite(maxBudgetPerPerson) ||
+        maxBudgetPerPerson < 0)
+    ) {
+      return res.status(400).json({ error: 'maxBudgetPerPerson must be a non-negative number or null' })
+    }
+    data.maxBudgetPerPerson = maxBudgetPerPerson
+  }
 
   const updated = await itineraries.update(id, data)
 
   return res.status(200).json(updated)
+}
+
+// PUT /itineraries/:id/stops/order
+// Reorder the caller's own itinerary. Body: { stopIds: number[] } — every stop
+// id of this itinerary, in the new order. Recomputes each stop's time + travel
+// from the new order (re-walk only; meals are not held) and persists atomically.
+async function reorderItineraryStops(req, res) {
+  const id = parseIdParam(req, res, 'itinerary id')
+  if (id === null) return
+
+  const itinerary = await loadOwned(res, itineraries.findByIdBasic, id, req.user.id, {
+    label: 'Itinerary',
+    action: 'edit',
+  })
+  if (!itinerary) return
+
+  const { stopIds } = req.body
+  if (!Array.isArray(stopIds) || stopIds.some((s) => !Number.isInteger(s))) {
+    return res.status(400).json({ error: 'stopIds must be an array of stop ids' })
+  }
+
+  const current = await itineraryStops.findManyByItineraryWithPins(id)
+  const currentIds = current.map((s) => s.id)
+  // stopIds must be exactly the current set — same length, no dupes, no unknowns.
+  const sameSet =
+    stopIds.length === currentIds.length &&
+    new Set(stopIds).size === stopIds.length &&
+    stopIds.every((sid) => currentIds.includes(sid))
+  if (!sameSet) {
+    return res.status(400).json({ error: 'stopIds must list every stop of this itinerary exactly once' })
+  }
+
+  try {
+    const byId = new Map(current.map((s) => [s.id, s]))
+    const ordered = stopIds.map((sid) => byId.get(sid))
+    const tripDate = itinerary.tripDate
+      ? itinerary.tripDate.toISOString().slice(0, 10)
+      : null
+    const rows = computeReorder(ordered, {
+      dayStart: itinerary.dayStart,
+      transport: itinerary.transport,
+      tripDate,
+    })
+    await itineraryStops.reorderStops(id, rows)
+    const updated = await itineraries.findById(id, { forOwner: true })
+    return res.status(200).json(updated)
+  } catch (err) {
+    console.error('Reorder stops failed:', err)
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'Stop order conflict, please retry' })
+    }
+    return res.status(500).json({ error: 'Failed to reorder stops' })
+  }
 }
 
 // DELETE /itineraries/:id
@@ -447,6 +513,7 @@ export {
   listItineraries,
   getItinerary,
   updateItinerary,
+  reorderItineraryStops,
   deleteItinerary,
   likeItinerary,
   unlikeItinerary,

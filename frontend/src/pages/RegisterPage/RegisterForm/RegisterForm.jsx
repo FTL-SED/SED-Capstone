@@ -4,6 +4,7 @@ import SubmitButton from '../../../components/Inputs/SubmitButton/SubmitButton.j
 import ErrorMessage from '../../../components/ErrorMessage/ErrorMessage.jsx'
 import ConfirmationMessage from '../../../components/ConfirmationMessage/ConfirmationMessage.jsx'
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import './RegisterForm.css'
 
@@ -16,6 +17,7 @@ function RegisterForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("") // confirmation message
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
    
   const handleSubmit = async (e) => {
     const userData = { email, username, password };
@@ -34,11 +36,10 @@ function RegisterForm() {
     try {
       await axios.post(`${BASE_URL}/users/register`, userData);
       setError("");
-      setSuccess("Account created! You can now log in.");
+      setTimeout(() => { navigate("/login", { state: { message: "Account created! You can now log in." }, }); },1200);
     } catch (err) {
       setSuccess("")
       setError(err.response?.data?.error || "Something went wrong. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
@@ -58,11 +59,14 @@ function RegisterForm() {
         onChange={(e) => setUsername(e.target.value)}
       />
 
-      <PasswordInput 
-        placeholder="Password" 
-        value={password} 
+      <PasswordInput
+        placeholder="Password"
+        value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
+      <p className="register-form__password-hint">
+        Password — 8+ characters, A-Z, a-z, 0-9, symbol
+      </p>
       <ErrorMessage message={error}/>
       <ConfirmationMessage message={success}/>
       

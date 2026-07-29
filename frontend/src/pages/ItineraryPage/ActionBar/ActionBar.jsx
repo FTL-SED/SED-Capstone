@@ -19,11 +19,34 @@ function ActionBar({
   onCopy,
   visited,
   onMarkVisited,
+  editing = false,
+  onEdit,
+  onSaveEdit,
+  onCancelEdit,
+  editBusy = false,
 }) {
+  // While the owner is editing the itinerary's metadata, the bar collapses to
+  // Save/Cancel so the destructive/social actions can't fire mid-edit.
+  if (isOwner && editing) {
+    return (
+      <div className="action-bar">
+        <button type="button" className="action-btn action-bar__save" onClick={onSaveEdit} disabled={editBusy}>
+          {editBusy ? 'Saving…' : 'Save'}
+        </button>
+        <button type="button" className="action-btn action-bar__cancel" onClick={onCancelEdit} disabled={editBusy}>
+          Cancel
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="action-bar">
       {isOwner ? (
         <>
+          <button type="button" className="action-btn action-bar__edit" onClick={onEdit}>
+            Edit
+          </button>
           <DeleteButton onClick={onDelete} />
           <PrivacyButton isPublic={isPublic} onClick={onTogglePrivacy} />
           <BookmarkButton bookmarked={bookmarked} onClick={onToggleBookmark} />

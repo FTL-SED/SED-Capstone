@@ -3,3 +3,20 @@
   flex-direction: column;
   gap: 16px;
 }
+
+/* Always-visible password requirements, sitting just under the field. The
+   negative top margin pulls it up so it reads as a caption on the input
+   rather than a separate gapped row. */
+/* Hidden by default; revealed only while the password field (or its show/hide
+   toggle) has focus — see the :focus-within rule below. */
+.register-form__password-hint {
+  margin: -10px 0 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+  text-align: center;
+  display: none;
+}
+
+.password-input:focus-within + .register-form__password-hint {
+  display: block;
+}

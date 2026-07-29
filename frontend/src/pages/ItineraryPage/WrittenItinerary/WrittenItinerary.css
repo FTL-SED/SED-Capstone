@@ -133,3 +133,22 @@
   color: var(--slate-600);
   line-height: 1.5;
 }
+
+/* Owner reorder: the whole row is the drag surface. Grab affordance on the card,
+   and touch-action:none so a touch-drag reorders instead of scrolling. The card's
+   own interactive controls (remove, time editor) stopPropagation so they still
+   click/type normally without starting a drag. */
+.timeline-stop--draggable {
+  touch-action: none;
+}
+.timeline-stop--draggable .timeline-stop__card {
+  cursor: grab;
+}
+.timeline-stop--draggable:active .timeline-stop__card {
+  cursor: grabbing;
+}
+.timeline-stop--draggable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}

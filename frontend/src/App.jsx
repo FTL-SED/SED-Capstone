@@ -115,9 +115,11 @@ function App() {
           <Route 
             path="/account" 
             element={!isAuthenticated ? <Navigate to="/" replace/> : <AccountPage currentUser={currentUser} setCurrentUser={setCurrentUser} />} />
+          {/* Any unknown/invalid path falls through to the landing page. */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      {!isAuthPage && !isFullBleed && <Footer variant={isLanding ? 'landing' : undefined} />}
+      {!isAuthPage && !isFullBleed && <Footer />}
     </div>
   );
 }
