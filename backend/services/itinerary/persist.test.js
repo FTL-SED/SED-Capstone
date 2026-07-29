@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { stopsToStops, toDateTime, pacificOffset, memberRows, constraintColumns } from './persist.js'
+import { stopsToStops, toDateTime, fromDateTime, pacificDayISO, pacificOffset, memberRows, constraintColumns } from './persist.js'
 
 const shortlist = [
   { id: 1, name: 'Ferry Building', category: 'activity', tags: ['food'], latitude: 37.7955, longitude: -122.3937, address: 'SF', locationImageUrl: 'ferry.jpg', rating: 4.5, description: 'A market.', pricePerPerson: 0 },
@@ -150,4 +150,22 @@ test('memberRows: a member with only one coordinate stores neither', () => {
   ])
   assert.equal(row.startLat, null)
   assert.equal(row.startLng, null)
+})
+
+test('fromDateTime returns Pacific HH:MM and round-trips with toDateTime (PDT)', () => {
+  // 09:00 PDT === 16:00 UTC
+  const dt = toDateTime('2026-07-15', '09:00', '-07:00')
+  assert.equal(fromDateTime(dt), '09:00')
+})
+
+test('fromDateTime is DST-safe (PST winter instant)', () => {
+  // 22:30 PST === 06:30 UTC next day
+  const dt = new Date('2026-01-16T06:30:00.000Z')
+  assert.equal(fromDateTime(dt), '22:30')
+})
+
+test('pacificDayISO returns the Pacific calendar day (late-evening PST instant stays same local day)', () => {
+  // 2026-01-15 23:30 PST === 2026-01-16 07:30 UTC — Pacific day is still the 15th
+  const dt = new Date('2026-01-16T07:30:00.000Z')
+  assert.equal(pacificDayISO(dt), '2026-01-15')
 })

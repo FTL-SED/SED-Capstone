@@ -134,3 +134,11 @@ export async function uploadItineraryCover(id, file) {
   const { data } = await api.post(`/itineraries/${id}/cover`, formData)
   return data
 }
+
+// PUT /itineraries/:id/stops/order — reorder a stop (owner only). Body:
+// { stopIds } — every stop id of the itinerary, in the new order. The backend
+// recomputes each stop's time + travel and returns the updated itinerary.
+export async function reorderStops(itineraryId, stopIds) {
+  const { data } = await api.put(`/itineraries/${itineraryId}/stops/order`, { stopIds })
+  return data
+}
