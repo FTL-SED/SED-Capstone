@@ -167,6 +167,15 @@
   color: var(--slate-400);
 }
 
+/* Past dates can't be chosen for a trip. Dim them and drop the hover affordance. */
+.date-field__day:disabled,
+.date-field__day:disabled:hover {
+  color: var(--slate-400);
+  opacity: 0.5;
+  background: transparent;
+  cursor: not-allowed;
+}
+
 .date-field__day--selected,
 .date-field__day--selected:hover {
   background: var(--accent);
