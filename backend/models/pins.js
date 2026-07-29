@@ -3,6 +3,7 @@
 // split, Pin is a venue catalog: the recommendation engine reads it, and
 // stopController creates a venue when a stop references a brand-new place.
 import prisma from '../lib/prisma.js'
+import { haversineMiles } from '../utils/geo.js'
 
 function findById(id) {
   return prisma.pin.findUnique({ where: { id } })
@@ -27,4 +28,17 @@ function create(data) {
   return prisma.pin.create({ data })
 }
 
-export { findById, findMany, create }
+// Pure: keep only rows within `radius` miles of { lat, lng }, annotating each
+// survivor with distanceMi (1 decimal). Rows without numeric coordinates are
+// dropped — they can't be shown as "within radius". Does not mutate inputs.
+function filterByRadius(rows, { lat, lng, radius }) {
+  const center = { latitude: lat, longitude: lng }
+  return rows.reduce((acc, row) => {
+    if (typeof row.latitude !== 'number' || typeof row.longitude !== 'number') return acc
+    const miles = haversineMiles(row, center)
+    if (miles <= radius) acc.push({ ...row, distanceMi: Math.round(miles * 10) / 10 })
+    return acc
+  }, [])
+}
+
+export { findById, findMany, create, filterByRadius }
