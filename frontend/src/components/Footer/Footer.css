@@ -1,24 +1,20 @@
 .footer {
-  border-top: 1px solid var(--border);
-  background: var(--surface);
-  padding: 20px 24px;
+  /* Lift the footer into its own stacking context above any page backdrop.
+     Pages like Home paint a position:fixed, full-viewport sky at z-index:-1
+     inside their own z-index:0 stacking context; without this the footer (a
+     non-positioned sibling) paints UNDER that context and the fixed sky covers
+     it as you scroll to the bottom. */
+  position: relative;
+  z-index: 1;
+  /* One consistent footer everywhere: the deep blue band that used to be the
+     landing-only treatment, so the closing bar reads the same on every page. */
+  border-top: none;
+  background: #16324f;
+  padding: 40px 24px 48px;
   text-align: center;
 }
 
 .footer p {
-  color: var(--slate-500);
-  font-size: 0.875rem;
-}
-
-/* Landing variant — closes the green "drive" with a deep blue band, so the
-   footer is unmistakably its own moment at the end of the page. */
-.footer--landing {
-  border-top: none;
-  background: #16324f;
-  padding: 40px 24px 48px;
-}
-
-.footer--landing p {
   color: #ffffff; /* white, high contrast on the deep blue */
   font-family: "Fraunces", Georgia, serif;
   font-size: 1.05rem;

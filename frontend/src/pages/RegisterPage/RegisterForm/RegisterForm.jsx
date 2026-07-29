@@ -59,11 +59,14 @@ function RegisterForm() {
         onChange={(e) => setUsername(e.target.value)}
       />
 
-      <PasswordInput 
-        placeholder="Password" 
-        value={password} 
+      <PasswordInput
+        placeholder="Password"
+        value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
+      <p className="register-form__password-hint">
+        Password — 8+ characters, A-Z, a-z, 0-9, symbol
+      </p>
       <ErrorMessage message={error}/>
       <ConfirmationMessage message={success}/>
       

@@ -1,5 +1,5 @@
 import './ItineraryPage.css'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams, useNavigate } from 'react-router-dom'
 import ItineraryPanel from './ItineraryPanel/ItineraryPanel.jsx'
@@ -183,6 +183,10 @@ function ItineraryPage() {
     : '';
   // Guards against double-firing the delete/copy network calls on rapid clicks.
   const [actionBusy, setActionBusy] = useState(false);
+  // Privacy toggle sync: like the hook's like/bookmark loop, we track the latest
+  // DESIRED public/private state and keep at most one request in flight, so rapid
+  // clicks feel instant and always converge to the last click. { desired, running }.
+  const privacySync = useRef({ desired: false, running: false });
 
   const currentUserId = getCurrentUser()?.id;
   const numId = Number(id);
@@ -277,24 +281,38 @@ function ItineraryPage() {
     }
   };
 
-  // Owner-only: flip the itinerary between public and private. Optimistic — we
-  // update the itinerary in place immediately, then persist via PUT and revert
-  // if the server rejects, so the toggle never lies. Guarded by actionBusy so a
-  // rapid double-click can't fire two conflicting writes.
-  const handleTogglePrivacy = async () => {
-    if (actionBusy) return;
-    const desired = !itinerary.isPublic;
-    setActionBusy(true);
-    const previous = patchItinerary((prev) => ({ ...prev, isPublic: desired }));
+  // Drain loop: keep sending until the last request we sent matches the user's
+  // latest desired public/private state (they may click again mid-flight), with
+  // at most one request in flight so concurrent toggles can't race at the DB.
+  const syncPrivacy = async () => {
+    const state = privacySync.current;
+    if (state.running) return;
+    state.running = true;
     try {
-      await updateItinerary(id, { isPublic: desired });
+      let sent;
+      while (state.desired !== sent) {
+        sent = state.desired;
+        await updateItinerary(id, { isPublic: sent });
+      }
     } catch (err) {
       console.error('Privacy toggle failed, reverting:', err);
-      queryClient.setQueryData(itineraryKey, previous);
+      // Roll the cache back to whatever the server last confirmed (state.desired
+      // never applied), so the toggle never lies.
+      patchItinerary((prev) => ({ ...prev, isPublic: !state.desired }));
       window.alert('Could not change the privacy setting. Please try again.');
     } finally {
-      setActionBusy(false);
+      state.running = false;
     }
+  };
+
+  // Owner-only: flip the itinerary between public and private. Optimistic — flip
+  // the cached value immediately (so the click feels instant), record the latest
+  // desired state, then converge the server in the background.
+  const handleTogglePrivacy = () => {
+    const desired = !itinerary.isPublic;
+    patchItinerary((prev) => ({ ...prev, isPublic: desired }));
+    privacySync.current.desired = desired;
+    syncPrivacy();
   };
 
   // Owner-only: save inline edits to the itinerary's own metadata (title,

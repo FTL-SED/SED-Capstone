@@ -18,7 +18,7 @@
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 1320px;
+  max-width: 1680px;
   margin: 0 auto;
   padding: clamp(160px, 22vh, 340px) clamp(20px, 5vw, 64px);
   display: flex;
@@ -37,9 +37,12 @@
    wide middle gap is the road corridor, so neither column ever covers it. */
 .field-beat {
   display: grid;
+  /* Two equal columns so text and image stay balanced on either side of the
+     centre road. Each column caps its own content (text 560px, image 640px)
+     and sits against its OUTER edge, leaving the middle clear for the road. */
   grid-template-columns: 1fr 1fr;
   align-items: center;
-  gap: clamp(120px, 18vw, 300px);
+  gap: clamp(80px, 10vw, 160px);
 }
 
 /* Default: text on the left, image on the right */
@@ -75,11 +78,24 @@
   color: rgba(246, 239, 225, 0.7);
 }
 
-/* A real photo keeps the placeholder box's size/frame but shows in full —
-   stretched to fill (never cropped). Solid (not dashed) border and a soft
-   shadow lift it off the field. */
+/* A real photo drops the placeholder's forced 4:3 frame and takes its own
+   natural proportions instead — shown in full, never cropped, never distorted,
+   with no empty letterbox strips. `width: 100%` up to the shared 560px cap
+   keeps it in step with the text box; height follows the image's aspect ratio.
+   Solid (not dashed) border and a soft shadow lift it off the field. */
 .field-beat__image--photo {
-  object-fit: fill;
+  /* Render as a plain block image, not the placeholder's grid box: width:100%
+     + height:auto is the pair that ALWAYS keeps the true ratio (no stretch).
+     aspect-ratio:auto drops the forced 4:3; max-width sets how big it can get. */
+  display: block;
+  aspect-ratio: auto;
+  /* Larger than the 560px placeholder but capped so the photo stays within its
+     half and never crosses the centre road. width:100% + height:auto keeps the
+     true ratio (no stretch); justify-self:end (from the base rule) holds it
+     against the outer edge, balancing the text card on the far side. */
+  width: 100%;
+  height: auto;
+  max-width: 640px;
   border-style: solid;
   border-color: rgba(246, 239, 225, 0.12);
   background: none;
