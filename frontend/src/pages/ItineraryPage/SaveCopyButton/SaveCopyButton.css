@@ -3,3 +3,13 @@
   border-color: var(--accent);
   color: var(--accent-strong);
 }
+
+/* While the copy is in flight: filled teal so the click is obviously registered,
+   and non-interactive so it can't be clicked again. */
+.save-copy-button--copied,
+.save-copy-button--copied:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  cursor: not-allowed;
+}

@@ -183,6 +183,9 @@ function ItineraryPage() {
     : '';
   // Guards against double-firing the delete/copy network calls on rapid clicks.
   const [actionBusy, setActionBusy] = useState(false);
+  // Highlights the Copy button while the copy request is in flight, so the user
+  // gets immediate feedback that their click registered.
+  const [copied, setCopied] = useState(false);
   // Privacy toggle sync: like the hook's like/bookmark loop, we track the latest
   // DESIRED public/private state and keep at most one request in flight, so rapid
   // clicks feel instant and always converge to the last click. { desired, running }.
@@ -238,12 +241,14 @@ function ItineraryPage() {
   const handleCopy = async () => {
     if (actionBusy) return;
     setActionBusy(true);
+    setCopied(true);
     try {
       const copy = await copyItinerary(id);
       navigate(`/itinerary/${copy.id}`);
     } catch (err) {
       console.error('Copy failed:', err);
       setActionBusy(false);
+      setCopied(false);
       window.alert('Could not save a copy. Please try again.');
     }
   };
@@ -444,6 +449,7 @@ function ItineraryPage() {
         onTogglePrivacy={handleTogglePrivacy}
         onDelete={handleDelete}
         onCopy={handleCopy}
+        copied={copied}
         onMarkVisited={() => toggleVisited(numId, itinerary)}
         onRemoveStop={handleRemoveStop}
         onEditStop={handleEditStop}

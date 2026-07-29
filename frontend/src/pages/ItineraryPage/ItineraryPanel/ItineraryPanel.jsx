@@ -13,7 +13,7 @@ function ItineraryPanel({
   liked, bookmarked, likeCount, isPublic, visited,
   activeTab, onTabChange,
   onToggleLike, onToggleBookmark, onTogglePrivacy,
-  onDelete, onCopy, onMarkVisited,
+  onDelete, onCopy, copied, onMarkVisited,
   onRemoveStop, onEditStop, onAddStop, onReorderStops,
   onEditItinerary, actionBusy,
 }) {
@@ -200,6 +200,7 @@ function ItineraryPanel({
         onTogglePrivacy={onTogglePrivacy}
         onDelete={onDelete}
         onCopy={onCopy}
+        copied={copied}
         visited={visited}
         onMarkVisited={onMarkVisited}
         editing={editing}

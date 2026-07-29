@@ -17,6 +17,7 @@ function ActionBar({
   onTogglePrivacy,
   onDelete,
   onCopy,
+  copied = false,
   visited,
   onMarkVisited,
   editing = false,
@@ -56,7 +57,7 @@ function ActionBar({
       ) : (
         <>
           <BookmarkButton bookmarked={bookmarked} onClick={onToggleBookmark} />
-          <SaveCopyButton onClick={onCopy} />
+          <SaveCopyButton onClick={onCopy} copied={copied} />
           <LikeButton liked={liked} likeCount={likeCount} onClick={onToggleLike} />
           <VisitedButton visited={visited} onClick={onMarkVisited} />
         </>
