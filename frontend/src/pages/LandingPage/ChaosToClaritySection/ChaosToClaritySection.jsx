@@ -1,4 +1,7 @@
+import planTripPreview from '../../../assets/plan-trip-preview.png'
+import groupMembersPreview from '../../../assets/group-members-preview.png'
 import itineraryPreview from '../../../assets/itinerary-preview.png'
+import discoverPreview from '../../../assets/discover-preview.png'
 import './ChaosToClaritySection.css'
 
 /*
@@ -11,30 +14,30 @@ import './ChaosToClaritySection.css'
  * right, and so on down the drive.
  */
 const BEATS = [ 
-  { 
-    title: "Making plans together shouldn't feel like work", 
-    copy: "Stop jumping between group chats, maps, TikToks, and review sites. Tell NavQuest what your group enjoys, and we'll handle the planning.", 
-    image: itineraryPreview, 
-    imageAlt: 'A finished NavQuest itinerary — a Mission District taco crawl with timed stops beside a live map of the route.', 
-  }, 
-  { 
-    title: 'Plan a day that actually works for everyone', 
+  {
+    title: "Making plans together shouldn't feel like work",
+    copy: "Stop jumping between group chats, maps, TikToks, and review sites. Tell NavQuest what your group enjoys, and we'll handle the planning.",
+    image: planTripPreview,
+    imageAlt: "NavQuest's Create form — a few quick trip details (date, time window, transport, budget) and NavQuest maps out the whole day.",
+  },
+  {
+    title: 'Plan a day that actually works for everyone',
     copy: "NavQuest finds a fair meeting point so no one's stuck with an hour commute, keeps every stop inside your group's budget, and never books a place someone in the group can't eat at.",
-    image: itineraryPreview, 
-    imageAlt: 'A finished NavQuest itinerary — a Mission District taco crawl with timed stops beside a live map of the route.',  
-  }, 
-  { 
-    title: 'Every destination in the right place, at the right time', 
-    copy: "Get a complete schedule with timed stops, sensible travel times, and an interactive map that keeps the day moving. Everything is organized for you from start to finish.", 
-    image: itineraryPreview, 
-    imageAlt: 'A finished NavQuest itinerary — a Mission District taco crawl with timed stops beside a live map of the route.', 
-  }, 
-  { 
-    title: "Your next great adventure may already be waiting", 
+    image: groupMembersPreview,
+    imageAlt: "Adding each group member with their starting point, interests, and dietary needs so NavQuest can plan a day that's fair to everyone.",
+  },
+  {
+    title: 'Every destination in the right place, at the right time',
+    copy: "Get a complete schedule with timed stops, sensible travel times, and an interactive map that keeps the day moving. Everything is organized for you from start to finish.",
+    image: itineraryPreview,
+    imageAlt: 'A finished NavQuest itinerary — a San Francisco day with timed stops beside a live map of the route.',
+  },
+  {
+    title: "Your next great adventure may already be waiting",
     copy: "Browse public itineraries, save the ones you like, and copy any of them into your own plan to customize. Great plans are meant to be shared.",
-    image: itineraryPreview, 
-    imageAlt: 'A finished NavQuest itinerary — a Mission District taco crawl with timed stops beside a live map of the route.',  
-  }, 
+    image: discoverPreview,
+    imageAlt: "NavQuest's Explore page — a grid of public itineraries shared by others, ready to save or copy into your own plan.",
+  },
 ];
 
 /*
