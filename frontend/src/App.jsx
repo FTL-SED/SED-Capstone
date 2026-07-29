@@ -119,7 +119,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      {!isAuthPage && !isFullBleed && <Footer variant={isLanding ? 'landing' : undefined} />}
+      {!isAuthPage && !isFullBleed && <Footer />}
     </div>
   );
 }
