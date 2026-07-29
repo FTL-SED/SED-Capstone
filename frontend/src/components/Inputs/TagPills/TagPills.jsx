@@ -3,7 +3,7 @@ import './TagPills.css'
 import { computePillView } from './pillView.js'
 
 // Must match the collapse animation duration in TagPills.css.
-const COLLAPSE_MS = 200
+const COLLAPSE_MS = 320
 
 // Click-to-toggle pills for choosing from a fixed set of options (e.g. the
 // engine's interest/food vocab). Clearer and more discoverable than a dropdown:
