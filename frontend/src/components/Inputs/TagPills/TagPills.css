@@ -78,6 +78,14 @@
     animation: tag-pills-reveal 200ms ease-out both;
   }
 
+  /* Reverse of the reveal — overflow pills fade/slide out before unmounting when
+     the user hits "View less". Kept mounted for the animation's duration by the
+     component's `collapsing` state. */
+  .tag-pill--collapse {
+    animation: tag-pills-collapse 200ms ease-in both;
+    pointer-events: none;
+  }
+
   @keyframes tag-pills-reveal {
     from {
       opacity: 0;
@@ -86,6 +94,17 @@
     to {
       opacity: 1;
       transform: none;
+    }
+  }
+
+  @keyframes tag-pills-collapse {
+    from {
+      opacity: 1;
+      transform: none;
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-4px);
     }
   }
 }
