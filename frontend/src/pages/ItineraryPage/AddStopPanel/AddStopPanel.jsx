@@ -45,7 +45,7 @@ function AddStopPanel({ onAddStop, meetingPoint, radiusMi }) {
       ignore = true
       clearTimeout(timer)
     }
-  }, [query, open, geoActive, meetingPoint, radiusMi])
+  }, [query, open, geoActive, meetingPoint?.lat, meetingPoint?.lng, radiusMi])
 
   const handleAdd = async (venue) => {
     if (addingId) return
