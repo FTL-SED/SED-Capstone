@@ -12,16 +12,18 @@ function findById(id) {
 // Browse/search the venue catalog so a user can pick a place to add to their
 // itinerary. `q` matches the venue name (case-insensitive); `category` filters
 // restaurant vs activity. Ordered by rating (best first, nulls last) then name.
-function findMany({ q, category, take = 20, skip = 0 } = {}) {
+function findMany({ q, category, take = 20, skip = 0, geo } = {}) {
   const where = {}
   if (q) where.name = { contains: q, mode: 'insensitive' }
   if (category) where.category = category
-  return prisma.pin.findMany({
-    where,
-    orderBy: [{ rating: { sort: 'desc', nulls: 'last' } }, { name: 'asc' }],
-    take,
-    skip,
-  })
+  return prisma.pin
+    .findMany({
+      where,
+      orderBy: [{ rating: { sort: 'desc', nulls: 'last' } }, { name: 'asc' }],
+      take,
+      skip,
+    })
+    .then((rows) => (geo ? filterByRadius(rows, geo) : rows))
 }
 
 function create(data) {
