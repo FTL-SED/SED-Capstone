@@ -27,6 +27,13 @@ function TagPills({ options = [], selected = [], onChange, collapsedCount, group
     collapsedCount,
   })
 
+  // When expanded, render every option in its original order — the pinning in
+  // computePillView (which floats selected overflow pills up so they aren't
+  // hidden when collapsed) would otherwise make a pill jump rows the moment it's
+  // selected. Expanded shows everything anyway, so no pinning is needed.
+  const overflowSet = new Set(overflow)
+  const gridPills = expanded ? options : alwaysVisible
+
   const renderPill = (option, reveal = false) => {
     const isOn = selected.includes(option)
     return (
@@ -52,8 +59,7 @@ function TagPills({ options = [], selected = [], onChange, collapsedCount, group
         aria-live="polite"
         aria-label={`${groupLabel}`}
       >
-        {alwaysVisible.map((o) => renderPill(o))}
-        {hasToggle && expanded && overflow.map((o) => renderPill(o, true))}
+        {gridPills.map((o) => renderPill(o, expanded && overflowSet.has(o)))}
       </div>
 
       {/* The toggle sits on its own row, always aligned right — never wrapping
