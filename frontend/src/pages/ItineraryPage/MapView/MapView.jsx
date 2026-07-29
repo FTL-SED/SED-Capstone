@@ -1,7 +1,7 @@
 import './MapView.css'
 import 'leaflet/dist/leaflet.css'
 import { useEffect, useState } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet'
 import L from 'leaflet'
 
 // A numbered teal marker built from HTML (divIcon) so we need no image assets.
@@ -12,6 +12,40 @@ const numberedIcon = (n) =>
     iconSize: [28, 28],
     iconAnchor: [14, 14],
   });
+
+// Grey variant for stops that fall outside the group's travel radius. Color
+// alone isn't enough — the popup also says "Outside radius".
+const mutedIcon = (n) =>
+  L.divIcon({
+    className: 'map-view__marker map-view__marker--out',
+    html: `<span class="map-view__marker-num">${n}</span>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  });
+
+const EARTH_RADIUS_MILES = 3958.8;
+const toRad = (d) => (d * Math.PI) / 180;
+function haversineMi(a, b) {
+  const dLat = toRad(b.lat - a.lat);
+  const dLon = toRad(b.lng - a.lng);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLon / 2) ** 2;
+  return 2 * EARTH_RADIUS_MILES * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+// The lat/lng bounding-box corners of a radius (in miles) around a point, so
+// fitBounds always frames the whole circle — not just its center.
+function circleBoundsPoints(center, radiusMi) {
+  const latDelta = radiusMi / 69;
+  const lonDelta = radiusMi / (69 * Math.cos((center.lat * Math.PI) / 180));
+  return [
+    [center.lat + latDelta, center.lng],
+    [center.lat - latDelta, center.lng],
+    [center.lat, center.lng + lonDelta],
+    [center.lat, center.lng - lonDelta],
+  ];
+}
 
 // Keep Leaflet's internal size in sync with its container. Leaflet caches the
 // container size at init; if the flex layout resolves the real height AFTER
@@ -41,12 +75,25 @@ function MapResizer({ points }) {
 }
 
 // Real OpenStreetMap view with a numbered marker per stop (in visit order).
-function MapView({ pins = [] }) {
+function MapView({ pins = [], meetingPoint = null, radiusMi = null }) {
   const located = pins.filter(
     (p) => typeof p.latitude === 'number' && typeof p.longitude === 'number'
   );
   const points = located.map((p) => [p.latitude, p.longitude]);
   const center = points[0] ?? [37.7749, -122.4194]; // fall back to SF center
+
+  // The radius is opt-in: the data exists for the owner, but we only draw the
+  // circle/legend/muting once the user turns it on via the on-map toggle. Off by
+  // default so the map loads clean.
+  const radiusAvailable = meetingPoint != null && radiusMi != null;
+  const [radiusOn, setRadiusOn] = useState(false);
+  const showRadius = radiusAvailable && radiusOn;
+  // Include the circle's bounding box corners so the whole circle is visible on load.
+  const framePoints = showRadius
+    ? [...points, ...circleBoundsPoints(meetingPoint, radiusMi)]
+    : points;
+  const isOutside = (pin) =>
+    showRadius && haversineMi({ lat: pin.latitude, lng: pin.longitude }, meetingPoint) > radiusMi;
 
   // Under React StrictMode (dev), effects mount→unmount→remount, which makes
   // Leaflet's MapContainer throw "already initialized". Mounting the map only
@@ -74,15 +121,53 @@ function MapView({ pins = [] }) {
           subdomains="abcd"
           maxZoom={20}
         />
-        {located.map((pin, i) => (
-          <Marker key={pin.id ?? i} position={[pin.latitude, pin.longitude]} icon={numberedIcon(i + 1)}>
-            <Popup>
-              <strong>{pin.name}</strong>
-            </Popup>
-          </Marker>
-        ))}
-        <MapResizer points={points} />
+        {showRadius && (
+          <Circle
+            center={[meetingPoint.lat, meetingPoint.lng]}
+            radius={radiusMi * 1609.34}
+            pathOptions={{
+              color: '#0f766e',
+              weight: 2,
+              fillColor: '#0d9488',
+              fillOpacity: 0.1,
+            }}
+            interactive={false}
+          />
+        )}
+        {located.map((pin, i) => {
+          const outside = isOutside(pin);
+          return (
+            <Marker
+              key={pin.id ?? i}
+              position={[pin.latitude, pin.longitude]}
+              icon={outside ? mutedIcon(i + 1) : numberedIcon(i + 1)}
+            >
+              <Popup>
+                <strong>{pin.name}</strong>
+                {outside && <span className="map-view__popup-note"> · Outside radius</span>}
+              </Popup>
+            </Marker>
+          );
+        })}
+        <MapResizer points={framePoints} />
       </MapContainer>
+      {radiusAvailable && (
+        <button
+          type="button"
+          className={`map-view__radius-toggle${radiusOn ? ' map-view__radius-toggle--on' : ''}`}
+          onClick={() => setRadiusOn((on) => !on)}
+          aria-pressed={radiusOn}
+        >
+          <span className="map-view__legend-dot" aria-hidden="true" />
+          {radiusOn ? 'Hide' : 'Show'} travel radius
+        </button>
+      )}
+      {showRadius && (
+        <div className="map-view__legend" aria-label={`Travel radius: within ${radiusMi} miles`}>
+          <span className="map-view__legend-dot" aria-hidden="true" />
+          Within {radiusMi} mi radius
+        </div>
+      )}
     </div>
   );
 }

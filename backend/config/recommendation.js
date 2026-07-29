@@ -43,7 +43,7 @@ export const QUALITY_DEFAULT = 0.6
 export const VALUE_NEUTRAL = 0.5
 export const VALUE_BAND = 0.4          // ±40% around the per-stop target = full credit
 export const VALUE_OVER_CUTOFF = 3     // a pin at 3× the target scores ~0 on value
-export const VALUE_FLOOR = 0.5         // a $0 pin still gets half value credit (free is fine)
+export const VALUE_FLOOR = 0.8         // a $0 pin still gets near full value credit (free is fine)
 // Fallback per-stop share of budget when the trip window (hence stop count) is
 // unknown — mirrors the old behavior so scoring still works without a window.
 export const VALUE_FALLBACK_SHARE = 0.2
@@ -56,7 +56,7 @@ export const INTENSITY_SATURATION = 3
 //   stops = (endTime - startTime) / AVG_STOP_DURATION_MIN
 //   SHORTLIST_SIZE = stops * SHORTLIST_MULTIPLIER
 // so the AI gets ~2–3× as many options as there are stops to fill.
-export const AVG_STOP_DURATION_MIN = 90
+export const AVG_STOP_DURATION_MIN = 60
 export const SHORTLIST_MULTIPLIER = 3
 
 // Upper bound on a single stop's dwell time. The fallback sequencer stretches

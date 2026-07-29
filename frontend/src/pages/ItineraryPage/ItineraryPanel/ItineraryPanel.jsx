@@ -14,7 +14,7 @@ function ItineraryPanel({
   activeTab, onTabChange,
   onToggleLike, onToggleBookmark, onTogglePrivacy,
   onDelete, onCopy, copied, onMarkVisited,
-  onRemoveStop, onEditStop, onAddStop, onReorderStops,
+  onRemoveStop, onEditStop, onAddStop, meetingPoint, radiusMi, onReorderStops,
   onEditItinerary, actionBusy,
 }) {
   // Per-person total from the stops' prices. When it exceeds the trip's budget,
@@ -240,6 +240,8 @@ function ItineraryPanel({
           onRemoveStop={onRemoveStop}
           onEditStop={onEditStop}
           onAddStop={onAddStop}
+          meetingPoint={meetingPoint}
+          radiusMi={radiusMi}
           onReorderStops={onReorderStops}
         />
       </div>

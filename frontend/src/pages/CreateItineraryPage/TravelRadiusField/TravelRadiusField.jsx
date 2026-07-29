@@ -5,7 +5,7 @@ import { useState } from 'react'
 // Position 0 means "no limit" and stores '' (so buildRequest omits it); any
 // other position stores that number as a string, matching the prior contract.
 // The upper bound is editable so a user who needs a wider radius isn't capped.
-const DEFAULT_MAX = 15;
+const DEFAULT_MAX = 5;
 
 function TravelRadiusField({ form, update }) {
   const [max, setMax] = useState(DEFAULT_MAX);

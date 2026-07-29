@@ -144,7 +144,7 @@ function SortableStop({ pin, index, total, meal, onRemoveStop, onEditStop, sibli
 
 // Wanderlog-style vertical timeline. For the owner (`editable`) each stop is
 // draggable (dnd-kit) and dropping calls onReorderStops with the new id order.
-function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onEditStop, onAddStop, onReorderStops }) {
+function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onEditStop, onAddStop, meetingPoint, radiusMi, onReorderStops }) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -154,7 +154,7 @@ function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onEditSto
     return (
       <div className="written-itinerary">
         <p className="written-itinerary__empty">No stops in this itinerary yet.</p>
-        {editable && <AddStopPanel onAddStop={onAddStop} />}
+        {editable && <AddStopPanel onAddStop={onAddStop} meetingPoint={meetingPoint} radiusMi={radiusMi} />}
       </div>
     );
   }
@@ -215,7 +215,7 @@ function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onEditSto
           </ol>
         </SortableContext>
       </DndContext>
-      <AddStopPanel onAddStop={onAddStop} />
+      <AddStopPanel onAddStop={onAddStop} meetingPoint={meetingPoint} radiusMi={radiusMi} />
     </>
   );
 }

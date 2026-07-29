@@ -11,8 +11,10 @@ const COLLAPSED = 8
 // food prefs. `member` is { name, location, interestTags, foodPrefs };
 // `onChange(next)` replaces the whole member object. foodPrefs stays a single
 // flat array (cuisines + diets) so the request payload is unchanged — the two
-// food groups below just edit disjoint slices of that one array.
-function MemberCard({ index, member, onChange, onRemove }) {
+// food groups below just edit disjoint slices of that one array. When
+// `showFoodPrefs` is false (the group opted out of meals) the food prefs section
+// is hidden since there are no meal stops for it to influence.
+function MemberCard({ index, member, onChange, onRemove, showFoodPrefs = true }) {
   const set = (field, value) => onChange({ ...member, [field]: value });
 
   // Slices foodPrefs into cuisine vs diet. Assumes foodPrefs contains ONLY tags
@@ -53,22 +55,26 @@ function MemberCard({ index, member, onChange, onRemove }) {
         groupLabel="interests"
       />
 
-      <label className="member-card__label">Food preferences</label>
-      <span className="member-card__sublabel">Cuisines</span>
-      <TagPills
-        options={CUISINE_TAGS}
-        selected={cuisineSel}
-        onChange={(next) => set('foodPrefs', [...next, ...dietSel])}
-        collapsedCount={COLLAPSED}
-        groupLabel="cuisines"
-      />
-      <span className="member-card__sublabel">Dietary</span>
-      <TagPills
-        options={DIET_TAGS}
-        selected={dietSel}
-        onChange={(next) => set('foodPrefs', [...cuisineSel, ...next])}
-        groupLabel="dietary needs"
-      />
+      {showFoodPrefs && (
+        <>
+          <label className="member-card__label">Food preferences</label>
+          <span className="member-card__sublabel">Cuisines</span>
+          <TagPills
+            options={CUISINE_TAGS}
+            selected={cuisineSel}
+            onChange={(next) => set('foodPrefs', [...next, ...dietSel])}
+            collapsedCount={COLLAPSED}
+            groupLabel="cuisines"
+          />
+          <span className="member-card__sublabel">Dietary</span>
+          <TagPills
+            options={DIET_TAGS}
+            selected={dietSel}
+            onChange={(next) => set('foodPrefs', [...cuisineSel, ...next])}
+            groupLabel="dietary needs"
+          />
+        </>
+      )}
     </div>
   );
 }

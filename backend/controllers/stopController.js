@@ -8,17 +8,34 @@ import { rangesOverlap } from '../utils/time.js'
 // GET /stops
 // Browse/search the shared venue catalog so a user can pick a place to add to
 // their itinerary. Query params: q (name search), category (restaurant|activity),
-// limit, offset. Returns an array of catalog venues (Pins). Auth via requireAuth.
+// limit, offset, and optional lat/lng/radius (miles) to filter to venues within
+// the group's travel radius — supplied all-or-none; each result then carries
+// distanceMi. Returns an array of catalog venues (Pins). Auth via requireAuth.
 async function searchCatalog(req, res) {
   const { q, category } = req.query
   const limit = Math.min(Number(req.query.limit) || 20, 50)
   const offset = Math.max(Number(req.query.offset) || 0, 0)
+
+  // Geo filter is all-or-none: supplying any of lat/lng/radius requires all
+  // three, each finite, with radius > 0. Absent → unfiltered (today's behavior).
+  const rawGeo = [req.query.lat, req.query.lng, req.query.radius]
+  const geoProvided = rawGeo.some((v) => v !== undefined)
+  let geo
+  if (geoProvided) {
+    const [lat, lng, radius] = rawGeo.map(Number)
+    const allFinite = [lat, lng, radius].every(Number.isFinite)
+    if (!allFinite || radius <= 0) {
+      return res.status(400).json({ error: 'lat, lng, and radius must all be provided as numbers with radius > 0' })
+    }
+    geo = { lat, lng, radius }
+  }
 
   const venues = await pins.findMany({
     q: typeof q === 'string' && q.trim() ? q.trim() : undefined,
     category: category === 'restaurant' || category === 'activity' ? category : undefined,
     take: limit,
     skip: offset,
+    geo,
   })
 
   return res.status(200).json(venues)

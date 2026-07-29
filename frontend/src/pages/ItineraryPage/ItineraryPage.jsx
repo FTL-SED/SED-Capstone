@@ -423,6 +423,17 @@ function ItineraryPage() {
 
   const isOwner = currentUserId != null && itinerary.creator?.id === currentUserId;
 
+  // Owner-only meeting point + optional travel radius drive the Add Stop distance
+  // filter and the map's radius circle. Both must be present/positive to apply;
+  // otherwise the UI degrades to its no-radius behavior.
+  const meetingPoint =
+    typeof itinerary.meetingPointLat === 'number' && typeof itinerary.meetingPointLng === 'number'
+      ? { lat: itinerary.meetingPointLat, lng: itinerary.meetingPointLng }
+      : null;
+  const radiusMi = typeof itinerary.travelRadius === 'number' && itinerary.travelRadius > 0
+    ? itinerary.travelRadius
+    : null;
+
   // A true split: the scrolling panel (title, actions, timeline) on the left and
   // the map on the right, together filling the space between nav and footer.
   // On narrow screens (see ItineraryPage.css) the two collapse into a tabbed
@@ -454,11 +465,13 @@ function ItineraryPage() {
         onRemoveStop={handleRemoveStop}
         onEditStop={handleEditStop}
         onAddStop={handleAddStop}
+        meetingPoint={meetingPoint}
+        radiusMi={radiusMi}
         onReorderStops={handleReorderStops}
         onEditItinerary={handleEditItinerary}
         actionBusy={actionBusy}
       />
-      <MapView pins={itinerary.pins} />
+      <MapView pins={itinerary.pins} meetingPoint={meetingPoint} radiusMi={radiusMi} />
     </div>
   );
 }

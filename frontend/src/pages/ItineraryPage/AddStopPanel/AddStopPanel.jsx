@@ -9,13 +9,15 @@ const DEBOUNCE_MS = 300
 // to search by name (debounced); each result has an Add button that appends it
 // to the itinerary via the parent's onAddStop. Collapsed behind a toggle so it
 // doesn't clutter the timeline until the user wants it.
-function AddStopPanel({ onAddStop }) {
+function AddStopPanel({ onAddStop, meetingPoint, radiusMi }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [addingId, setAddingId] = useState(null)
   const genRef = useRef(0)
+
+  const geoActive = meetingPoint != null && radiusMi != null
 
   // Debounced catalog search. `ignore`/generation guard keeps a slow earlier
   // request from overwriting a newer one.
@@ -26,7 +28,11 @@ function AddStopPanel({ onAddStop }) {
     const timer = setTimeout(async () => {
       setLoading(true)
       try {
-        const data = await searchCatalog({ q: query.trim() || undefined, limit: 15 })
+        const data = await searchCatalog({
+          q: query.trim() || undefined,
+          limit: 15,
+          ...(geoActive && { lat: meetingPoint.lat, lng: meetingPoint.lng, radius: radiusMi }),
+        })
         if (ignore || generation !== genRef.current) return
         setResults(data)
       } catch (err) {
@@ -39,7 +45,7 @@ function AddStopPanel({ onAddStop }) {
       ignore = true
       clearTimeout(timer)
     }
-  }, [query, open])
+  }, [query, open, geoActive, meetingPoint?.lat, meetingPoint?.lng, radiusMi])
 
   const handleAdd = async (venue) => {
     if (addingId) return
@@ -74,6 +80,12 @@ function AddStopPanel({ onAddStop }) {
         onChange={(e) => setQuery(e.target.value)}
       />
 
+      {geoActive && (
+        <p className="add-stop-panel__geo-note">
+          Showing places within {radiusMi} mi of your group&rsquo;s meeting point
+        </p>
+      )}
+
       <ul className="add-stop-panel__results">
         {loading && results.length === 0 && (
           <li className="add-stop-panel__hint">Searching…</li>
@@ -89,6 +101,7 @@ function AddStopPanel({ onAddStop }) {
                 {venue.category}
                 {venue.rating != null && ` · ★ ${venue.rating}`}
                 {venue.pricePerPerson != null && ` · $${venue.pricePerPerson}/person`}
+                {venue.distanceMi != null && ` · ${venue.distanceMi} mi away`}
               </span>
             </div>
             <button

@@ -31,6 +31,13 @@ function formatSummary(date) {
   });
 }
 
+// Today at local midnight — the earliest selectable day. Dates before this are
+// disabled since a trip can't be planned for a day that has already passed.
+function startOfToday() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
 // The 42 cells (6 weeks) covering a month, padded with the trailing days of the
 // previous month and leading days of the next so every row is full.
 function monthGrid(viewYear, viewMonth) {
@@ -88,7 +95,10 @@ function DateField({ form, update }) {
     });
   };
 
+  const today = startOfToday();
+
   const pick = (day) => {
+    if (day < today) return; // past dates aren't selectable
     update('tripDate', toValue(day));
     setOpen(false);
   };
@@ -163,6 +173,7 @@ function DateField({ form, update }) {
               {cells.map((day) => {
                 const inMonth = day.getMonth() === view.month;
                 const isSelected = toValue(day) === selectedValue;
+                const isPast = day < today;
                 return (
                   <button
                     key={toValue(day)}
@@ -173,6 +184,7 @@ function DateField({ form, update }) {
                       + (isSelected ? ' date-field__day--selected' : '')
                     }
                     aria-pressed={isSelected}
+                    disabled={isPast}
                     onClick={() => pick(day)}
                   >
                     {day.getDate()}

@@ -21,7 +21,7 @@ export async function getRecommendations(body) {
 // { feasible: false, reason } (200) when constraints are too tight.
 // Hits a live model with the backend's own retry budget (~up to 40s worst
 // case), so use a generous client timeout so we don't abort before it responds.
-const AI_TIMEOUT_MS = 60_000
+const AI_TIMEOUT_MS = 120_000
 export async function generateItinerary(body) {
   const { data } = await api.post('/ai-agent', body, { timeout: AI_TIMEOUT_MS })
   return data

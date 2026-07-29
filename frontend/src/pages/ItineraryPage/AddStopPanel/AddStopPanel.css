@@ -55,6 +55,12 @@
   color: var(--ink);
 }
 
+.add-stop-panel__geo-note {
+  margin: 6px 0 4px;
+  font-size: 0.8125rem;
+  color: var(--slate-500);
+}
+
 .add-stop-panel__results {
   list-style: none;
   margin: 12px 0 0;
