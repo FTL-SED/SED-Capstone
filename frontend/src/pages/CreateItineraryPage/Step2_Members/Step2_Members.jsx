@@ -24,6 +24,8 @@ function validateMembers(members) {
 // See .claude/roadmap/frontend-backend-integration.md (per-member restructure).
 function Step2_Members({ form, update, onNext, onBack }) {
   const members = form.members;
+  // Food prefs only matter when the day includes meals; hide them otherwise.
+  const showFoodPrefs = form.includeMeals !== false;
   // Only advance once every member has the required name + location.
   const [error, setError] = useState('');
 
@@ -54,6 +56,7 @@ function Step2_Members({ form, update, onNext, onBack }) {
             member={member}
             onChange={(next) => updateMember(i, next)}
             onRemove={members.length > 1 ? () => removeMember(i) : undefined}
+            showFoodPrefs={showFoodPrefs}
           />
         ))}
       </div>
