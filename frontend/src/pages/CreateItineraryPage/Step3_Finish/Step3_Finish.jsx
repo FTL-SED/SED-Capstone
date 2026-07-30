@@ -1,11 +1,12 @@
 import './Step3_Finish.css'
-import { useMemo, useEffect, useRef } from 'react'
+import { useMemo, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ItineraryDetailsPreview from '../ItineraryDetailsPreview/ItineraryDetailsPreview.jsx'
 import PrivacyField from '../PrivacyField/PrivacyField.jsx'
 import FinishButton from '../FinishButton/FinishButton.jsx'
 import BackButton from '../../../components/Inputs/BackButton/BackButton.jsx'
 import TextInput from '../../../components/Inputs/TextInput/TextInput.jsx'
+import BannerGeneratorModal from '../BannerGeneratorModal/BannerGeneratorModal.jsx'
 
 // The final review step. On finish we hand the collected form to /loading,
 // which runs recommend + generate as ONE phase and then navigates to the
@@ -14,6 +15,7 @@ import TextInput from '../../../components/Inputs/TextInput/TextInput.jsx'
 function Step3_Finish({ form, update, onBack, goTo }) {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const [showBannerModal, setShowBannerModal] = useState(false);
 
   // Build an object URL for the chosen file so the thumbnail updates live.
   const preview = useMemo(() => {
@@ -90,6 +92,13 @@ function Step3_Finish({ form, update, onBack, goTo }) {
             hidden
           />
         </label>
+        <button
+          type="button"
+          className="step3-finish__ai-banner"
+          onClick={() => setShowBannerModal(true)}
+        >
+          ✨ Generate with AI
+        </button>
       </div>
 
       <PrivacyField form={form} update={update} />
@@ -97,6 +106,17 @@ function Step3_Finish({ form, update, onBack, goTo }) {
         <BackButton onClick={onBack} />
         <FinishButton onClick={handleFinish} />
       </div>
+
+      {showBannerModal && (
+        <BannerGeneratorModal
+          details={{ title: form.title, location: form.location, description: form.description }}
+          onUse={(file) => {
+            update('coverImageFile', file);
+            setShowBannerModal(false);
+          }}
+          onClose={() => setShowBannerModal(false)}
+        />
+      )}
     </div>
   );
 }
