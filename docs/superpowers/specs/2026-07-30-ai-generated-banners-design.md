@@ -96,7 +96,7 @@ ephemeral (browser-only) and reuses the existing upload path for the single chos
 | `backend/config/ai.js` | **Changed** | Add `BANNER_MODEL` (`'gpt-image-1'`), `BANNER_IMAGE_SIZE` (`'1536x1024'`), `MAX_BANNERS_PER_ITINERARY` (`3`), and prompt-input caps. |
 | `backend/controllers/aiController.js` | **Changed** | Add `postBanner`: validates `promptText` (string, length cap) and details, calls `generateBanner`, returns `{ image, mediaType }`. Friendly errors; `console.error` raw. |
 | `backend/routes/aiRoutes.js` | **Changed** | Add `POST /banner` → `requireAuth` → `bannerRateLimit` → `postBanner`. |
-| `backend/middleware/bannerRateLimit.js` | **New** | Per-user (by `req.user.id`) in-memory sliding-window limiter (e.g. **N generations/hour**). On exceed → `429 { error }`. In-memory is acceptable for a single-instance capstone deploy; documented as such. |
+| `backend/middleware/bannerRateLimit.js` | **New** | Per-user (by `req.user.id`) in-memory sliding-window limiter of **10 generations/hour**. On exceed → `429 { error }`. In-memory is acceptable for a single-instance capstone deploy; documented as such. |
 
 **No schema/migration changes.** `coverImageUrl`, the `itinerary-covers` bucket, and the
 `POST /itineraries/:id/cover` route already exist and are reused unchanged.
@@ -152,7 +152,7 @@ because generated text renders poorly and a cover with garbled words looks broke
 
 The 3-cap is client-side and bypassable by refresh; each `gpt-image-1` call costs
 ~$0.02–0.13. The **per-user server-side rate limit** (`bannerRateLimit`) is the real
-guardrail. In-memory limiter is acceptable for the current single-instance deploy; if the
+guardrail (**10 generations/hour per user**). In-memory limiter is acceptable for the current single-instance deploy; if the
 backend is ever horizontally scaled, this would need a shared store (documented, not built).
 
 ## Testing
