@@ -81,6 +81,10 @@ export function buildItinerarySummaryData(itinerary) {
         typeof pin.travelTimeToNextMinutes === 'number'
           ? pin.travelTimeToNextMinutes
           : null,
+      // Coordinates flow through for the PDF's static map; null when absent so the
+      // map layer can simply skip un-located stops.
+      latitude: typeof pin.latitude === 'number' ? pin.latitude : null,
+      longitude: typeof pin.longitude === 'number' ? pin.longitude : null,
     })),
   }
 }
