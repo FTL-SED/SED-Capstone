@@ -89,42 +89,49 @@ async function postAiAgent(req, res) {
 // is uploaded later via POST /itineraries/:id/cover. Thin per backend rules;
 // prompt-building + the image call live in services/ai/banner. Auth +
 // bannerRateLimit run first (see aiRoutes.js).
-async function postBanner(req, res) {
-  const { title, location, description, promptText } = req.body ?? {}
+// Factory so tests can inject a fake `generate` (Express passes `next` as the
+// 3rd handler arg, so we can't inject through the handler signature). The route
+// uses the default `postBanner` below, wired to the real service.
+function createPostBanner({ generate = generateBanner } = {}) {
+  return async function postBanner(req, res) {
+    const { title, location, description, promptText } = req.body ?? {}
 
-  // Every field is optional, but if present each must be a string. Detail fields
-  // and the free-text prompt are length-capped to bound the request + cost.
-  for (const [key, value] of Object.entries({ title, location, description, promptText })) {
-    if (value !== undefined && typeof value !== 'string') {
-      return res.status(400).json({ error: `${key} must be a string when provided` })
+    // Every field is optional, but if present each must be a string. Detail
+    // fields and the free-text prompt are length-capped to bound cost.
+    for (const [key, value] of Object.entries({ title, location, description, promptText })) {
+      if (value !== undefined && typeof value !== 'string') {
+        return res.status(400).json({ error: `${key} must be a string when provided` })
+      }
     }
-  }
-  if (typeof promptText === 'string' && promptText.length > BANNER_PROMPT_MAX_CHARS) {
-    return res.status(400).json({ error: `promptText must be ${BANNER_PROMPT_MAX_CHARS} characters or fewer` })
-  }
-  for (const [key, value] of Object.entries({ title, location, description })) {
-    if (typeof value === 'string' && value.length > BANNER_FIELD_MAX_CHARS) {
-      return res.status(400).json({ error: `${key} must be ${BANNER_FIELD_MAX_CHARS} characters or fewer` })
+    if (typeof promptText === 'string' && promptText.length > BANNER_PROMPT_MAX_CHARS) {
+      return res.status(400).json({ error: `promptText must be ${BANNER_PROMPT_MAX_CHARS} characters or fewer` })
     }
-  }
+    for (const [key, value] of Object.entries({ title, location, description })) {
+      if (typeof value === 'string' && value.length > BANNER_FIELD_MAX_CHARS) {
+        return res.status(400).json({ error: `${key} must be ${BANNER_FIELD_MAX_CHARS} characters or fewer` })
+      }
+    }
 
-  try {
-    const { image, mediaType } = await generateBanner(
-      { title, location, description },
-      promptText ?? '',
-    )
-    return res.status(200).json({ image, mediaType })
-  } catch (err) {
-    // Input that failed content moderation (or that we couldn't verify) is a
-    // client-side problem — surface it as a 400 so the user can reword, not a 500.
-    if (err?.code === 'FLAGGED') {
-      return res.status(400).json({
-        error: 'That description can’t be used for a banner. Please try a different wording.',
-      })
+    try {
+      const { image, mediaType } = await generate(
+        { title, location, description },
+        promptText ?? '',
+      )
+      return res.status(200).json({ image, mediaType })
+    } catch (err) {
+      // Input that failed content moderation (or that we couldn't verify) is a
+      // client-side problem — surface it as a 400 so the user can reword, not a 500.
+      if (err?.code === 'FLAGGED') {
+        return res.status(400).json({
+          error: 'That description can’t be used for a banner. Please try a different wording.',
+        })
+      }
+      console.error('POST /ai-agent/banner failed:', err)
+      return res.status(500).json({ error: 'Failed to generate banner' })
     }
-    console.error('POST /ai-agent/banner failed:', err)
-    return res.status(500).json({ error: 'Failed to generate banner' })
   }
 }
 
-export { postAiAgent, postBanner }
+const postBanner = createPostBanner()
+
+export { postAiAgent, postBanner, createPostBanner }
