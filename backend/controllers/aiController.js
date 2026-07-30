@@ -1,5 +1,7 @@
 import { generateItinerary } from '../services/ai/index.js'
 import { persistItinerary } from '../services/itinerary/persist.js'
+import { generateBanner } from '../services/ai/banner/banner.js'
+import { BANNER_PROMPT_MAX_CHARS } from '../config/ai.js'
 
 // POST /ai-agent
 // Takes the recommendation engine's output ({ shortlist, constraints }),
@@ -80,4 +82,37 @@ async function postAiAgent(req, res) {
   }
 }
 
-export { postAiAgent }
+// POST /ai-agent/banner
+// Generates an AI cover-banner (gpt-image-1) from the itinerary details + the
+// user's free-text style prompt, returning the image as base64. Nothing is
+// persisted here — the browser holds generated banners and only the CHOSEN one
+// is uploaded later via POST /itineraries/:id/cover. Thin per backend rules;
+// prompt-building + the image call live in services/ai/banner. Auth +
+// bannerRateLimit run first (see aiRoutes.js).
+async function postBanner(req, res) {
+  const { title, location, description, promptText } = req.body ?? {}
+
+  // Every field is optional, but if present each must be a string, and the
+  // free-text prompt is length-capped to bound cost.
+  for (const [key, value] of Object.entries({ title, location, description, promptText })) {
+    if (value !== undefined && typeof value !== 'string') {
+      return res.status(400).json({ error: `${key} must be a string when provided` })
+    }
+  }
+  if (typeof promptText === 'string' && promptText.length > BANNER_PROMPT_MAX_CHARS) {
+    return res.status(400).json({ error: `promptText must be ${BANNER_PROMPT_MAX_CHARS} characters or fewer` })
+  }
+
+  try {
+    const { image, mediaType } = await generateBanner(
+      { title, location, description },
+      promptText ?? '',
+    )
+    return res.status(200).json({ image, mediaType })
+  } catch (err) {
+    console.error('POST /ai-agent/banner failed:', err)
+    return res.status(500).json({ error: 'Failed to generate banner' })
+  }
+}
+
+export { postAiAgent, postBanner }
