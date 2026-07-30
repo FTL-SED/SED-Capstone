@@ -341,11 +341,6 @@ export const BANNER_MODEL = 'gpt-image-1'
 // Landscape, banner-shaped output — the cover renders wide (see CoverImage).
 export const BANNER_IMAGE_SIZE = '1536x1024'
 
-// Max banners a user may generate per create session. Enforced client-side
-// (no itinerary row exists yet during the wizard); the server-side guardrail
-// is the per-user rate limit below.
-export const MAX_BANNERS_PER_ITINERARY = 3
-
 // Cap on the user's free-text style prompt, to bound the request and cost.
 export const BANNER_PROMPT_MAX_CHARS = 500
 

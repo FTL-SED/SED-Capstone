@@ -15,6 +15,9 @@ export function bannerRateLimit(req, res, next) {
 
   const recent = (hits.get(userId) ?? []).filter((t) => t > windowStart)
 
+  // Prune stale-empty entry before deciding (user returning after window expiry).
+  if (recent.length === 0) hits.delete(userId)
+
   if (recent.length >= BANNER_RATE_LIMIT_MAX) {
     return res.status(429).json({
       error: 'Too many banner generations. Please try again later.',
