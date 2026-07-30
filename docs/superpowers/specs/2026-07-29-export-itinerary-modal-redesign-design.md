@@ -137,3 +137,4 @@ Manual verification (no test harness):
 2. Backend: new endpoint contract + tests (green).
 3. Schema: remove `member.email`, generate migration, update persist/model.
 4. **Pause** for user go-ahead before applying the migration to the shared DB.
+

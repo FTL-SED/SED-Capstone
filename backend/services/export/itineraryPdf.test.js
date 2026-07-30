@@ -44,3 +44,31 @@ test('buildItineraryPdf tolerates missing optional fields on stops', async () =>
   assert.ok(Buffer.isBuffer(buf) && buf.length > 0)
   assert.equal(buf.subarray(0, 5).toString('ascii'), '%PDF-')
 })
+
+test('buildItineraryPdf still builds when the map fetch fails (returns null)', async () => {
+  const getMap = async () => null
+  const buf = await buildItineraryPdf(itinerary, { getMap })
+  assert.ok(Buffer.isBuffer(buf) && buf.length > 0)
+  assert.equal(buf.subarray(0, 5).toString('ascii'), '%PDF-')
+})
+
+test('buildItineraryPdf calls the map fetcher with the itinerary stops', async () => {
+  const calls = []
+  const getMap = async (stops) => {
+    calls.push(stops)
+    return null
+  }
+  await buildItineraryPdf(itinerary, { getMap })
+  assert.equal(calls.length, 1)
+  assert.ok(Array.isArray(calls[0]))
+  assert.equal(calls[0][0].name, 'Blue Bottle')
+})
+
+test('buildItineraryPdf degrades to text-only when the map image is corrupt', async () => {
+  // A non-PNG buffer: pdfkit's image() would throw, but drawMap must catch it and
+  // still return a valid PDF (fail-soft — a bad map never fails the export).
+  const getMap = async () => Buffer.from('not a real image')
+  const buf = await buildItineraryPdf(itinerary, { getMap })
+  assert.ok(Buffer.isBuffer(buf) && buf.length > 0)
+  assert.equal(buf.subarray(0, 5).toString('ascii'), '%PDF-')
+})

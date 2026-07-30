@@ -7,18 +7,28 @@
 import PDFDocument from 'pdfkit'
 import SVGtoPDF from 'svg-to-pdfkit'
 import { buildItinerarySummaryData } from '../../utils/itinerarySummary.js'
+import { fetchStaticMap } from '../../lib/staticMap.js'
 import { COLORS, FONTS, registerFonts, COMPASS_SVG } from './pdfBrand.js'
 
-const PAGE = { size: 'A4', margin: 48 }
-const BAND_HEIGHT = 72 // moss header band (compass + wordmark only)
-const COMPASS_SIZE = 40 // wordmark compass, left of "NavQuest"
+const PAGE = { size: 'A4', margin: 40 }
+const BAND_HEIGHT = 54 // header band (compass + wordmark only)
+const COMPASS_SIZE = 32 // wordmark compass, left of "NavQuest"
 
-// Draws the header: a moss band carrying the compass + "NavQuest" wordmark, then
-// the trip title (large Fraunces) and subtitle below the band, closed by a rule.
+// Draws the header: a cream band matching the website navbar (solid #f6efe1 fill,
+// moss wordmark, subtle warm bottom border) carrying the compass + "NavQuest"
+// wordmark, then the trip title (large Fraunces) and subtitle below the band,
+// closed by a rule.
 function drawHeader(doc, { title, subtitle }) {
   const { width } = doc.page
   doc.save()
-  doc.rect(0, 0, width, BAND_HEIGHT).fill(COLORS.moss)
+  // Cream band + subtle warm bottom border, mirroring the navbar treatment.
+  doc.rect(0, 0, width, BAND_HEIGHT).fill(COLORS.cream)
+  doc
+    .moveTo(0, BAND_HEIGHT)
+    .lineTo(width, BAND_HEIGHT)
+    .lineWidth(1)
+    .strokeColor(COLORS.roadLine)
+    .stroke()
 
   const left = PAGE.margin
   // Compass, vertically centred in the band. svg-to-pdfkit scales the 100×100
@@ -30,27 +40,27 @@ function drawHeader(doc, { title, subtitle }) {
     assumePt: true,
   })
 
-  // "NavQuest" wordmark to the right of the compass, baseline-aligned in the band.
+  // "NavQuest" wordmark to the right of the compass, in moss to match the navbar.
   doc
     .font(FONTS.heading.name)
-    .fontSize(24)
-    .fillColor(COLORS.onBand)
-    .text('NavQuest', left + COMPASS_SIZE + 14, BAND_HEIGHT / 2 - 16)
+    .fontSize(21)
+    .fillColor(COLORS.moss)
+    .text('NavQuest', left + COMPASS_SIZE + 12, BAND_HEIGHT / 2 - 14)
   doc.restore()
 
   // Trip title below the band, large, in moss.
-  let y = BAND_HEIGHT + 22
+  let y = BAND_HEIGHT + 14
   doc
     .font(FONTS.heading.name)
     .fontSize(20)
     .fillColor(COLORS.moss)
     .text(title, PAGE.margin, y, { width: width - PAGE.margin * 2 })
-  y = doc.y + 4
+  y = doc.y + 2
 
   // Subtitle in stone.
   if (subtitle) {
     doc.font(FONTS.body.name).fontSize(10.5).fillColor(COLORS.stone).text(subtitle, PAGE.margin, y)
-    y = doc.y + 10
+    y = doc.y + 6
   }
   // Accent rule.
   doc
@@ -59,7 +69,7 @@ function drawHeader(doc, { title, subtitle }) {
     .lineWidth(1.5)
     .strokeColor(COLORS.sunset)
     .stroke()
-  return y + 18
+  return y + 12
 }
 
 // Draws one stop row starting at `y`; returns the y after the row (incl. spacing).
@@ -94,13 +104,8 @@ function drawStop(doc, stop, y) {
     .fillColor(COLORS.moss)
     .text(stop.name, nameLeft, lineY, { width: doc.page.width - PAGE.margin - nameLeft })
 
-  let cursor = doc.y + 2
+  let cursor = doc.y + 1
 
-  // Muted category.
-  if (stop.category) {
-    doc.font(FONTS.body.name).fontSize(9.5).fillColor(COLORS.stone).text(stop.category, contentLeft, cursor, { width: contentWidth })
-    cursor = doc.y + 1
-  }
   // Small travel sub-line.
   if (stop.travelToNext !== null) {
     doc
@@ -111,15 +116,20 @@ function drawStop(doc, stop, y) {
       .text(`› ${stop.travelToNext} min to next stop`, contentLeft, cursor, { width: contentWidth })
     cursor = doc.y
   }
-  return cursor + 12
+  return cursor + 8
 }
 
-// Footer on every page: NavQuest mark + page number, in muted stone.
+// Footer on every page: NavQuest mark + page number, in muted stone. The footer
+// sits in the bottom margin (below the printable area); pdfkit would treat text
+// past the bottom margin as overflow and append a blank page, so we zero the
+// page's bottom margin for the duration of the stamp and restore it after.
 function drawFooter(doc) {
   const range = doc.bufferedPageRange()
   for (let i = range.start; i < range.start + range.count; i += 1) {
     doc.switchToPage(i)
-    const y = doc.page.height - 34
+    const savedBottom = doc.page.margins.bottom
+    doc.page.margins.bottom = 0
+    const y = doc.page.height - 30
     doc
       .font(FONTS.body.name)
       .fontSize(8.5)
@@ -128,13 +138,69 @@ function drawFooter(doc) {
         `NavQuest · page ${i - range.start + 1} of ${range.count}`,
         PAGE.margin,
         y,
-        { width: doc.page.width - PAGE.margin * 2, align: 'center' },
+        { width: doc.page.width - PAGE.margin * 2, align: 'center', lineBreak: false },
       )
+    doc.page.margins.bottom = savedBottom
   }
 }
 
-export function buildItineraryPdf(itinerary) {
+// Aspect ratio (w:h) we request the static map at, mirroring lib/staticMap's cap.
+const MAP_ASPECT = 1200 / 800
+
+// Draws a left-aligned "Map" heading (same size as the trip title) closed by a
+// sunset accent rule — matching the header — then the fetched map PNG below the stops,
+// scaled to the content width. Starts a new page if the block wouldn't fit under
+// the current cursor. No-op when `mapImage` is null (fetch failed / no coords /
+// no key), so the PDF degrades to text-only. Returns the y after the map.
+function drawMap(doc, mapImage, y) {
+  if (!mapImage) return y
+
+  const contentWidth = doc.page.width - PAGE.margin * 2
+  const imgHeight = contentWidth / MAP_ASPECT
+  const headingH = 40 // "Map" heading + accent rule + gaps
+  const blockH = headingH + imgHeight
+
+  // Move to a fresh page if the whole map block wouldn't fit above the footer.
+  if (y + blockH > doc.page.height - 60) {
+    doc.addPage()
+    y = PAGE.margin
+  }
+
+  // Guard the image draw: a corrupt/unsupported PNG from the map service would
+  // otherwise throw and fail the whole export. Fall back to text-only.
+  try {
+    // Left-aligned "Map" heading, same size/colour as the trip title.
+    doc
+      .font(FONTS.heading.name)
+      .fontSize(20)
+      .fillColor(COLORS.moss)
+      .text('Map', PAGE.margin, y, { width: contentWidth })
+    let cursor = doc.y + 6
+    // Sunset accent rule, matching the header.
+    doc
+      .moveTo(PAGE.margin, cursor)
+      .lineTo(doc.page.width - PAGE.margin, cursor)
+      .lineWidth(1.5)
+      .strokeColor(COLORS.sunset)
+      .stroke()
+    cursor += 12
+    doc.image(mapImage, PAGE.margin, cursor, { width: contentWidth, height: imgHeight })
+    return cursor + imgHeight
+  } catch (err) {
+    console.error('drawMap: failed to embed map image:', err)
+    return y
+  }
+}
+
+// buildPdf deps are injectable so tests run without hitting the map service.
+const DEFAULT_DEPS = { getMap: fetchStaticMap }
+
+export async function buildItineraryPdf(itinerary, deps = {}) {
+  const { getMap } = { ...DEFAULT_DEPS, ...deps }
   const data = buildItinerarySummaryData(itinerary)
+
+  // Fetch the static map up front (fail-soft: null if it can't be produced).
+  const mapImage = await getMap(data.stops)
 
   return new Promise((resolve, reject) => {
     // bufferPages lets us stamp "page X of Y" once the total is known.
@@ -167,6 +233,9 @@ export function buildItineraryPdf(itinerary) {
         .strokeColor(COLORS.creamDeep)
         .stroke()
     }
+
+    // Visual map with numbered markers, below the stop list.
+    y = drawMap(doc, mapImage, y + 8)
 
     drawFooter(doc)
     doc.end()

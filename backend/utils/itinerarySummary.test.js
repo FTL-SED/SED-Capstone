@@ -50,6 +50,8 @@ test('buildItinerarySummaryData: structured parts per stop for the PDF renderer'
     name: 'Blue Bottle',
     category: 'cafe',
     travelToNext: 12,
+    latitude: null, // fixture pins carry no coords
+    longitude: null,
   })
   assert.match(d.stops[0].time, /–/) // start–end range
   assert.equal(d.stops[1].name, 'Golden Gate Park')
@@ -72,7 +74,18 @@ test('buildItinerarySummaryData: missing fields degrade to empty/null, no crash 
     name: 'Mystery Spot',
     category: '',
     travelToNext: null,
+    latitude: null,
+    longitude: null,
   })
+})
+
+test('buildItinerarySummaryData: passes through pin coordinates for the PDF map', () => {
+  const d = buildItinerarySummaryData({
+    title: 'Located',
+    pins: [{ name: 'Ferry Building', latitude: 37.7955, longitude: -122.3937 }],
+  })
+  assert.equal(d.stops[0].latitude, 37.7955)
+  assert.equal(d.stops[0].longitude, -122.3937)
 })
 
 test('buildItinerarySummaryData: falls back to "Itinerary" when title missing', () => {
