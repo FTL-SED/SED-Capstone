@@ -42,6 +42,26 @@ async function uploadItineraryCoverImage({ path, buffer, contentType }) {
   return uploadImage({ bucket: ITINERARY_COVER_BUCKET, path, buffer, contentType })
 }
 
+// Removes an itinerary's cover object(s) from the `itinerary-covers` bucket.
+// The upload keys the object by mimetype-derived extension (`${id}/cover.png`),
+// so we list everything under the `${id}/` prefix and remove it rather than
+// guessing the extension. No-op if the folder is already empty.
+async function removeItineraryCoverImage(id) {
+  const { data: objects, error: listError } = await supabaseAdmin.storage
+    .from(ITINERARY_COVER_BUCKET)
+    .list(String(id))
+
+  if (listError) throw listError
+  if (!objects?.length) return
+
+  const paths = objects.map((obj) => `${id}/${obj.name}`)
+  const { error: removeError } = await supabaseAdmin.storage
+    .from(ITINERARY_COVER_BUCKET)
+    .remove(paths)
+
+  if (removeError) throw removeError
+}
+
 // Changes a user's password via the admin API. Used by the account page's
 // password change, after the caller's current password has been re-verified.
 // Kept in lib/ so service-role access stays confined here.
@@ -53,4 +73,4 @@ async function updateUserPassword(authUserId, password) {
 }
 
 export default supabase
-export { uploadAvatar, uploadItineraryCoverImage, updateUserPassword }
+export { uploadAvatar, uploadItineraryCoverImage, removeItineraryCoverImage, updateUserPassword }

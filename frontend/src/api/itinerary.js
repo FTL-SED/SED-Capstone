@@ -143,6 +143,13 @@ export async function uploadItineraryCover(id, file) {
   return data
 }
 
+// DELETE /itineraries/:id/cover — remove the cover of an itinerary the caller
+// owns: deletes the stored file and clears the URL. Returns the updated itinerary.
+export async function deleteItineraryCover(id) {
+  const { data } = await api.delete(`/itineraries/${id}/cover`)
+  return data
+}
+
 // PUT /itineraries/:id/stops/order — reorder a stop (owner only). Body:
 // { stopIds } — every stop id of the itinerary, in the new order. The backend
 // recomputes each stop's time + travel and returns the updated itinerary.

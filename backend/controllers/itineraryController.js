@@ -4,7 +4,7 @@ import * as likes from '../models/likes.js'
 import * as bookmarks from '../models/bookmarks.js'
 import * as visited from '../models/visited.js'
 import { parseIdParam, parseDate, loadOrNotFound, loadOwned } from './helpers.js'
-import { uploadItineraryCoverImage } from '../lib/supabase.js'
+import { uploadItineraryCoverImage, removeItineraryCoverImage } from '../lib/supabase.js'
 import { computeReorder } from '../services/itinerary/reorderStops.js'
 
 // POST /itineraries
@@ -508,6 +508,31 @@ async function uploadItineraryCover(req, res) {
   }
 }
 
+// DELETE /itineraries/:id/cover
+// Removes the caller's cover: deletes the Storage object(s) and nulls the URL on
+// the itinerary. Owner-gated via loadOwned. The DB null is the source of truth
+// for whether a cover shows, so a Storage remove failure is logged but does not
+// fail the request — the itinerary still ends up with no cover.
+async function removeItineraryCover(req, res) {
+  const id = parseIdParam(req, res, 'itinerary id')
+  if (id === null) return
+
+  const owned = await loadOwned(res, itineraries.findByIdBasic, id, req.user.id, {
+    label: 'Itinerary',
+    action: 'modify',
+  })
+  if (!owned) return
+
+  try {
+    await removeItineraryCoverImage(id)
+  } catch (err) {
+    console.error('removeItineraryCover storage error:', err)
+  }
+
+  const updated = await itineraries.update(id, { coverImageUrl: null })
+  return res.status(200).json(updated)
+}
+
 export {
   createItinerary,
   listItineraries,
@@ -523,4 +548,5 @@ export {
   unmarkVisited,
   copyItinerary,
   uploadItineraryCover,
+  removeItineraryCover,
 }
