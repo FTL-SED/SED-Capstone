@@ -39,13 +39,6 @@ function MemberCard({ index, member, onChange, onRemove, showFoodPrefs = true })
         onChange={(e) => set('name', e.target.value)}
       />
 
-      <TextInput
-        type="email"
-        placeholder="Email (optional — for sharing the itinerary)"
-        value={member.email ?? ''}
-        onChange={(e) => set('email', e.target.value)}
-      />
-
       <label className="member-card__label">Starting location</label>
       <AddressPicker
         placeholder="Enter this member's starting location"

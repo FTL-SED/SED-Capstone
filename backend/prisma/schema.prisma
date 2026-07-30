@@ -189,7 +189,6 @@ model ItineraryMember {
   interestTags  String[]  // this member's chosen interests
   foodPrefs     String[]  // this member's food/cuisine prefs
   diets         String[]  // this member's dietary requirements
-  email         String?   // optional; collected in the wizard, used for email export
   itinerary     Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
 
   @@index([itineraryId])

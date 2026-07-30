@@ -59,10 +59,11 @@ export async function copyItinerary(id) {
   return data
 }
 
-// POST /itineraries/:id/export/email — owner-only. Emails a PDF of the itinerary to
-// its group members (BCC). Returns { sent: [{name,email}], skipped: [{name}] }.
-export async function emailItinerary(id) {
-  const { data } = await api.post(`/itineraries/${id}/export/email`)
+// POST /itineraries/:id/export/email — emails a PDF of the itinerary to an ad-hoc
+// list of addresses (any viewer of a visible itinerary). `emails` is a string[].
+// Returns { sent: [{email}], failed: [{email}] }.
+export async function emailItinerary(id, emails) {
+  const { data } = await api.post(`/itineraries/${id}/export/email`, { emails })
   return data
 }
 

@@ -173,9 +173,6 @@ function memberRows(members) {
       interestTags: Array.isArray(m.interestTags) ? m.interestTags : [],
       foodPrefs: Array.isArray(m.foodPrefs) ? m.foodPrefs : [],
       diets: Array.isArray(m.diet) ? m.diet : [],
-      // Optional per-member email, collected in the wizard; used by the email
-      // export. Trim + normalize to null so blank strings never become recipients.
-      email: typeof m.email === 'string' && m.email.trim() ? m.email.trim() : null,
     }
   })
 }

@@ -5,7 +5,6 @@ import SaveCopyButton from '../SaveCopyButton/SaveCopyButton.jsx'
 import LikeButton from '../LikeButton/LikeButton.jsx'
 import VisitedButton from '../VisitedButton/VisitedButton.jsx'
 import PrivacyButton from '../PrivacyButton/PrivacyButton.jsx'
-import ExportButton from '../ExportButton/ExportButton.jsx'
 
 function ActionBar({
   isOwner = true,
@@ -26,8 +25,7 @@ function ActionBar({
   onSaveEdit,
   onCancelEdit,
   editBusy = false,
-  onCopyText,
-  onEmail,
+  onExport,
 }) {
   // While the owner is editing the itinerary's metadata, the bar collapses to
   // Save/Cancel so the destructive/social actions can't fire mid-edit.
@@ -56,7 +54,9 @@ function ActionBar({
           <BookmarkButton bookmarked={bookmarked} onClick={onToggleBookmark} />
           <LikeButton liked={liked} likeCount={likeCount} onClick={onToggleLike} />
           <VisitedButton visited={visited} onClick={onMarkVisited} />
-          <ExportButton isOwner={isOwner} onCopy={onCopyText} onEmail={onEmail} />
+          <button type="button" className="action-btn" onClick={onExport}>
+            Export
+          </button>
         </>
       ) : (
         <>
@@ -64,7 +64,9 @@ function ActionBar({
           <SaveCopyButton onClick={onCopy} copied={copied} />
           <LikeButton liked={liked} likeCount={likeCount} onClick={onToggleLike} />
           <VisitedButton visited={visited} onClick={onMarkVisited} />
-          <ExportButton isOwner={isOwner} onCopy={onCopyText} onEmail={onEmail} />
+          <button type="button" className="action-btn" onClick={onExport}>
+            Export
+          </button>
         </>
       )}
     </div>

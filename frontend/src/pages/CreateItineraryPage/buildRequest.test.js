@@ -99,27 +99,3 @@ test('includes trip.includeMeals from the form', () => {
   assert.equal(buildRecommendationBody({ ...base, includeMeals: false }).trip.includeMeals, false)
 })
 
-test('carries member email through, omitting blanks', () => {
-  const form = {
-    ...baseForm,
-    members: [
-      {
-        name: 'Ava',
-        email: ' ava@example.com ',
-        location: { latitude: 1, longitude: 2 },
-        interestTags: [],
-        foodPrefs: [],
-      },
-      {
-        name: 'Bo',
-        email: '',
-        location: { latitude: 3, longitude: 4 },
-        interestTags: [],
-        foodPrefs: [],
-      },
-    ],
-  }
-  const { members } = buildRecommendationBody(form)
-  assert.equal(members[0].email, 'ava@example.com')
-  assert.equal(members[1].email, undefined)
-})

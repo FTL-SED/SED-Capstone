@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams, useNavigate } from 'react-router-dom'
 import ItineraryPanel from './ItineraryPanel/ItineraryPanel.jsx'
 import MapView from './MapView/MapView.jsx'
+import ExportModal from './ExportModal/ExportModal.jsx'
 import ErrorMessage from '../../components/ErrorMessage/ErrorMessage.jsx'
 import LoadingSection from '../LoadingPage/LoadingSection/LoadingSection.jsx'
 import { useLikeBookmark } from '../../hooks/useLikeBookmark.js'
@@ -359,6 +360,9 @@ function ItineraryPage() {
   // to the written view; ignored on desktop, where both show side by side.
   const [activeTab, setActiveTab] = useState('written');
 
+  // Whether the Export modal (ad-hoc email + copy) is open.
+  const [exportOpen, setExportOpen] = useState(false);
+
   // Any viewer: copy the itinerary as plain text. Uses the Clipboard API with a
   // hidden-textarea fallback for non-HTTPS / older browsers.
   const handleCopyText = async () => {
@@ -380,16 +384,9 @@ function ItineraryPage() {
     }
   }
 
-  // Owner-only: email the itinerary PDF to the group. Returns a status string for
-  // the ExportButton to show.
-  const handleEmail = async () => {
-    const res = await emailItinerary(id)
-    const sent = res.sent?.length ?? 0
-    const skipped = res.skipped?.length ?? 0
-    return skipped > 0
-      ? `Sent to ${sent} member${sent === 1 ? '' : 's'}, ${skipped} skipped — no email on file`
-      : `Sent to ${sent} member${sent === 1 ? '' : 's'}`
-  }
+  // Email the itinerary PDF to an ad-hoc list of addresses typed in the export
+  // modal. Returns the raw { sent, failed } result; the modal renders the status.
+  const handleEmail = async (emails) => emailItinerary(id, emails)
 
   // Owner-only: add a catalog venue as a new stop, appended at the end. The
   // backend has no auto-scheduler, so we assign the next order slot and default
@@ -496,8 +493,7 @@ function ItineraryPage() {
         onCopy={handleCopy}
         copied={copied}
         onMarkVisited={() => toggleVisited(numId, itinerary)}
-        onCopyText={handleCopyText}
-        onEmail={handleEmail}
+        onExport={() => setExportOpen(true)}
         onRemoveStop={handleRemoveStop}
         onEditStop={handleEditStop}
         onAddStop={handleAddStop}
@@ -508,6 +504,12 @@ function ItineraryPage() {
         actionBusy={actionBusy}
       />
       <MapView pins={itinerary.pins} meetingPoint={meetingPoint} radiusMi={radiusMi} />
+      <ExportModal
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        onSend={handleEmail}
+        onCopy={handleCopyText}
+      />
     </div>
   );
 }
