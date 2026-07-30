@@ -16,6 +16,7 @@ import {
   copyItinerary,
   uploadItineraryCover,
 } from '../controllers/itineraryController.js'
+import { exportItineraryEmail } from '../controllers/exportController.js'
 import { requireAuth } from '../middleware/auth.js'
 
 const router = express.Router()
@@ -46,5 +47,7 @@ router.delete('/:id/visited', requireAuth, unmarkVisited)
 router.post('/:id/copy', requireAuth, copyItinerary)
 
 router.post('/:id/cover', requireAuth, upload.single('cover'), uploadItineraryCover)
+
+router.post('/:id/export/email', requireAuth, exportItineraryEmail)
 
 export default router

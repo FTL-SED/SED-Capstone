@@ -98,3 +98,4 @@ test('includes trip.includeMeals from the form', () => {
   assert.equal(buildRecommendationBody({ ...base, includeMeals: true }).trip.includeMeals, true)
   assert.equal(buildRecommendationBody({ ...base, includeMeals: false }).trip.includeMeals, false)
 })
+

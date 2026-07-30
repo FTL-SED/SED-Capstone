@@ -59,6 +59,14 @@ export async function copyItinerary(id) {
   return data
 }
 
+// POST /itineraries/:id/export/email — emails a PDF of the itinerary to an ad-hoc
+// list of addresses (any viewer of a visible itinerary). `emails` is a string[].
+// Returns { sent: [{email}], failed: [{email}] }.
+export async function emailItinerary(id, emails) {
+  const { data } = await api.post(`/itineraries/${id}/export/email`, { emails })
+  return data
+}
+
 // GET /users/:id — the owner's dashboard, including createdItineraries plus
 // likedItineraries / bookmarkedItineraries (owner-only; the backend 403s for
 // another user's id). Used to hydrate the home page's liked/bookmarked state.

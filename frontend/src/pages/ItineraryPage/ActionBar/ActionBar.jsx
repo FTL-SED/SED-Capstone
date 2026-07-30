@@ -25,6 +25,7 @@ function ActionBar({
   onSaveEdit,
   onCancelEdit,
   editBusy = false,
+  onExport,
 }) {
   // While the owner is editing the itinerary's metadata, the bar collapses to
   // Save/Cancel so the destructive/social actions can't fire mid-edit.
@@ -53,6 +54,9 @@ function ActionBar({
           <BookmarkButton bookmarked={bookmarked} onClick={onToggleBookmark} />
           <LikeButton liked={liked} likeCount={likeCount} onClick={onToggleLike} />
           <VisitedButton visited={visited} onClick={onMarkVisited} />
+          <button type="button" className="action-btn" onClick={onExport}>
+            Export
+          </button>
         </>
       ) : (
         <>
@@ -60,6 +64,9 @@ function ActionBar({
           <SaveCopyButton onClick={onCopy} copied={copied} />
           <LikeButton liked={liked} likeCount={likeCount} onClick={onToggleLike} />
           <VisitedButton visited={visited} onClick={onMarkVisited} />
+          <button type="button" className="action-btn" onClick={onExport}>
+            Export
+          </button>
         </>
       )}
     </div>
