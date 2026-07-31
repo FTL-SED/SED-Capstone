@@ -77,11 +77,6 @@ function UserSearch({ onSelect }) {
                 />
                 <span className="user-search__text">
                   <span className="user-search__username">{u.username}</span>
-                  {u.interestTags?.length > 0 && (
-                    <span className="user-search__hint">
-                      {u.interestTags.slice(0, 3).join(', ')}
-                    </span>
-                  )}
                 </span>
               </button>
             </li>
