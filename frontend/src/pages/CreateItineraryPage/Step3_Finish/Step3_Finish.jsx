@@ -16,6 +16,7 @@ function Step3_Finish({ form, update, onBack, goTo }) {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [showBannerModal, setShowBannerModal] = useState(false);
+  const [coverError, setCoverError] = useState('');
 
   // Build an object URL for the chosen file so the thumbnail updates live.
   const preview = useMemo(() => {
@@ -34,6 +35,7 @@ function Step3_Finish({ form, update, onBack, goTo }) {
   const handleFileChange = (e) => {
     const file = e.target.files?.[0] ?? null;
     update('coverImageFile', file);
+    if (file) setCoverError('');
   };
 
   const handleRemoveImage = () => {
@@ -46,7 +48,10 @@ function Step3_Finish({ form, update, onBack, goTo }) {
   const hasCover = Boolean(form.coverImageFile);
 
   const handleFinish = () => {
-    if (!hasCover) return;
+    if (!hasCover) {
+      setCoverError('Please add a cover image — upload one or generate it with AI.');
+      return;
+    }
     navigate('/loading', { state: { form } });
   };
 
@@ -106,12 +111,13 @@ function Step3_Finish({ form, update, onBack, goTo }) {
             ✨ AI
           </button>
         </div>
+        {coverError && <p className="step3-finish__error" role="alert">{coverError}</p>}
       </div>
 
       <PrivacyField form={form} update={update} />
       <div className="step3-finish__nav">
         <BackButton onClick={onBack} />
-        <FinishButton onClick={handleFinish} disabled={!hasCover} />
+        <FinishButton onClick={handleFinish} />
       </div>
 
       {showBannerModal && (
@@ -119,6 +125,7 @@ function Step3_Finish({ form, update, onBack, goTo }) {
           details={{ title: form.title, location: form.location, description: form.description }}
           onUse={(file) => {
             update('coverImageFile', file);
+            setCoverError('');
             setShowBannerModal(false);
           }}
           onClose={() => setShowBannerModal(false)}

@@ -32,6 +32,13 @@
   color: var(--slate-500, #6e6656);
 }
 
+.step3-finish__error {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--danger, #c0392b);
+}
+
 /* Upload button + the compact AI button sit side by side. */
 .step3-finish__cover-actions {
   display: flex;
