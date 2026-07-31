@@ -22,10 +22,11 @@ import { requireAuth } from '../middleware/auth.js'
 const router = express.Router()
 
 // Cover images go straight to Supabase Storage, so keep the file in memory
-// (never on disk) and cap the size to keep uploads sane. Matches the avatar route.
+// (never on disk) and cap the size to keep uploads sane. Raised to 15 MB to
+// accommodate AI-generated banners (gpt-image-1 1536×1024 PNGs often reach 2–5 MB).
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15 MB
 })
 
 router.post('/', requireAuth, createItinerary)

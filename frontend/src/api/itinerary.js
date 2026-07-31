@@ -143,6 +143,16 @@ export async function uploadItineraryCover(id, file) {
   return data
 }
 
+// POST /ai-agent/banner — generate an AI cover banner from the itinerary details
+// + a free-text style prompt. Returns { image (base64), mediaType }. The image
+// is held in the wizard until the user picks one; only then is it uploaded via
+// uploadItineraryCover. Hits a live image model, so allow a generous timeout.
+const BANNER_TIMEOUT_MS = 120_000
+export async function generateBanner(body) {
+  const { data } = await api.post('/ai-agent/banner', body, { timeout: BANNER_TIMEOUT_MS })
+  return data
+}
+
 // PUT /itineraries/:id/stops/order — reorder a stop (owner only). Body:
 // { stopIds } — every stop id of the itinerary, in the new order. The backend
 // recomputes each stop's time + travel and returns the updated itinerary.

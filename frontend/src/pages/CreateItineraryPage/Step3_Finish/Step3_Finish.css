@@ -82,3 +82,24 @@
   border-color: var(--accent, #e67e34);
   color: var(--accent-strong, #cf6a2f);
 }
+
+.step3-finish__ai-banner {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px dashed var(--border-strong, #ddcca6);
+  border-radius: var(--radius-pill, 999px);
+  background: transparent;
+  color: var(--accent, #e67e34);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease;
+  margin-left: 10px;
+}
+
+.step3-finish__ai-banner:hover {
+  border-color: var(--accent, #e67e34);
+  color: var(--accent-strong, #cf6a2f);
+}

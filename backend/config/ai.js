@@ -330,3 +330,23 @@ const INFEASIBLE_SCHEMA = {
 export const ITINERARY_SCHEMA = {
   oneOf: [ITINERARY_SUCCESS_SCHEMA, INFEASIBLE_SCHEMA],
 }
+
+// --- AI banner generation (gpt-image-1) ---------------------------------
+// Cover-image generation for the create-itinerary wizard. Separate from the
+// sequencing model above: this is an IMAGE model, called via lib/imageClient.js.
+
+// OpenAI image model id. gpt-image-1 is OpenAI's current text-to-image model.
+export const BANNER_MODEL = 'gpt-image-1'
+
+// Landscape, banner-shaped output — the cover renders wide (see CoverImage).
+export const BANNER_IMAGE_SIZE = '1536x1024'
+
+// Cap on the user's free-text style prompt, to bound the request and cost.
+export const BANNER_PROMPT_MAX_CHARS = 500
+
+// Per-user rate limit on POST /ai-agent/banner: at most 10 generations per
+// rolling hour. This is the real cost guardrail (the 3-cap above is bypassable
+// by refreshing the wizard).
+export const BANNER_RATE_LIMIT_MAX = Number(process.env.BANNER_RATE_LIMIT_MAX) || 10
+export const BANNER_RATE_LIMIT_WINDOW_MS =
+  Number(process.env.BANNER_RATE_LIMIT_WINDOW_MS) || 60 * 60 * 1000

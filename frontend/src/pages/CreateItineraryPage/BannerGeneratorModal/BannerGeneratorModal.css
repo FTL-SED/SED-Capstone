@@ -1,0 +1,292 @@
+/* Banner Generator Modal - matches NavQuest's minimal aesthetic */
+
+/* Full-screen overlay: dim background, flex-centered */
+.banner-modal__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.6); /* --ink with opacity */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+}
+
+/* Modal card: white surface, matches PinDetailModal pattern */
+.banner-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 600px;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 24px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Header section */
+.banner-modal__header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.banner-modal__header h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0;
+}
+
+.banner-modal__hint {
+  font-size: 0.875rem;
+  color: var(--slate-500);
+  margin: 0;
+}
+
+/* Preview area: landscape aspect ratio for generated banner */
+.banner-modal__preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--surface-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.banner-modal__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Shimmer loading state: animated gradient sweep */
+.banner-modal__shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    var(--surface-muted) 0%,
+    var(--accent-soft) 50%,
+    var(--surface-muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Empty state text */
+.banner-modal__empty {
+  font-size: 0.875rem;
+  color: var(--slate-400);
+  text-align: center;
+  padding: 0 24px;
+}
+
+/* Thumbnail history strip */
+.banner-modal__history {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.banner-modal__thumb {
+  width: 80px;
+  height: 54px; /* maintains ~3:2 aspect */
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border);
+  overflow: hidden;
+  background: var(--surface-muted);
+  cursor: pointer;
+  transition: border-color 0.18s ease, transform 0.18s ease;
+  padding: 0;
+}
+
+.banner-modal__thumb:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.banner-modal__thumb--active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.banner-modal__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Textarea input */
+.banner-modal__input {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--slate-600);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.banner-modal__input::placeholder {
+  color: var(--slate-400);
+}
+
+.banner-modal__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.banner-modal__input:disabled {
+  background: var(--surface-muted);
+  color: var(--slate-400);
+  cursor: not-allowed;
+}
+
+/* Counter text */
+.banner-modal__counter {
+  font-size: 0.8125rem;
+  color: var(--slate-500);
+  text-align: right;
+  margin: -8px 0 0;
+}
+
+/* Error message */
+.banner-modal__error {
+  padding: 10px 14px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: var(--radius);
+  border: 1px solid var(--danger);
+}
+
+/* Action buttons row */
+.banner-modal__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* Cancel button: ghost style */
+.banner-modal__cancel {
+  padding: 10px 20px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--slate-600);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.banner-modal__cancel:hover {
+  background: var(--surface-muted);
+  border-color: var(--slate-600);
+  color: var(--ink);
+}
+
+/* Generate button: primary accent */
+.banner-modal__generate {
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: white;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.banner-modal__generate:hover:not(:disabled) {
+  background: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.banner-modal__generate:disabled {
+  background: var(--slate-400);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Use button: primary accent */
+.banner-modal__use {
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: white;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.banner-modal__use:hover:not(:disabled) {
+  background: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.banner-modal__use:disabled {
+  background: var(--slate-400);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 640px) {
+  .banner-modal__overlay {
+    padding: 16px;
+  }
+
+  .banner-modal {
+    padding: 20px;
+    max-height: 95vh;
+  }
+
+  .banner-modal__header h2 {
+    font-size: 1.25rem;
+  }
+
+  .banner-modal__actions {
+    flex-wrap: wrap;
+  }
+
+  .banner-modal__cancel,
+  .banner-modal__generate,
+  .banner-modal__use {
+    flex: 1;
+    min-width: 100px;
+  }
+}
