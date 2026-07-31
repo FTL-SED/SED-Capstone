@@ -46,3 +46,25 @@
   width: 18px;
   height: 18px;
 }
+
+.login-form__link {
+  background: none;
+  border: none;
+  padding: 0;
+  align-self: center;
+  color: inherit;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+.login-form__link:hover {
+  opacity: 1;
+}
+
+.login-form__hint {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}

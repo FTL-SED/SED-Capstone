@@ -6,7 +6,7 @@ import ConfirmationMessage from '../../../components/ConfirmationMessage/Confirm
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import { signInWithGoogle, completeOAuthSignIn } from '../../../api/auth.js'
+import { signInWithGoogle, completeOAuthSignIn, sendPasswordReset } from '../../../api/auth.js'
 import './LoginForm.css'
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -19,6 +19,8 @@ function LoginForm({setCurrentUser}) {
   const navigate = useNavigate();
   const location = useLocation();
   const [success] = useState(location.state?.message || "");
+  const [mode, setMode] = useState('login'); // 'login' | 'forgot'
+  const [resetSent, setResetSent] = useState(false);
 
   const handleSubmit = async (e) => {
     const userData = { email, password };
@@ -68,6 +70,30 @@ function LoginForm({setCurrentUser}) {
     }
   };
 
+  // Send a password-reset email. Always show the same neutral confirmation
+  // whether or not the email is registered (anti-enumeration); only surface an
+  // error on a real client/network failure.
+  const handleForgot = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await sendPasswordReset(email);
+      setResetSent(true);
+    } catch {
+      setError("Couldn't send the reset email. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (location.state?.message) {
       // Wipe the state so a refresh/back-nav doesn't show the message again.
@@ -96,43 +122,84 @@ function LoginForm({setCurrentUser}) {
 
   return (
     <form className="login-form">
-      <TextInput 
-        placeholder="Email" 
-        type="email" 
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+      {mode === 'login' ? (
+        <>
+          <TextInput
+            placeholder="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-      <PasswordInput 
-        placeholder="Password" 
-        value={password} 
-        onChange={(e) => setPassword(e.target.value)}
-      />
+          <PasswordInput
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-      <ErrorMessage message={error}/>
-      <ConfirmationMessage message={success} />
-      <SubmitButton
-        label="Log In"
-        onClick={handleSubmit}
-        loading={loading}
-      />
+          <ErrorMessage message={error}/>
+          <ConfirmationMessage message={success} />
+          <SubmitButton
+            label="Log In"
+            onClick={handleSubmit}
+            loading={loading}
+          />
 
-      <div className="login-form__divider"><span>or</span></div>
+          <button
+            type="button"
+            className="login-form__link"
+            onClick={() => { setError(""); setMode('forgot'); }}
+          >
+            Forgot password?
+          </button>
 
-      <button
-        type="button"
-        className="google-button"
-        onClick={handleGoogle}
-      >
-        <img
-          className="google-button__icon"
-          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-          alt=""
-          aria-hidden="true"
-        />
-        Continue with Google
-      </button>
+          <div className="login-form__divider"><span>or</span></div>
 
+          <button
+            type="button"
+            className="google-button"
+            onClick={handleGoogle}
+          >
+            <img
+              className="google-button__icon"
+              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+              alt=""
+              aria-hidden="true"
+            />
+            Continue with Google
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="login-form__hint">
+            Enter your email and we'll send you a link to reset your password.
+          </p>
+          <TextInput
+            placeholder="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <ErrorMessage message={error} />
+          <ConfirmationMessage
+            message={resetSent ? "If an account exists for that email, we've sent a reset link." : ""}
+          />
+          <SubmitButton
+            label="Send reset link"
+            onClick={handleForgot}
+            loading={loading}
+          />
+
+          <button
+            type="button"
+            className="login-form__link"
+            onClick={() => { setError(""); setResetSent(false); setMode('login'); }}
+          >
+            Back to log in
+          </button>
+        </>
+      )}
     </form>
   );
 }
