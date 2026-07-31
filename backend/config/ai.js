@@ -73,12 +73,15 @@ export const AI_MODEL =
   'claude-sonnet-4-5-20250929'
 // OpenAI model id, used when the client talks to OpenAI directly instead of the
 // Salesforce gateway (they namespace model ids differently, so the gateway id
-// above isn't valid there). gpt-5 is the strongest tier — chosen for reliable
-// sequencing (nano truncated its JSON under the reasoning-token budget); still
-// only a few cents per itinerary. Override with OPENAI_MODEL for a cheaper tier
-// (e.g. gpt-5-mini) if spend matters more than reliability.
+// above isn't valid there). gpt-5-mini is the default: deployed, the backend
+// sits behind Cloudflare's ~100s request cap, and full gpt-5's variable
+// reasoning latency could exceed it (a call was cut mid-flight before the
+// fallback could return). mini is materially faster and more consistent, which
+// keeps a full generation comfortably under the cap; sequencing a shortlist is
+// a shallow structured task where the quality gap is small. Override with
+// OPENAI_MODEL=gpt-5 for the strongest tier if latency headroom allows.
 export const AI_OPENAI_MODEL =
-  process.env.OPENAI_MODEL || 'gpt-5'
+  process.env.OPENAI_MODEL || 'gpt-5-mini'
 
 // Reasoning effort for OpenAI reasoning models (gpt-5 family). Sequencing a
 // shortlist is a structured, shallow task, so 'low' keeps gpt-5's quality while
@@ -88,13 +91,21 @@ export const AI_OPENAI_MODEL =
 // OPENAI_REASONING_EFFORT (low | medium | high) if you want deeper reasoning.
 export const AI_OPENAI_REASONING_EFFORT =
   process.env.OPENAI_REASONING_EFFORT || 'low'
-// gpt-5 is a reasoning model: it spends hidden thinking tokens before emitting
-// the itinerary, so a full sequencing call can take much longer than a
-// non-reasoning model. 20s was tuned for the old nano/gateway path and would
-// time out gpt-5 mid-think → needless retry → fallback. 60s gives it room while
-// still bounding how long we wait before giving up to the deterministic fallback.
-export const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS) || 60_000
-export const AI_MAX_RETRIES = Number(process.env.AI_MAX_RETRIES) || 2
+// gpt-5-family models are reasoning models: they spend hidden thinking tokens
+// before emitting the itinerary, so a call can take much longer than a
+// non-reasoning model. This timeout bounds how long we wait per attempt before
+// giving up to the deterministic fallback. 30s is deliberately set so the
+// worst case (timeout × attempts) stays UNDER the deployed Cloudflare ~100s
+// request cap: at 30s with AI_MAX_RETRIES=1 the backend gives up and returns a
+// fallback itinerary at ~60s, rather than being killed mid-request by the proxy
+// (which returned no response at all — see the deployed /ai-agent hang).
+export const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS) || 30_000
+// Transient-error retries (5xx / network / timeout). Kept at 1 so the worst
+// case is (AI_MAX_RETRIES + 1) × AI_TIMEOUT_MS = 2 × 30s = 60s, leaving headroom
+// under the deployed ~100s proxy cap for the deterministic fallback to run and
+// respond. A higher count would risk the proxy killing the request before the
+// fallback ever returns.
+export const AI_MAX_RETRIES = Number(process.env.AI_MAX_RETRIES) || 1
 
 // How many times to re-ask the model with its validation errors fed back before
 // giving up to the deterministic fallback. Distinct from AI_MAX_RETRIES (which
