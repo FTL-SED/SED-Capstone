@@ -91,7 +91,7 @@ function ExportModal({ open, onClose, onSend, onCopy }) {
       return
     }
     setBusy(true)
-    setStatus('Sending…')
+    setStatus('')
     try {
       const res = await onSend(toSend)
       const sent = res?.sent?.length ?? 0
