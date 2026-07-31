@@ -177,6 +177,16 @@ function memberRows(members) {
   })
 }
 
+// Sum the per-person cost of a generated plan's stops. Each stop carries only a
+// pinId; its cost is the matching shortlist pin's pricePerPerson (0 when the pin
+// or its price is missing). This is the generation-time twin of recalcBudget's
+// sumStopCosts (which reads persisted stops), so the budget shown on a freshly
+// generated itinerary matches the one recalculated after any later edit.
+function sumStopBudget(stops, shortlist) {
+  const priceById = new Map(shortlist.map((p) => [p.id, p.pricePerPerson ?? 0]))
+  return (stops ?? []).reduce((sum, s) => sum + (priceById.get(s.pinId) ?? 0), 0)
+}
+
 // Persist a generated itinerary for a user.
 //   itinerary = { title, location, description, stops[] } (feasible AI/fallback output)
 //   shortlist = the pins it was built from (catalog venue pins with real ids)
@@ -200,6 +210,12 @@ async function persistItinerary(itinerary, shortlist, { userId, tripDate, isPubl
 
   const memberCreate = memberRows(members)
 
+  // The stored budget is the actual per-person total of the generated stops, NOT
+  // the group's desired cap. This mirrors recalcBudget (add/edit/delete a stop),
+  // so the figure shown on a freshly generated itinerary matches the one after
+  // any later edit.
+  const budgetPerPerson = sumStopBudget(itinerary.stops, shortlist)
+
   return itineraries.create({
     userId,
     title: finalTitle,
@@ -208,9 +224,12 @@ async function persistItinerary(itinerary, shortlist, { userId, tripDate, isPubl
     coverImageUrl,
     isPublic,
     ...constraintColumns(constraints, tripDate),
+    // Override the cap that constraintColumns derives from constraints: display
+    // the summed stop total instead of the requested budget (US #1).
+    maxBudgetPerPerson: budgetPerPerson,
     stops: { create: stops },
     ...(memberCreate.length > 0 ? { members: { create: memberCreate } } : {}),
   })
 }
 
-export { persistItinerary, stopsToStops, toDateTime, fromDateTime, pacificDayISO, pacificOffset, memberRows, constraintColumns }
+export { persistItinerary, stopsToStops, toDateTime, fromDateTime, pacificDayISO, pacificOffset, memberRows, constraintColumns, sumStopBudget }

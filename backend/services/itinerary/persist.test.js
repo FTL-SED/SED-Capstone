@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { stopsToStops, toDateTime, fromDateTime, pacificDayISO, pacificOffset, memberRows, constraintColumns } from './persist.js'
+import { stopsToStops, toDateTime, fromDateTime, pacificDayISO, pacificOffset, memberRows, constraintColumns, sumStopBudget } from './persist.js'
 
 const shortlist = [
   { id: 1, name: 'Ferry Building', category: 'activity', tags: ['food'], latitude: 37.7955, longitude: -122.3937, address: 'SF', locationImageUrl: 'ferry.jpg', rating: 4.5, description: 'A market.', pricePerPerson: 0 },
@@ -112,6 +112,23 @@ test('memberRows maps group members onto ItineraryMember rows', () => {
 test('memberRows returns [] for missing/empty members', () => {
   assert.deepEqual(memberRows(undefined), [])
   assert.deepEqual(memberRows([]), [])
+})
+
+test('sumStopBudget sums each stop pin\'s pricePerPerson (the stored budget, not the cap)', () => {
+  // Ferry Building (0) + Tartine (25) = 25 per person, regardless of the group's
+  // requested cap — this is what persistItinerary stores as maxBudgetPerPerson.
+  assert.equal(sumStopBudget(stops, shortlist), 25)
+})
+
+test('sumStopBudget treats a missing pin or missing price as $0', () => {
+  const s = [{ pinId: 1 }, { pinId: 999 }] // 999 not in shortlist
+  const list = [{ id: 1 }] // pin 1 has no pricePerPerson
+  assert.equal(sumStopBudget(s, list), 0)
+})
+
+test('sumStopBudget on an empty plan is 0', () => {
+  assert.equal(sumStopBudget([], shortlist), 0)
+  assert.equal(sumStopBudget(undefined, shortlist), 0)
 })
 
 test('constraintColumns: full window + valid transport + meeting point persist as-is', () => {
