@@ -25,6 +25,17 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // No response object means the request never reached a running server
+    // (network failure / CORS-with-no-header). On our free Render tier the
+    // usual cause is a cold start: the backend spun down after idle and takes
+    // 30-60s to wake, so the first request gets no answer. Flag it so it's
+    // obvious in the console instead of looking like a CORS bug.
+    if (!error.response && error.request) {
+      console.warn(
+        'Backend did not respond — likely a cold start (free-tier spin-up). Retry in ~30-60s.'
+      )
+    }
+
     if (error.response?.status === 401) {
       localStorage.removeItem('accessToken')
       localStorage.removeItem('currentUser')
