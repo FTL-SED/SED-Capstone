@@ -17,11 +17,15 @@ function AddressPicker({ value = null, onChange, placeholder = 'Enter a starting
 
   // Keep the box in sync when `value` is set from outside (e.g. a member added
   // from a public user's saved location, or a card reused for a different member
-  // after a removal — cards are keyed by index). Only pull in a real label; when
-  // `value` is null (cleared while typing) we leave the typed text untouched.
-  useEffect(() => {
-    if (value?.label != null) setText(value.label)
-  }, [value])
+  // after a removal — cards are keyed by index). React's "adjust state during
+  // render" pattern: track the last external label and re-seed `text` when it
+  // changes. Only a real label pulls in; a null `value` (cleared mid-typing)
+  // leaves the typed text alone.
+  const [lastValueLabel, setLastValueLabel] = useState(value?.label ?? '')
+  if (value?.label != null && value.label !== lastValueLabel) {
+    setLastValueLabel(value.label)
+    setText(value.label)
+  }
 
   // Debounce lookups so we don't call Geoapify on every keystroke. `active`
   // drops results from a stale query (typed further before it resolved).
