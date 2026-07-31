@@ -5,11 +5,17 @@ import './LogOutButton.css'
 function LogOutButton({ setCurrentUser }) {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    // Also clear any persisted Supabase session (Google sign-in leaves one),
-    // so a residual session can't later satisfy a password reset. Fire-and-
-    // forget — don't block the local logout/navigation on the network call.
-    signOutSupabase();
+  const handleLogout = async () => {
+    // Clear the persisted Supabase session that Google sign-in leaves behind
+    // before dropping local state, so no residual session lingers in storage.
+    // Await it (a stale session is the root of the "logout then auto-login"
+    // bug), but never let a network hiccup block the local logout — the app
+    // treats the user as signed out regardless.
+    try {
+      await signOutSupabase();
+    } catch {
+      // Ignore — local logout below still signs the user out of the app.
+    }
     setCurrentUser(null); // useEffect in App clears localStorage automatically
     navigate("/");
   };
