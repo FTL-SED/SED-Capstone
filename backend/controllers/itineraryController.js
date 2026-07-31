@@ -113,13 +113,15 @@ async function listItineraries(req, res) {
       ? { userId: req.user.id }
       : { isPublic: true }
 
-  // Free-text search (?q=): match itineraries whose title OR location contains
-  // the query as a case-insensitive substring (e.g. "fran" matches "San
-  // Francisco"). Only applied when the user actually typed something.
+  // Free-text search (?q=): match itineraries whose title OR location OR
+  // author's username contains the query as a case-insensitive substring
+  // (e.g. "fran" matches "San Francisco"; "sam" matches author "sammy").
+  // Only applied when the user actually typed something.
   if (typeof q === 'string' && q.trim() !== '') {
     where.OR = [
       { title: { contains: q, mode: 'insensitive' } },
       { location: { contains: q, mode: 'insensitive' } },
+      { creator: { username: { contains: q, mode: 'insensitive' } } },
     ]
   }
 

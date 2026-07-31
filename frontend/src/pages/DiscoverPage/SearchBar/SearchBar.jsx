@@ -5,7 +5,7 @@ function SearchBar({ value, onChange }) {
     <input
       className="search-bar"
       type="search"
-      placeholder="Explore Destinations"
+      placeholder="Search by destination or author"
       value={value}
       onChange={onChange}
     />
