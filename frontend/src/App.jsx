@@ -12,12 +12,18 @@ import CreateItineraryPage from './pages/CreateItineraryPage/CreateItineraryPage
 import LoadingPage from './pages/LoadingPage/LoadingPage'
 import ItineraryPage from './pages/ItineraryPage/ItineraryPage'
 import AccountPage from './pages/AccountPage/AccountPage'
+import OnboardingPage from './pages/OnboardingPage/OnboardingPage'
 import { getCurrentUser } from './lib/currentUser.js'
 
 function App() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const isAuthPage = pathname === '/login' || pathname === '/register';
+  // Onboarding is post-register but pre-login (still signed out). Like the auth
+  // pages it takes over the screen — full-bleed shell (no padded max-width) and
+  // no footer — so the wizard is the whole focus. It keeps the in-app hero
+  // navbar identity (see isHeroNav).
+  const isOnboarding = pathname === '/onboarding';
   // The itinerary page is a full-bleed split (map + panel) that fills the space
   // between the navbar and footer, so it opts out of the padded, max-width shell.
   const isFullBleed = pathname.startsWith('/itinerary/');
@@ -29,7 +35,11 @@ function App() {
   // add the floating (transparent, over-the-scene) behaviour on top; the in-app
   // dashboard / discover / create pages wear the same identity on the standard
   // sticky bar so the navbar looks consistent across them.
-  const isFloatingNav = isLanding || isAuthPage;
+  // Onboarding reuses the AuthCard scene, which (like the auth pages) is built
+  // for a navbar that FLOATS over it — taking zero layout height so the scene's
+  // 100vh fills the viewport exactly. Without this it'd sit in-flow and push the
+  // 100vh scene down by the navbar height, forcing a scrollbar.
+  const isFloatingNav = isLanding || isAuthPage || isOnboarding;
   const isHeroNav = isFloatingNav ||
     pathname === '/home' || pathname === '/discover' || pathname === '/create' ||
     pathname === '/account' || isFullBleed;
@@ -43,6 +53,14 @@ function App() {
     if (!user || !expiresAt || Date.now() > expiresAt) return null;
     return user;
   });
+
+  // Reset scroll to the top on every route change. React Router preserves the
+  // window scroll position across navigations, so leaving a scrolled-down page
+  // (e.g. the profile) would land you part-way down the next one. Jump to top
+  // whenever the path changes.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
 
   useEffect(() => {
     if (currentUser) {
@@ -89,14 +107,23 @@ function App() {
         floating={isFloatingNav}
         landing={isLanding}
       />
-      <main className={`app__main${isAuthPage ? ' app__main--bare' : ''}${isFullBleed ? ' app__main--full' : ''}${isLanding ? ' app__main--bare' : ''}`}>
+      <main className={`app__main${isAuthPage || isOnboarding ? ' app__main--bare' : ''}${isFullBleed ? ' app__main--full' : ''}${isLanding ? ' app__main--bare' : ''}`}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route
             path="/login"
             element={isAuthenticated ? <Navigate to="/home" replace /> : <LoginPage setCurrentUser={setCurrentUser} />}
           />
-          <Route path="/register" element={<RegisterPage/>} />
+          <Route
+            path="/register"
+            element={isAuthenticated ? <Navigate to="/home" replace /> : <RegisterPage setCurrentUser={setCurrentUser} />}
+          />
+          {/* Second half of registration. Deliberately NOT gated on
+              isAuthenticated: the user is still signed out here (the app stays
+              locked until they finish), so OnboardingPage guards itself on the
+              session passed via router state and redirects to /register if
+              reached directly. */}
+          <Route path="/onboarding" element={<OnboardingPage setCurrentUser={setCurrentUser} />} />
           <Route 
             path="/home" 
             element={!isAuthenticated ? <Navigate to="/" replace/> : <HomePage />} />
@@ -119,7 +146,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      {!isAuthPage && !isFullBleed && <Footer />}
+      {!isAuthPage && !isOnboarding && !isFullBleed && <Footer />}
     </div>
   );
 }

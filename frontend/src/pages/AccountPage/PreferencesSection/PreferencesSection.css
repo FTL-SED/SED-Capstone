@@ -1,0 +1,91 @@
+/* The preferences editor mirrors the itinerary creation process: it uses the
+   same interest/cuisine/dietary pills + address picker as a wizard MemberCard,
+   so the labels/sublabels reuse the MemberCard typography for a consistent feel,
+   while the outer section keeps the account card's surface/border treatment. */
+.preferences-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.preferences-section .section-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Field label — matches .member-card__label from the itinerary wizard. */
+.preferences-section__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #555;
+  margin-top: 0.25rem;
+}
+
+/* Sub-group caption under "Food preferences" — matches .member-card__sublabel. */
+.preferences-section__sublabel {
+  display: block;
+  margin: 0.5rem 0 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--slate-500, #6e6656);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.preferences-section__loading {
+  margin: 0;
+  color: var(--slate-500);
+}
+
+.preferences-section__success {
+  margin: 0;
+  color: var(--moss, #4e6540);
+  font-size: 0.9rem;
+}
+
+/* Save action — reuses the itinerary wizard's finish-button identity (moss pill)
+   so the primary action reads the same across the creation + preferences flows. */
+.preferences-section__save {
+  align-self: flex-start;
+  margin-top: 0.5rem;
+  padding: 10px 18px;
+  border: 1px solid var(--moss, var(--ink));
+  border-radius: var(--radius-pill, 999px);
+  background: var(--moss, var(--ink));
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.preferences-section__save:hover {
+  background: var(--moss-deep, var(--ink));
+}
+
+.preferences-section__save:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Mobile: full-width tap targets, matching the itinerary wizard's phone tuning. */
+@media (max-width: 600px) {
+  .preferences-section {
+    padding: 18px;
+  }
+
+  .preferences-section__save {
+    align-self: stretch;
+    min-height: 44px;
+    text-align: center;
+  }
+
+  .preferences-section .tag-pill {
+    padding: 0.5rem 0.9rem;
+    font-size: 0.9rem;
+  }
+}

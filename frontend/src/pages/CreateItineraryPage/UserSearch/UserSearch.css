@@ -1,0 +1,85 @@
+/* Mirrors AddressPicker's dropdown pattern (relative wrapper + absolute results
+   list) so user search feels consistent with the location picker in the same
+   step. */
+.user-search {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.user-search__status {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--slate-500, #6e6656);
+}
+
+.user-search__results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin: 0.25rem 0 0;
+  padding: 0.25rem;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.user-search__results button {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.user-search__results button:hover {
+  background: #f2f2f2;
+}
+
+/* Round avatar thumbnail beside the name; falls back to the default account icon. */
+.user-search__avatar {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface-muted, #f2f2f2);
+}
+
+/* Username + interests stack in a column to the right of the avatar. */
+.user-search__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.user-search__username {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.user-search__hint {
+  font-size: 0.78rem;
+  color: var(--slate-500, #6e6656);
+}
+
+@media (max-width: 600px) {
+  .user-search__results button {
+    padding: 0.65rem 0.75rem;
+    min-height: 44px;
+  }
+}

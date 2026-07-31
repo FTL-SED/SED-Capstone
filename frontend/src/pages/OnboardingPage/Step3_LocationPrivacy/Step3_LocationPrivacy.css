@@ -1,0 +1,26 @@
+/* Step 3 reuses the shared .onboarding-step* layout (see Step1_Interests.css);
+   only the privacy row is unique. */
+.onboarding-step__privacy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+}
+
+.onboarding-step__privacy-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Stack the copy above the toggle on narrow screens so neither is squeezed. */
+@media (max-width: 600px) {
+  .onboarding-step__privacy {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

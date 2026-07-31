@@ -1,0 +1,8 @@
+/* Onboarding reuses the shared AuthCard scene (sky + drifting clouds + birds)
+   for its background — the same one the register/login pages use — and its warm
+   golden palette + card chrome. So this page needs no backdrop or token retint
+   of its own; AuthCard (.auth-scene / .auth-card) provides all of it. This
+   wrapper only exists as the routed element. */
+.onboarding-page {
+  display: contents;
+}

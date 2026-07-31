@@ -1,0 +1,92 @@
+/* Shared layout for all onboarding steps (defined once here, reused by every
+   Step*.jsx which all use the .onboarding-step* classes). */
+.onboarding-step {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  /* The step fills the card's height (see .onboarding-wizard > .onboarding-step);
+     center its contents as one group so the heading + pills + nav sit together in
+     the middle rather than leaving a big gap above the buttons. */
+  justify-content: center;
+}
+
+.onboarding-step__title {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.onboarding-step__hint {
+  margin: 0;
+  color: var(--slate-500);
+  font-size: 1.05rem;
+}
+
+/* Sub-group caption (Cuisines / Dietary) — matches .member-card__sublabel from
+   the itinerary wizard so the food section reads the same across both flows. */
+.onboarding-step__sublabel {
+  display: block;
+  margin: 0.5rem 0 0.3rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--slate-500, #6e6656);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Bigger, roomier pills inside the onboarding wizard so they fill the large card
+   and are easy to tap. Scoped to .onboarding-wizard so the shared TagPills stay
+   their normal size everywhere else. */
+.onboarding-wizard .tag-pill {
+  padding: 0.6rem 1.1rem;
+  font-size: 1.02rem;
+}
+
+.onboarding-wizard .tag-pills__grid {
+  gap: 0.6rem;
+}
+
+/* Slightly larger controls + nav buttons in the onboarding card too, to match
+   the bigger pills and fill the roomy card. */
+.onboarding-wizard .address-picker input {
+  font-size: 1.02rem;
+  min-height: 46px;
+}
+
+.onboarding-step__nav .back-button,
+.onboarding-step__nav .next-button,
+.onboarding-step__nav .submit-button {
+  font-size: 1.02rem;
+}
+
+.onboarding-step__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Back left, Finish/Next right */
+  gap: 12px;
+  margin-top: 0.5rem;
+}
+
+/* Keep both buttons at their natural size at the two ends — don't let them
+   stretch. SubmitButton defaults to width:100%, which would fill the row and
+   break the space-between layout, so override it here. */
+.onboarding-step__nav .back-button,
+.onboarding-step__nav .next-button,
+.onboarding-step__nav .submit-button {
+  flex: 0 0 auto;
+  width: auto;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* SubmitButton's default padding assumes full width; give it a comfortable
+   horizontal size now that it's auto-width on the right. */
+.onboarding-step__nav .submit-button {
+  padding: 10px 28px;
+}
+
+/* Step 1 has no Back button, so keep its lone Next button on the right. */
+.onboarding-step__nav--end {
+  justify-content: flex-end;
+}

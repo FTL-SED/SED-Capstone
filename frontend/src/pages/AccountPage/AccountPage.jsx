@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import AccountAvatar from './AccountAvatar/AccountAvatar.jsx'
 import AccountNav from './AccountNav/AccountNav.jsx'
 import ProfileSection from './ProfileSection/ProfileSection.jsx'
 import UsernameField from './ProfileSection/UsernameField/UsernameField.jsx'
 import ChangePasswordSection from './ChangePasswordSection/ChangePasswordSection.jsx'
+import PreferencesSection from './PreferencesSection/PreferencesSection.jsx'
 import './AccountPage.css'
 
 /*
@@ -17,6 +19,10 @@ import './AccountPage.css'
  * AccountPage.css; the logic below is unchanged.
  */
 function AccountPage({ currentUser, setCurrentUser }) {
+  // The saved-preferences editor is opened on demand from the account nav rather
+  // than always shown, keeping the card focused on identity by default.
+  const [showPreferences, setShowPreferences] = useState(false);
+
   return (
     <div className="account-page">
       <div className="account-scene" aria-hidden="true">
@@ -151,9 +157,14 @@ function AccountPage({ currentUser, setCurrentUser }) {
           <ProfileSection currentUser={currentUser} />
           <UsernameField currentUser={currentUser} setCurrentUser={setCurrentUser} />
           <ChangePasswordSection currentUser={currentUser} />
+          {showPreferences && <PreferencesSection currentUser={currentUser} />}
         </div>
 
-        <AccountNav setCurrentUser={setCurrentUser} />
+        <AccountNav
+          setCurrentUser={setCurrentUser}
+          onTogglePreferences={() => setShowPreferences((v) => !v)}
+          preferencesOpen={showPreferences}
+        />
       </div>
     </div>
   );
