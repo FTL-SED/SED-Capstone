@@ -24,6 +24,8 @@ function App() {
   // no footer — so the wizard is the whole focus. It keeps the in-app hero
   // navbar identity (see isHeroNav).
   const isOnboarding = pathname === '/onboarding';
+  // The loading page is a full-screen generation scene, so it hides the footer.
+  const isLoading = pathname === '/loading';
   // The itinerary page is a full-bleed split (map + panel) that fills the space
   // between the navbar and footer, so it opts out of the padded, max-width shell.
   const isFullBleed = pathname.startsWith('/itinerary/');
@@ -146,7 +148,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      {!isAuthPage && !isOnboarding && !isFullBleed && <Footer />}
+      {!isAuthPage && !isOnboarding && !isFullBleed && !isLoading && <Footer />}
     </div>
   );
 }
