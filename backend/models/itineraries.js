@@ -56,7 +56,13 @@ function reshapeItinerary(itinerary, { forOwner = true } = {}) {
       description: s.note ?? p.description ?? null,
       tags,
       rating: p.rating,
-      pricePerPerson: p.pricePerPerson,
+      // The stop's EFFECTIVE per-person cost: its own override when set, else the
+      // shared venue price. This is what the timeline shows and what the itinerary
+      // budget sums — editing a stop's cost sets the override, never the venue.
+      pricePerPerson: s.costPerPerson ?? p.pricePerPerson,
+      // The raw override (null ⇒ using the venue price), so the editor can tell
+      // whether a custom cost has been set.
+      costPerPerson: s.costPerPerson ?? null,
       latitude: p.latitude,
       longitude: p.longitude,
       address: p.address,
