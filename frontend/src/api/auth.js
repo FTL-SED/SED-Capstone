@@ -50,13 +50,48 @@ export async function sendPasswordReset(email) {
   if (error) throw error
 }
 
-// True when a Supabase session exists on the current page — i.e. the recovery
-// link was followed and detectSessionInUrl captured the session. Used by the
-// reset page to decide whether to show the form or an "invalid link" message.
-export async function hasRecoverySession() {
-  if (!supabase) return false
-  const { data: { session } } = await supabase.auth.getSession()
-  return !!session
+// Password-recovery detection. Supabase fires an 'PASSWORD_RECOVERY' auth event
+// when detectSessionInUrl processes a recovery link — this is what distinguishes
+// a genuine reset flow from a plain persisted session (e.g. a logged-in or
+// recently-logged-out Google user), which a bare getSession() check could not.
+//
+// The event can fire during client init (at module import) BEFORE the reset page
+// mounts and subscribes, so a pure listener would miss it. We register the
+// listener here at module load — earlier than any component mount — and latch a
+// flag when it fires, so a subscriber that attaches late still hears about it.
+let recoveryDetected = false
+const recoveryListeners = new Set()
+
+if (supabase) {
+  supabase.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      recoveryDetected = true
+      for (const listener of recoveryListeners) listener()
+    }
+  })
+}
+
+// Subscribe to the password-recovery event. Invokes `callback` when a genuine
+// recovery context is active — immediately if it already fired before this call
+// (the init-time race), otherwise when it fires. Returns an unsubscribe function.
+// Deliberately NOT satisfied by a plain non-recovery session.
+export function onPasswordRecovery(callback) {
+  if (!supabase) return () => {}
+  if (recoveryDetected) {
+    callback()
+    return () => {}
+  }
+  recoveryListeners.add(callback)
+  return () => recoveryListeners.delete(callback)
+}
+
+// Clear any persisted Supabase session on logout. Google sign-in persists a
+// session and the app's own logout only clears localStorage, leaving a residual
+// Supabase session that could satisfy updateUser without a fresh emailed link.
+// Sign out to close that gap. Guarded on the null client like the other helpers.
+export async function signOutSupabase() {
+  if (!supabase) return
+  await supabase.auth.signOut()
 }
 
 // Set the new password using the recovery session, then sign out so the user
