@@ -164,6 +164,9 @@ async function provisionOAuthUser(req, res) {
       authUserId: authUser.id,
       email: authUser.email,
       username,
+      // Google gives us a profile picture on first login — save it. Falls back
+      // to the default avatar (null) for providers/accounts without one.
+      avatarUrl: authUser.avatarUrl,
     })
 
     return res.status(201).json({ user })

@@ -88,9 +88,9 @@ async function findAvailableUsername(base) {
   return candidate
 }
 
-function create({ authUserId, email, username }) {
+function create({ authUserId, email, username, avatarUrl }) {
   return prisma.user.create({
-    data: { authUserId, email, username },
+    data: { authUserId, email, username, avatarUrl },
     select: profileSelect,
   })
 }

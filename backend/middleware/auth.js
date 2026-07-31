@@ -18,7 +18,14 @@ async function getAuthUser(req) {
   const { data, error } = await supabase.auth.getUser(token)
   if (error || !data?.user) return null
 
-  return { id: data.user.id, email: data.user.email }
+  // OAuth providers (e.g. Google) put the profile picture in user_metadata as
+  // `avatar_url` or `picture`. Surface it so first-login provisioning can save it.
+  const meta = data.user.user_metadata || {}
+  return {
+    id: data.user.id,
+    email: data.user.email,
+    avatarUrl: meta.avatar_url || meta.picture || null,
+  }
 }
 
 // Verifies the caller is signed in and resolves their app-side `User` row,
