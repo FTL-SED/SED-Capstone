@@ -37,3 +37,33 @@ export async function completeOAuthSignIn() {
     expiresAt: session.expires_at * 1000,
   }
 }
+
+// Send a password-reset email. Supabase mails a recovery link that lands on
+// /reset-password, where the recovery session is captured and the new password
+// is set. Callers should show the same neutral message regardless of outcome
+// (anti-enumeration) and only surface an error on a real client failure.
+export async function sendPasswordReset(email) {
+  if (!supabase) throw new Error('Password reset is not configured')
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`,
+  })
+  if (error) throw error
+}
+
+// True when a Supabase session exists on the current page — i.e. the recovery
+// link was followed and detectSessionInUrl captured the session. Used by the
+// reset page to decide whether to show the form or an "invalid link" message.
+export async function hasRecoverySession() {
+  if (!supabase) return false
+  const { data: { session } } = await supabase.auth.getSession()
+  return !!session
+}
+
+// Set the new password using the recovery session, then sign out so the user
+// isn't left in a lingering recovery session — they log in fresh afterward.
+export async function updatePassword(newPassword) {
+  if (!supabase) throw new Error('Password reset is not configured')
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  if (error) throw error
+  await supabase.auth.signOut()
+}
