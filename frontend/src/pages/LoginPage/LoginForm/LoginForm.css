@@ -3,3 +3,46 @@
   flex-direction: column;
   gap: 16px;
 }
+
+.login-form__divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 0.85rem;
+}
+
+.login-form__divider::before,
+.login-form__divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.google-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.75);
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.google-button:hover {
+  background: #f7f8fa;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.google-button__icon {
+  width: 18px;
+  height: 18px;
+}

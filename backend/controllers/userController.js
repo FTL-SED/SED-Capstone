@@ -2,6 +2,8 @@ import supabase, { uploadAvatar, updateUserPassword } from '../lib/supabase.js'
 import * as users from '../models/users.js'
 import { reshapeItinerary } from '../models/itineraries.js'
 import { parseIdParam } from './helpers.js'
+import { getAuthUser } from '../middleware/auth.js'
+import { usernameFromEmail } from '../utils/username.js'
 
 // POST /users/register
 // Creates the Supabase Auth account, then the matching app-side profile row.
@@ -123,6 +125,54 @@ async function loginUser(req, res) {
   }
 
   return res.status(200).json({ user: profile, session: data.session })
+}
+
+// POST /users/oauth
+// Provisions the app-side profile for a user who signed in via an OAuth provider
+// (e.g. Google). The frontend completes the Supabase OAuth handshake in the
+// browser, then sends the resulting access token here. We verify the token,
+// then find-or-create the matching `User` row (OAuth gives us an email but no
+// username, so we derive a unique one). Returns the profile the same shape as
+// login. Cannot use requireAuth — that rejects tokens with no profile yet,
+// which is exactly the case we're here to create.
+async function provisionOAuthUser(req, res) {
+  const authUser = await getAuthUser(req)
+  if (!authUser) {
+    return res.status(401).json({ error: 'You must be signed in' })
+  }
+
+  try {
+    // Already provisioned (a returning Google user) — just return the profile.
+    const existing = await users.findByAuthUserId(authUser.id)
+    if (existing) {
+      return res.status(200).json({ user: existing })
+    }
+
+    // First OAuth login for this account: derive a unique username from the
+    // email and create the profile. The email is trusted because it comes from
+    // the Supabase-verified token, not the request body.
+    const base = usernameFromEmail(authUser.email)
+    const username = await users.findAvailableUsername(base)
+
+    const user = await users.create({
+      authUserId: authUser.id,
+      email: authUser.email,
+      username,
+    })
+
+    return res.status(201).json({ user })
+  } catch (err) {
+    // Safety net for the race where two concurrent first-logins collide on the
+    // unique constraint — the loser re-reads the now-created row.
+    if (err.code === 'P2002') {
+      const existing = await users.findByAuthUserId(authUser.id)
+      if (existing) return res.status(200).json({ user: existing })
+    }
+    console.error('provisionOAuthUser error:', err)
+    return res
+      .status(500)
+      .json({ error: 'Something went wrong on our end. Please try again.' })
+  }
 }
 
 // PUT /users/:id
@@ -442,6 +492,7 @@ async function changeUserPassword(req, res) {
 export {
   registerUser,
   loginUser,
+  provisionOAuthUser,
   updateUser,
   getUser,
   uploadUserAvatar,
