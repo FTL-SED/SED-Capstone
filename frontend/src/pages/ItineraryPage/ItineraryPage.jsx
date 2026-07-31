@@ -17,6 +17,7 @@ import {
   updateStop,
   updateItinerary,
   uploadItineraryCover,
+  deleteItineraryCover,
   reorderStops,
   emailItinerary,
 } from '../../api/itinerary.js'
@@ -324,19 +325,23 @@ function ItineraryPage() {
   };
 
   // Owner-only: save inline edits to the itinerary's own metadata (title,
-  // description, budget, and optionally a new cover). NOT optimistic — a cover
-  // upload is async and can fail, so we keep the panel in edit mode and only
-  // commit state on success. Coordinated: upload the cover first (if any) so its
-  // URL lands, then PUT the text fields, then merge both results. Guarded by
-  // actionBusy against a double-click. Returns true on success so the panel
-  // knows whether to close the editor.
-  const handleEditItinerary = async (changes, coverFile) => {
+  // description, budget, and optionally a new cover — or removing the cover).
+  // NOT optimistic — a cover upload is async and can fail, so we keep the panel
+  // in edit mode and only commit state on success. Coordinated: upload/remove the
+  // cover first (if requested) so its URL lands, then PUT the text fields, then
+  // merge both results. Guarded by actionBusy against a double-click. Returns true
+  // on success so the panel knows whether to close the editor.
+  const handleEditItinerary = async (changes, coverFile, coverRemoved) => {
     if (actionBusy) return false;
     setActionBusy(true);
     try {
+      // A newly picked file wins over a staged removal.
       if (coverFile) {
         const withCover = await uploadItineraryCover(id, coverFile);
         patchItinerary((prev) => ({ ...prev, coverImageUrl: withCover.coverImageUrl }));
+      } else if (coverRemoved) {
+        await deleteItineraryCover(id);
+        patchItinerary((prev) => ({ ...prev, coverImageUrl: null }));
       }
       const updated = await updateItinerary(id, changes);
       patchItinerary((prev) => ({

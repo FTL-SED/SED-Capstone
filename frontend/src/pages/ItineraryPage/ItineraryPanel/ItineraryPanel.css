@@ -211,6 +211,36 @@
   outline-offset: 2px;
 }
 
+/* "Remove cover" stacks just below "Change cover", right-aligned, as a matching
+   frosted pill with a subtle danger tint so it reads as the destructive option. */
+.itinerary-panel__cover-remove {
+  position: absolute;
+  top: 52px;
+  right: 12px;
+  z-index: 3;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--danger, #b42318);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+
+.itinerary-panel__cover-remove:hover {
+  background: var(--surface);
+  border-color: var(--danger, #b42318);
+}
+
+.itinerary-panel__cover-remove:focus-visible {
+  outline: 2px solid var(--danger, #b42318);
+  outline-offset: 2px;
+}
+
 .itinerary-panel__budget-edit {
   display: flex;
   flex-direction: column;

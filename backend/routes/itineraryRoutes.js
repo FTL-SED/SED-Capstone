@@ -15,6 +15,7 @@ import {
   unmarkVisited,
   copyItinerary,
   uploadItineraryCover,
+  removeItineraryCover,
 } from '../controllers/itineraryController.js'
 import { exportItineraryEmail } from '../controllers/exportController.js'
 import { requireAuth } from '../middleware/auth.js'
@@ -48,6 +49,7 @@ router.delete('/:id/visited', requireAuth, unmarkVisited)
 router.post('/:id/copy', requireAuth, copyItinerary)
 
 router.post('/:id/cover', requireAuth, upload.single('cover'), uploadItineraryCover)
+router.delete('/:id/cover', requireAuth, removeItineraryCover)
 
 router.post('/:id/export/email', requireAuth, exportItineraryEmail)
 

@@ -143,6 +143,13 @@ export async function uploadItineraryCover(id, file) {
   return data
 }
 
+// DELETE /itineraries/:id/cover — remove the cover of an itinerary the caller
+// owns: deletes the stored file and clears the URL. Returns the updated itinerary.
+export async function deleteItineraryCover(id) {
+  const { data } = await api.delete(`/itineraries/${id}/cover`)
+  return data
+}
+
 // POST /ai-agent/banner — generate an AI cover banner from the itinerary details
 // + a free-text style prompt. Returns { image (base64), mediaType }. The image
 // is held in the wizard until the user picks one; only then is it uploaded via
@@ -152,6 +159,7 @@ export async function generateBanner(body) {
   const { data } = await api.post('/ai-agent/banner', body, { timeout: BANNER_TIMEOUT_MS })
   return data
 }
+
 
 // PUT /itineraries/:id/stops/order — reorder a stop (owner only). Body:
 // { stopIds } — every stop id of the itinerary, in the new order. The backend

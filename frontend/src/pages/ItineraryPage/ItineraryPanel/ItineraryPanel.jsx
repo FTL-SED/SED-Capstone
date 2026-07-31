@@ -35,6 +35,7 @@ function ItineraryPanel({
   const [draftBudget, setDraftBudget] = useState('');
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
+  const [coverRemoved, setCoverRemoved] = useState(false);
   const [error, setError] = useState('');
   const coverInputRef = useRef(null);
 
@@ -50,6 +51,7 @@ function ItineraryPanel({
     setDraftBudget(hasBudget ? String(maxBudgetPerPerson) : '');
     setCoverFile(null);
     setCoverPreview(null);
+    setCoverRemoved(false);
     setError('');
     setEditing(true);
   };
@@ -58,6 +60,7 @@ function ItineraryPanel({
     if (coverPreview) URL.revokeObjectURL(coverPreview);
     setCoverFile(null);
     setCoverPreview(null);
+    setCoverRemoved(false);
     setError('');
     setEditing(false);
   };
@@ -68,6 +71,17 @@ function ItineraryPanel({
     if (coverPreview) URL.revokeObjectURL(coverPreview);
     setCoverFile(file);
     setCoverPreview(URL.createObjectURL(file));
+    setCoverRemoved(false); // picking a file un-stages a removal
+  };
+
+  // Stage removal of the existing cover: drop any picked file/preview and hide
+  // the banner locally. Committed on Save (see ItineraryPage.handleEditItinerary).
+  const onRemoveCover = () => {
+    if (coverPreview) URL.revokeObjectURL(coverPreview);
+    setCoverFile(null);
+    setCoverPreview(null);
+    setCoverRemoved(true);
+    if (coverInputRef.current) coverInputRef.current.value = '';
   };
 
   const saveEdit = async () => {
@@ -95,11 +109,12 @@ function ItineraryPanel({
       maxBudgetPerPerson: budget,
     };
 
-    const ok = await onEditItinerary(changes, coverFile);
+    const ok = await onEditItinerary(changes, coverFile, coverRemoved);
     if (ok) {
       if (coverPreview) URL.revokeObjectURL(coverPreview);
       setCoverFile(null);
       setCoverPreview(null);
+      setCoverRemoved(false);
       setError('');
       setEditing(false);
     } else {
@@ -110,8 +125,8 @@ function ItineraryPanel({
   };
 
   // The cover shown in the banner: the staged preview while editing, else the
-  // persisted image.
-  const bannerImg = coverPreview ?? coverImageUrl;
+  // persisted image — unless removal is staged, which hides it locally.
+  const bannerImg = coverRemoved ? null : (coverPreview ?? coverImageUrl);
 
   return (
     <div className="itinerary-panel">
@@ -151,6 +166,15 @@ function ItineraryPanel({
               >
                 Change cover
               </button>
+              {bannerImg && (
+                <button
+                  type="button"
+                  className="itinerary-panel__cover-remove"
+                  onClick={onRemoveCover}
+                >
+                  Remove cover
+                </button>
+              )}
             </>
           )}
           <div className="itinerary-panel__banner-content">
