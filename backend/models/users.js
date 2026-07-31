@@ -12,6 +12,35 @@ const profileSelect = {
   createdAt: true,
 }
 
+// Saved-preference fields (incl. the privacy flag). Returned by the preferences
+// editor and the profile page so the client can show current state. No email —
+// this is about prefs, not identity.
+const preferencesSelect = {
+  id: true,
+  isPublic: true,
+  interestTags: true,
+  foodPrefs: true,
+  diets: true,
+  defaultStartLabel: true,
+  defaultStartLat: true,
+  defaultStartLng: true,
+}
+
+// What a user-search result exposes about ANOTHER user. Never email. Includes
+// the preference snapshot so "add group member by username" can pre-fill a new
+// member without a second request. Only returned for isPublic users.
+const publicSnapshotSelect = {
+  id: true,
+  username: true,
+  avatarUrl: true,
+  interestTags: true,
+  foodPrefs: true,
+  diets: true,
+  defaultStartLabel: true,
+  defaultStartLat: true,
+  defaultStartLng: true,
+}
+
 function findByAuthUserId(authUserId) {
   return prisma.user.findUnique({ where: { authUserId } })
 }
@@ -61,4 +90,50 @@ function update(id, data) {
   })
 }
 
-export { findByAuthUserId, findByUsername, findByEmail, findDashboardById, create, update }
+// Persist a subset of the caller's saved preferences (incl. isPublic). The
+// controller validates/whitelists the fields; this just writes and returns the
+// preference view so the client can reflect the saved state.
+function updatePreferences(id, data) {
+  return prisma.user.update({
+    where: { id },
+    data,
+    select: preferencesSelect,
+  })
+}
+
+// Read the caller's own saved preferences (for the profile page / editor).
+function findPreferencesById(id) {
+  return prisma.user.findUnique({ where: { id }, select: preferencesSelect })
+}
+
+// Case-insensitive username-substring search. Matches PUBLIC users, plus the
+// caller themselves (`includeSelfId`) even when their profile is private — you
+// can always add yourself to your own trip. Returns the public prefs snapshot
+// for each match, capped by `take`.
+function searchPublicByUsername(query, { includeSelfId, take = 10 } = {}) {
+  return prisma.user.findMany({
+    where: {
+      username: { contains: query, mode: 'insensitive' },
+      // Public to everyone, OR it's the caller's own (private-or-not) account.
+      OR: [
+        { isPublic: true },
+        ...(includeSelfId != null ? [{ id: includeSelfId }] : []),
+      ],
+    },
+    select: publicSnapshotSelect,
+    orderBy: { username: 'asc' },
+    take,
+  })
+}
+
+export {
+  findByAuthUserId,
+  findByUsername,
+  findByEmail,
+  findDashboardById,
+  create,
+  update,
+  updatePreferences,
+  findPreferencesById,
+  searchPublicByUsername,
+}

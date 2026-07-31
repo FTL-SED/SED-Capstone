@@ -24,8 +24,40 @@
   background: #e0e7ff;
 }
 
+/* Row holding the two add affordances: "+ Add member" and "Search by username". */
+.step2-members__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.step2-members__search {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.85rem;
+  border: 1px dashed #c7d2fe;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.step2-members__search-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--slate-500, #6e6656);
+}
+
 .step2-members__nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+@media (max-width: 600px) {
+  .step2-members__actions .step2-members__add {
+    flex: 1;
+    align-self: stretch;
+    min-height: 44px;
+    text-align: center;
+  }
 }

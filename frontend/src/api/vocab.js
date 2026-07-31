@@ -7,18 +7,20 @@
 // NOTE: keep in sync with the backend if its vocab changes. A shared GET /tags
 // endpoint would remove the duplication (see the roadmap's optional follow-up).
 
-// Interests / activity tags — the canonical INTERESTS keys from
-// backend/config/tagVocab.js. Ordered so the most broadly-appealing options come
-// first (the wizard shows the first 8 by default). Also consumed by
-// DiscoverPage/FilterControls (order only). 'live music' is stored spaced (not
-// the canonical camelCase `liveMusic`) so it renders as "Live Music" through the
-// pills' capitalize styling.
-// NOTE: matching is raw-string overlap against catalog pins, and the catalog is
-// not yet re-tagged to this taxonomy, so several of these won't match venues
-// until that migration lands (see the venue-taxonomy-redesign spec).
+// Interests / activity tags. These are matched by RAW STRING OVERLAP against the
+// values catalog pins actually store in their `interests` column (score.js's
+// shareTag), so every tag here must be a value venues really carry — otherwise a
+// pill silently matches nothing. Ordered so the most broadly-appealing options
+// come first (the wizard shows the first 8 by default). Also consumed by
+// DiscoverPage/FilterControls (order only).
+// NOTE: `music` (not "live music") is the value venues are tagged with in the
+// catalog (see prisma/data/sfPlaces — ~130 venues use 'music'); it renders as
+// "Music" through the pills' capitalize styling. tagVocab.js lists a camelCase
+// `liveMusic` key, but nothing reads tagVocab at request time, so the catalog's
+// spelling is the source of truth for matching.
 export const INTEREST_TAGS = [
   'art', 'museums', 'history', 'architecture', 'nature', 'outdoors', 'scenic', 'photography',
-  'coffee', 'food', 'desserts', 'markets', 'shopping', 'nightlife', 'live music',
+  'coffee', 'food', 'desserts', 'markets', 'shopping', 'nightlife', 'music',
   'entertainment', 'fitness', 'wellness',
 ]
 

@@ -5,8 +5,10 @@
   width: 40px;
   height: 40px;
   border-radius: var(--radius-pill);
+  /* A lighter ring than the nav-link text — subtle, not a hard outline. */
+  border: 2px solid var(--slate-400);
   overflow: hidden;
-  transition: box-shadow 0.15s ease;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .account-icon img {
@@ -16,5 +18,6 @@
 }
 
 .account-icon:hover {
+  border-color: var(--ink);
   box-shadow: 0 0 0 2px var(--accent-soft);
 }

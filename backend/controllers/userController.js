@@ -159,6 +159,154 @@ async function updateUser(req, res) {
   }
 }
 
+// Coerce an inbound tag array into a clean list of trimmed, non-empty, unique
+// strings, or return null if it isn't an array of strings. Caps the count so a
+// client can't store an unbounded list. Validates shape, not vocab membership:
+// the app treats unknown tags permissively, and the wizard's tags aren't vocab-
+// checked either (see frontend buildRequest.js).
+function cleanTagList(value, cap = 40) {
+  if (!Array.isArray(value)) return null
+  const out = []
+  for (const t of value) {
+    if (typeof t !== 'string') return null
+    const trimmed = t.trim()
+    if (trimmed && !out.includes(trimmed)) out.push(trimmed)
+  }
+  return out.slice(0, cap)
+}
+
+// GET /users/search?username=<query>
+// Case-insensitive username-substring search over PUBLIC users, plus the caller
+// themselves even if their own profile is private (you can always add yourself
+// to your own trip). Returns each match's public preference snapshot so the
+// itinerary wizard can pre-fill a group member. Auth is handled by requireAuth.
+async function searchUsers(req, res) {
+  const query = typeof req.query.username === 'string' ? req.query.username.trim() : ''
+
+  // Require at least 1 character — an empty query would return an arbitrary
+  // slice of the user table. (The model caps results at 10, so even a common
+  // single letter stays bounded.)
+  if (query.length < 1) {
+    return res.status(400).json({ error: 'Enter at least 1 character to search.' })
+  }
+
+  const results = await users.searchPublicByUsername(query, { includeSelfId: req.user.id })
+  return res.status(200).json({ users: results })
+}
+
+// GET /users/availability?email=<email>&username=<username>
+// Public pre-check for the registration form: reports whether an email and/or
+// username are already taken, so the multi-step register flow can block up front
+// instead of letting the user finish onboarding and fail at account creation.
+// Only checks the fields provided. Note: this is a best-effort UX check — the
+// real uniqueness guarantee is still the DB constraint enforced in registerUser
+// (two people could pass this check simultaneously; the P2002 catch handles it).
+async function checkAvailability(req, res) {
+  const email = typeof req.query.email === 'string' ? req.query.email.trim() : ''
+  const username = typeof req.query.username === 'string' ? req.query.username.trim() : ''
+
+  if (!email && !username) {
+    return res.status(400).json({ error: 'Provide an email and/or username to check.' })
+  }
+
+  const [emailRow, usernameRow] = await Promise.all([
+    email ? users.findByEmail(email) : null,
+    username ? users.findByUsername(username) : null,
+  ])
+
+  return res.status(200).json({
+    emailTaken: !!emailRow,
+    usernameTaken: !!usernameRow,
+  })
+}
+
+// GET /users/:id/preferences
+// Returns the caller's own saved preferences (incl. isPublic) for the profile
+// page / preferences editor. Owner-only. Auth is handled by requireAuth.
+async function getPreferences(req, res) {
+  const id = parseIdParam(req, res, 'user id')
+  if (id === null) return
+
+  if (req.user.id !== id) {
+    return res.status(403).json({ error: 'You can only view your own preferences' })
+  }
+
+  const prefs = await users.findPreferencesById(id)
+  if (!prefs) {
+    return res.status(404).json({ error: 'User not found' })
+  }
+
+  return res.status(200).json(prefs)
+}
+
+// PUT /users/:id/preferences
+// Persists any subset of the caller's saved preferences: isPublic (privacy
+// toggle), interestTags, foodPrefs, diets, and the default start location. Each
+// field is optional so the same endpoint serves both the privacy toggle (just
+// isPublic) and the full preferences editor. Owner-only; auth via requireAuth.
+async function updatePreferences(req, res) {
+  const id = parseIdParam(req, res, 'user id')
+  if (id === null) return
+
+  if (req.user.id !== id) {
+    return res.status(403).json({ error: 'You can only edit your own preferences' })
+  }
+
+  const { isPublic, interestTags, foodPrefs, diets, defaultStartLocation } = req.body
+  const data = {}
+
+  if (isPublic !== undefined) {
+    if (typeof isPublic !== 'boolean') {
+      return res.status(400).json({ error: 'isPublic must be a boolean' })
+    }
+    data.isPublic = isPublic
+  }
+
+  for (const [key, value] of [
+    ['interestTags', interestTags],
+    ['foodPrefs', foodPrefs],
+    ['diets', diets],
+  ]) {
+    if (value !== undefined) {
+      const cleaned = cleanTagList(value)
+      if (cleaned === null) {
+        return res.status(400).json({ error: `${key} must be an array of strings` })
+      }
+      data[key] = cleaned
+    }
+  }
+
+  // Default start location: a resolved { label, latitude, longitude } from the
+  // address picker, or null to clear it. Label + coords move together so a
+  // snapshot into a group member always has usable coordinates.
+  if (defaultStartLocation !== undefined) {
+    if (defaultStartLocation === null) {
+      data.defaultStartLabel = null
+      data.defaultStartLat = null
+      data.defaultStartLng = null
+    } else {
+      const { label, latitude, longitude } = defaultStartLocation
+      const validLabel = typeof label === 'string' && label.trim() !== ''
+      const validCoords = typeof latitude === 'number' && typeof longitude === 'number'
+      if (!validLabel || !validCoords) {
+        return res.status(400).json({
+          error: 'defaultStartLocation must be { label, latitude, longitude } or null',
+        })
+      }
+      data.defaultStartLabel = label.trim()
+      data.defaultStartLat = latitude
+      data.defaultStartLng = longitude
+    }
+  }
+
+  if (Object.keys(data).length === 0) {
+    return res.status(400).json({ error: 'No preference fields provided' })
+  }
+
+  const updated = await users.updatePreferences(id, data)
+  return res.status(200).json(updated)
+}
+
 // POST /users/:id/avatar
 // Uploads the caller's avatar image to Supabase Storage and saves its public
 // URL on the profile. Multipart body; the file is on `req.file` (multer). A
@@ -298,4 +446,8 @@ export {
   getUser,
   uploadUserAvatar,
   changeUserPassword,
+  searchUsers,
+  checkAvailability,
+  getPreferences,
+  updatePreferences,
 }

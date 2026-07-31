@@ -39,6 +39,23 @@ model User {
   username           String      @unique
   avatarUrl          String?
   createdAt          DateTime    @default(now())
+
+  // Whether this profile is discoverable in user search. Defaults to private;
+  // only isPublic users surface in the "add group member by username" search.
+  isPublic           Boolean     @default(false)
+
+  // Saved preferences collected by the onboarding wizard and editable from the
+  // profile page. Mirror ItineraryMember's shape (interestTags, foodPrefs, diets,
+  // and a startLabel/startLat/startLng location triple) so a public user's prefs
+  // can be snapshotted into a new group member as an independent copy. Legacy
+  // accounts have empty arrays / null location until they fill these in.
+  interestTags       String[]    @default([])
+  foodPrefs          String[]    @default([])
+  diets              String[]    @default([])
+  defaultStartLabel  String?
+  defaultStartLat    Float?
+  defaultStartLng    Float?
+
   createdItineraries Itinerary[] @relation("CreatedItineraries")
   likes              Like[]
   bookmarks          Bookmark[]

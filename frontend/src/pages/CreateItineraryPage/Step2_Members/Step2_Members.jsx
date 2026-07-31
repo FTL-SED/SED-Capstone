@@ -1,10 +1,11 @@
 import './Step2_Members.css'
 import { useState } from 'react'
 import MemberCard from '../MemberCard/MemberCard.jsx'
+import UserSearch from '../UserSearch/UserSearch.jsx'
 import NextButton from '../../../components/Inputs/NextButton/NextButton.jsx'
 import BackButton from '../../../components/Inputs/BackButton/BackButton.jsx'
 import ErrorMessage from '../../../components/ErrorMessage/ErrorMessage.jsx'
-import { newMember } from '../memberModel.js'
+import { newMember, memberFromUser } from '../memberModel.js'
 
 // Every member the backend accepts (validateRecommendationInput) needs a
 // non-empty name and a starting location resolved to coordinates (the address
@@ -28,6 +29,8 @@ function Step2_Members({ form, update, onNext, onBack }) {
   const showFoodPrefs = form.includeMeals !== false;
   // Only advance once every member has the required name + location.
   const [error, setError] = useState('');
+  // The username-search box is revealed on demand, next to "+ Add member".
+  const [showSearch, setShowSearch] = useState(false);
 
   const handleNext = () => {
     const message = validateMembers(members);
@@ -40,6 +43,13 @@ function Step2_Members({ form, update, onNext, onBack }) {
   };
 
   const addMember = () => update('members', [...members, newMember()]);
+
+  // Add a member pre-filled from a public user's saved preferences. The snapshot
+  // is an independent copy — editing this member never touches that user's
+  // account. The search box stays open so several users can be added in a row.
+  const addMemberFromUser = (userSnapshot) => {
+    update('members', [...members, memberFromUser(userSnapshot)]);
+  };
 
   const removeMember = (index) => {
     update('members', members.filter((_, i) => i !== index));
@@ -60,9 +70,30 @@ function Step2_Members({ form, update, onNext, onBack }) {
           />
         ))}
       </div>
-      <button type="button" className="step2-members__add" onClick={addMember}>
-        + Add member
-      </button>
+      <div className="step2-members__actions">
+        <button type="button" className="step2-members__add" onClick={addMember}>
+          + Add member
+        </button>
+        <button
+          type="button"
+          className="step2-members__add step2-members__search-toggle"
+          onClick={() => setShowSearch((v) => !v)}
+          aria-expanded={showSearch}
+        >
+          {showSearch ? 'Close search' : 'Search by username'}
+        </button>
+      </div>
+
+      {showSearch && (
+        <div className="step2-members__search">
+          <p className="step2-members__search-hint">
+            Find a public user to add as a member — their saved preferences are
+            copied in and can be edited without affecting their account.
+          </p>
+          <UserSearch onSelect={addMemberFromUser} />
+        </div>
+      )}
+
       <ErrorMessage message={error} />
       <div className="step2-members__nav">
         <BackButton onClick={onBack} />

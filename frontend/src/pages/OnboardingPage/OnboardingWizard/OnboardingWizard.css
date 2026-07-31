@@ -1,0 +1,53 @@
+/* The onboarding wizard lives inside the shared AuthCard panel (the same
+   floating card the register/login pages use); the card chrome (background,
+   border, shadow) is provided by .auth-card. It's a flex column that fills the
+   card's height, with the stepper at the top and the active step spread into the
+   remaining space so a big card never leaves a pool of empty space at the
+   bottom. */
+.onboarding-wizard {
+  /* Reset the <fieldset> default chrome (it's a fieldset so `disabled` can lock
+     every control inside while saving) so it lays out exactly like a plain div. */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* While saving (fieldset[disabled]), dim the wizard and show the wait cursor so
+   it's visually clear nothing is interactive during account creation. */
+.onboarding-wizard:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+/* Push the active step to fill the space under the stepper. */
+.onboarding-wizard > .onboarding-step {
+  flex: 1;
+}
+
+/* Make the onboarding panel MUCH larger than the login card it borrows chrome
+   from — it fills most of the scene (wide, and tall enough to soak up the empty
+   space) instead of floating as a small card in a big sky. Height is capped to
+   the scene's usable area (viewport minus the scene's top+bottom padding) so it
+   never forces the page to scroll. Scoped to :has(.onboarding-wizard) so the
+   register/login cards are untouched. */
+.auth-card:has(.onboarding-wizard) {
+  max-width: 920px;
+  width: 100%;
+  min-height: min(760px, calc(100vh - var(--nav-h) - 88px));
+  padding: clamp(32px, 4vw, 56px) clamp(32px, 5vw, 72px);
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 600px) {
+  .auth-card:has(.onboarding-wizard) {
+    min-height: 0; /* let it size to content on phones — no forced tall card */
+  }
+}
