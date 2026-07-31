@@ -15,6 +15,14 @@ function AddressPicker({ value = null, onChange, placeholder = 'Enter a starting
   const [text, setText] = useState(value?.label ?? '')
   const [suggestions, setSuggestions] = useState([])
 
+  // Keep the box in sync when `value` is set from outside (e.g. a member added
+  // from a public user's saved location, or a card reused for a different member
+  // after a removal — cards are keyed by index). Only pull in a real label; when
+  // `value` is null (cleared while typing) we leave the typed text untouched.
+  useEffect(() => {
+    if (value?.label != null) setText(value.label)
+  }, [value])
+
   // Debounce lookups so we don't call Geoapify on every keystroke. `active`
   // drops results from a stale query (typed further before it resolved).
   useEffect(() => {
