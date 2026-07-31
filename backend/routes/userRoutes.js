@@ -3,6 +3,7 @@ import multer from 'multer'
 import {
   registerUser,
   loginUser,
+  provisionOAuthUser,
   updateUser,
   getUser,
   uploadUserAvatar,
@@ -25,6 +26,7 @@ const upload = multer({
 
 router.post('/register', registerUser)
 router.post('/login', loginUser)
+router.post('/oauth', provisionOAuthUser)
 // Public pre-check for the register form (email/username availability). Static
 // path, so like '/search' it must be registered before the '/:id' routes.
 router.get('/availability', checkAvailability)

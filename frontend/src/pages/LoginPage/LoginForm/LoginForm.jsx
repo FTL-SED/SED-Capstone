@@ -6,6 +6,7 @@ import ConfirmationMessage from '../../../components/ConfirmationMessage/Confirm
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import { signInWithGoogle, completeOAuthSignIn } from '../../../api/auth.js'
 import './LoginForm.css'
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -56,12 +57,42 @@ function LoginForm({setCurrentUser}) {
     }
   };
 
+  // Start the Google OAuth flow. The browser leaves for Google's consent screen
+  // and returns to /login, where the effect below finishes the sign-in.
+  const handleGoogle = async () => {
+    setError("");
+    try {
+      await signInWithGoogle();
+    } catch {
+      setError("Couldn't start Google sign-in. Please try again.");
+    }
+  };
+
   useEffect(() => {
     if (location.state?.message) {
       // Wipe the state so a refresh/back-nav doesn't show the message again.
       window.history.replaceState({}, "");
     }
   }, [location.state]);
+
+  // On return from Google, exchange the Supabase session for our app profile.
+  // Runs on every mount but no-ops when there's no pending OAuth session.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await completeOAuthSignIn();
+        if (!result || cancelled) return;
+        localStorage.setItem("accessToken", result.accessToken);
+        localStorage.setItem("sessionExpiresAt", String(result.expiresAt));
+        setCurrentUser(result.user);
+        navigate("/home");
+      } catch {
+        if (!cancelled) setError("Google sign-in failed. Please try again.");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [navigate, setCurrentUser]);
 
   return (
     <form className="login-form">
@@ -80,11 +111,27 @@ function LoginForm({setCurrentUser}) {
 
       <ErrorMessage message={error}/>
       <ConfirmationMessage message={success} />
-      <SubmitButton 
-        label="Log In" 
+      <SubmitButton
+        label="Log In"
         onClick={handleSubmit}
         loading={loading}
       />
+
+      <div className="login-form__divider"><span>or</span></div>
+
+      <button
+        type="button"
+        className="google-button"
+        onClick={handleGoogle}
+      >
+        <img
+          className="google-button__icon"
+          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+          alt=""
+          aria-hidden="true"
+        />
+        Continue with Google
+      </button>
 
     </form>
   );

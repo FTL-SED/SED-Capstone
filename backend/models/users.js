@@ -75,6 +75,19 @@ function findDashboardById(id) {
   })
 }
 
+// Given a desired username, return it if free, otherwise the first available
+// "base2", "base3", … variant. Used when provisioning OAuth accounts, whose
+// derived username may already be taken by another user.
+async function findAvailableUsername(base) {
+  let candidate = base
+  let suffix = 2
+  while (await findByUsername(candidate)) {
+    candidate = `${base}${suffix}`
+    suffix += 1
+  }
+  return candidate
+}
+
 function create({ authUserId, email, username }) {
   return prisma.user.create({
     data: { authUserId, email, username },
@@ -130,6 +143,7 @@ export {
   findByAuthUserId,
   findByUsername,
   findByEmail,
+  findAvailableUsername,
   findDashboardById,
   create,
   update,

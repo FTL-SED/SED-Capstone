@@ -39,4 +39,4 @@ async function requireAuth(req, res, next) {
   next()
 }
 
-export { requireAuth }
+export { requireAuth, getAuthUser }
