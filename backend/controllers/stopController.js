@@ -2,6 +2,7 @@ import * as pins from '../models/pins.js'
 import * as itineraryStops from '../models/itineraryStops.js'
 import * as itineraries from '../models/itineraries.js'
 import { addStop } from '../services/itinerary/addStop.js'
+import { recalcBudget } from '../services/itinerary/recalcBudget.js'
 import { parseIdParam, parseDate } from './helpers.js'
 import { rangesOverlap } from '../utils/time.js'
 
@@ -84,6 +85,7 @@ async function createStop(req, res) {
     address,
     startTime,
     endTime,
+    costPerPerson,
     travelTimeToNextMinutes,
     distanceToNextMeters,
     mealType,
@@ -127,6 +129,13 @@ async function createStop(req, res) {
   }
   if (note !== undefined && note !== null && typeof note !== 'string') {
     return res.status(400).json({ error: 'note must be a string or null' })
+  }
+  if (
+    costPerPerson !== undefined &&
+    costPerPerson !== null &&
+    (typeof costPerPerson !== 'number' || !Number.isFinite(costPerPerson) || costPerPerson < 0)
+  ) {
+    return res.status(400).json({ error: 'costPerPerson must be a non-negative number or null' })
   }
 
   const itinerary = await itineraries.findByIdBasic(itineraryId)
@@ -223,6 +232,7 @@ async function createStop(req, res) {
         orderInItinerary,
         startTime: parsedStart,
         endTime: parsedEnd,
+        costPerPerson: costPerPerson ?? null,
         travelTimeToNextMinutes: travelTimeToNextMinutes ?? null,
         distanceToNextMeters: distanceToNextMeters ?? null,
         mealType: mealType ?? null,
@@ -230,6 +240,14 @@ async function createStop(req, res) {
       },
       venue,
     )
+    // Adding a stop changes the day's cost — recompute the itinerary's per-person
+    // budget (see recalcBudget). Best-effort: the stop is already saved, so a
+    // recalc hiccup must not fail the request.
+    try {
+      await recalcBudget(itineraryId)
+    } catch (recalcErr) {
+      console.error('Budget recalc after add stop failed:', recalcErr)
+    }
     return res.status(201).json(stop)
   } catch (err) {
     // A stop already occupies this order slot (@@unique([itineraryId, orderInItinerary])).
@@ -261,6 +279,7 @@ async function updateStop(req, res) {
     orderInItinerary,
     startTime,
     endTime,
+    costPerPerson,
     travelTimeToNextMinutes,
     distanceToNextMeters,
     mealType,
@@ -288,6 +307,17 @@ async function updateStop(req, res) {
       return res.status(400).json({ error: 'endTime must be a valid date' })
     }
     data.endTime = parsedEnd
+  }
+  if (costPerPerson !== undefined) {
+    // null clears the override (revert to the venue price); otherwise it's a
+    // non-negative per-person amount just for this stop.
+    if (
+      costPerPerson !== null &&
+      (typeof costPerPerson !== 'number' || !Number.isFinite(costPerPerson) || costPerPerson < 0)
+    ) {
+      return res.status(400).json({ error: 'costPerPerson must be a non-negative number or null' })
+    }
+    data.costPerPerson = costPerPerson
   }
   if (travelTimeToNextMinutes !== undefined) {
     if (travelTimeToNextMinutes !== null && !Number.isInteger(travelTimeToNextMinutes)) {
@@ -335,6 +365,16 @@ async function updateStop(req, res) {
 
   try {
     const updated = await itineraryStops.update(id, data)
+    // If the stop's cost changed, the itinerary's per-person budget did too.
+    // Best-effort recalc: the stop edit is already committed, so don't fail the
+    // request on a recalc error.
+    if (data.costPerPerson !== undefined) {
+      try {
+        await recalcBudget(stop.itineraryId)
+      } catch (recalcErr) {
+        console.error('Budget recalc after edit stop failed:', recalcErr)
+      }
+    }
     return res.status(200).json(updated)
   } catch (err) {
     // Moving a stop onto an order slot another stop already holds.
@@ -361,6 +401,14 @@ async function deleteStop(req, res) {
   }
 
   await itineraryStops.remove(id)
+
+  // Removing a stop lowers the day's cost — recompute the per-person budget.
+  // Best-effort: the delete already committed, so don't fail the request on it.
+  try {
+    await recalcBudget(stop.itineraryId)
+  } catch (recalcErr) {
+    console.error('Budget recalc after delete stop failed:', recalcErr)
+  }
 
   return res.status(204).send()
 }

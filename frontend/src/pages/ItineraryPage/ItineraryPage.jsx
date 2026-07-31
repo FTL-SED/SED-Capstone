@@ -290,6 +290,30 @@ function ItineraryPage() {
     }
   };
 
+  // Owner-only: edit a stop's per-person cost. Optimistic — patch the stop's
+  // price in place immediately, then PUT the ItineraryStop's `costPerPerson`
+  // override (the shared venue Pin is never touched). The server recomputes the
+  // itinerary's maxBudgetPerPerson from the sum of stop costs, so we refetch to
+  // pick up the new budget; on failure we roll back to the pre-edit cache.
+  const handleEditCost = async (stopId, costPerPerson) => {
+    const previous = patchItinerary((prev) => ({
+      ...prev,
+      pins: prev.pins.map((p) =>
+        p.stopId === stopId ? { ...p, pricePerPerson: costPerPerson, costPerPerson } : p,
+      ),
+    }));
+    try {
+      await updateStop(stopId, { costPerPerson });
+      // Refetch so the server-recalculated per-person budget is reflected.
+      const refreshed = await getItinerary(id);
+      queryClient.setQueryData(itineraryKey, refreshed);
+    } catch (err) {
+      console.error('Edit stop cost failed, reverting:', err);
+      queryClient.setQueryData(itineraryKey, previous);
+      window.alert(err.response?.data?.error || 'Could not update the cost. Please try again.');
+    }
+  };
+
   // Drain loop: keep sending until the last request we sent matches the user's
   // latest desired public/private state (they may click again mid-flight), with
   // at most one request in flight so concurrent toggles can't race at the DB.
@@ -501,6 +525,7 @@ function ItineraryPage() {
         onExport={() => setExportOpen(true)}
         onRemoveStop={handleRemoveStop}
         onEditStop={handleEditStop}
+        onEditCost={handleEditCost}
         onAddStop={handleAddStop}
         meetingPoint={meetingPoint}
         radiusMi={radiusMi}

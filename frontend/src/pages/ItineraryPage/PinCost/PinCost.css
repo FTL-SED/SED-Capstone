@@ -2,4 +2,101 @@
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--accent-strong);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pin-cost__edit {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--slate-400);
+  cursor: pointer;
+  line-height: 0;
+}
+
+.pin-cost__edit:hover {
+  color: var(--accent-strong);
+}
+
+.pin-cost--editing {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: flex-start;
+}
+
+.pin-cost__inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.pin-cost__prefix {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent-strong);
+}
+
+.pin-cost__suffix {
+  font-size: 0.8rem;
+  color: var(--slate-600);
+}
+
+.pin-cost__input {
+  font: inherit;
+  font-size: 0.875rem;
+  width: 5rem;
+  padding: 3px 6px;
+  color: var(--slate-800);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.pin-cost__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.pin-cost__save,
+.pin-cost__cancel {
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+
+.pin-cost__save {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.pin-cost__save:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.pin-cost__cancel {
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--slate-600);
+}
+
+.pin-cost__cancel:hover {
+  border-color: var(--slate-400);
+}
+
+.pin-cost__error {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--danger);
 }

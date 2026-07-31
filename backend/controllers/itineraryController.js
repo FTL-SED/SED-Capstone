@@ -450,6 +450,7 @@ async function copyItinerary(req, res) {
         orderInItinerary: s.orderInItinerary,
         startTime: s.startTime,
         endTime: s.endTime,
+        costPerPerson: s.costPerPerson,
         travelTimeToNextMinutes: s.travelTimeToNextMinutes,
         distanceToNextMeters: s.distanceToNextMeters,
         mealType: s.mealType,

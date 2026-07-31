@@ -176,6 +176,12 @@ model ItineraryStop {
   orderInItinerary        Int
   startTime               DateTime
   endTime                 DateTime
+  // Per-visit cost override. When set, this stop's cost is this value instead of
+  // the venue Pin's shared `pricePerPerson` — so editing a stop's cost never
+  // mutates the shared catalog venue (used by other itineraries + the
+  // recommendation engine). Null ⇒ fall back to the venue price. The itinerary's
+  // maxBudgetPerPerson is recomputed as the sum of these effective per-stop costs.
+  costPerPerson           Float?
   travelTimeToNextMinutes Int?
   distanceToNextMeters    Float?
   mealType                String?

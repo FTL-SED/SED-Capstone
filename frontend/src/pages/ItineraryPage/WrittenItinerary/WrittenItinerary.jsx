@@ -75,7 +75,7 @@ function RemoveStopControl({ onConfirm }) {
 
 // The inner content of a stop card — shared by the draggable (owner) and static
 // (viewer) rows so the two never drift.
-function StopCard({ pin, index, total, meal, editable, onRemoveStop, onEditStop, siblings }) {
+function StopCard({ pin, index, total, meal, editable, onRemoveStop, onEditStop, onEditCost, siblings }) {
   return (
     <>
       <div className="timeline-stop__rail">
@@ -102,7 +102,13 @@ function StopCard({ pin, index, total, meal, editable, onRemoveStop, onEditStop,
         />
         {pin.address && <PinAddress address={pin.address} />}
         {pin.description && <p className="timeline-stop__desc">{pin.description}</p>}
-        <PinCost cost={pin.pricePerPerson} />
+        <PinCost
+          cost={pin.pricePerPerson}
+          editable={editable}
+          stopId={pin.stopId}
+          onEditCost={onEditCost}
+          controlProps={editable ? noDrag : undefined}
+        />
       </div>
     </>
   );
@@ -112,7 +118,7 @@ function StopCard({ pin, index, total, meal, editable, onRemoveStop, onEditStop,
 // whole row carries the drag listeners so the card itself is the drag surface.
 // Interactive controls inside (remove, time editor) stopPropagation via `noDrag`
 // so they still work without starting a drag.
-function SortableStop({ pin, index, total, meal, onRemoveStop, onEditStop, siblings }) {
+function SortableStop({ pin, index, total, meal, onRemoveStop, onEditStop, onEditCost, siblings }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: pin.stopId });
   const style = {
@@ -136,6 +142,7 @@ function SortableStop({ pin, index, total, meal, onRemoveStop, onEditStop, sibli
         editable
         onRemoveStop={onRemoveStop}
         onEditStop={onEditStop}
+        onEditCost={onEditCost}
         siblings={siblings}
       />
     </li>
@@ -144,7 +151,7 @@ function SortableStop({ pin, index, total, meal, onRemoveStop, onEditStop, sibli
 
 // Wanderlog-style vertical timeline. For the owner (`editable`) each stop is
 // draggable (dnd-kit) and dropping calls onReorderStops with the new id order.
-function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onEditStop, onAddStop, meetingPoint, radiusMi, onReorderStops }) {
+function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onEditStop, onEditCost, onAddStop, meetingPoint, radiusMi, onReorderStops }) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -176,6 +183,7 @@ function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onEditSto
               editable={false}
               onRemoveStop={onRemoveStop}
               onEditStop={onEditStop}
+              onEditCost={onEditCost}
               siblings={siblingsFor(pin)}
               dragHandle={null}
             />
@@ -209,6 +217,7 @@ function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onEditSto
                 meal={mealOf(pin.tags)}
                 onRemoveStop={onRemoveStop}
                 onEditStop={onEditStop}
+                onEditCost={onEditCost}
                 siblings={siblingsFor(pin)}
               />
             ))}

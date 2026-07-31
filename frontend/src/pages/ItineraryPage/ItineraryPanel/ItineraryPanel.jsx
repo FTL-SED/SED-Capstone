@@ -15,24 +15,27 @@ function ItineraryPanel({
   onToggleLike, onToggleBookmark, onTogglePrivacy,
   onDelete, onCopy, copied, onMarkVisited,
   onExport,
-  onRemoveStop, onEditStop, onAddStop, meetingPoint, radiusMi, onReorderStops,
+  onRemoveStop, onEditStop, onEditCost, onAddStop, meetingPoint, radiusMi, onReorderStops,
   onEditItinerary, actionBusy,
 }) {
-  // Per-person total from the stops' prices. When it exceeds the trip's budget,
-  // the day was kept within the generator's grace band (a small overage beats
-  // swapping the AI plan for a worse one) — surface it honestly rather than hide.
+  // Per-person total from the stops' effective prices. This is now the itinerary's
+  // budget per person — the server recomputes maxBudgetPerPerson as this same sum
+  // whenever a stop is added, edited, or removed, so the two agree. The budget is
+  // NOT edited directly anymore; it's driven by the per-stop costs (edit those).
   const totalPerPerson = (pins ?? []).reduce((sum, p) => sum + (p.pricePerPerson ?? 0), 0);
-  const hasBudget = typeof maxBudgetPerPerson === 'number';
-  const overBudgetBy = hasBudget ? totalPerPerson - maxBudgetPerPerson : 0;
+  // Prefer the server's stored figure once it's been computed; fall back to the
+  // live sum (e.g. a legacy itinerary whose budget was never recalculated).
+  const budgetPerPerson = typeof maxBudgetPerPerson === 'number' ? maxBudgetPerPerson : totalPerPerson;
+  const hasBudget = (pins ?? []).length > 0 || typeof maxBudgetPerPerson === 'number';
 
-  // Owner inline-edit of the itinerary's own metadata (title/description/budget/
-  // cover). One Edit toggle flips the panel into edit mode; Save commits all
-  // four as a batch (see ItineraryPage.handleEditItinerary). Not optimistic —
-  // a cover upload is async and can fail, so we stay in edit mode until it lands.
+  // Owner inline-edit of the itinerary's own metadata (title/description/cover).
+  // One Edit toggle flips the panel into edit mode; Save commits them as a batch
+  // (see ItineraryPage.handleEditItinerary). Not optimistic — a cover upload is
+  // async and can fail, so we stay in edit mode until it lands. The budget is no
+  // longer edited here (it's derived from the per-stop costs on the timeline).
   const [editing, setEditing] = useState(false);
   const [draftTitle, setDraftTitle] = useState('');
   const [draftDescription, setDraftDescription] = useState('');
-  const [draftBudget, setDraftBudget] = useState('');
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
   const [coverRemoved, setCoverRemoved] = useState(false);
@@ -48,7 +51,6 @@ function ItineraryPanel({
   const beginEdit = () => {
     setDraftTitle(title ?? '');
     setDraftDescription(description ?? '');
-    setDraftBudget(hasBudget ? String(maxBudgetPerPerson) : '');
     setCoverFile(null);
     setCoverPreview(null);
     setCoverRemoved(false);
@@ -90,23 +92,10 @@ function ItineraryPanel({
       setError('Title is required.');
       return;
     }
-    // Blank budget clears it (null); otherwise it must be a non-negative number.
-    let budget;
-    if (draftBudget.trim() === '') {
-      budget = null;
-    } else {
-      const n = Number(draftBudget);
-      if (!Number.isFinite(n) || n < 0) {
-        setError('Budget must be a non-negative number.');
-        return;
-      }
-      budget = n;
-    }
 
     const changes = {
       title: trimmedTitle,
       description: draftDescription.trim() === '' ? null : draftDescription,
-      maxBudgetPerPerson: budget,
     };
 
     const ok = await onEditItinerary(changes, coverFile, coverRemoved);
@@ -190,25 +179,13 @@ function ItineraryPanel({
               value={draftDescription}
               onChange={setDraftDescription}
             />
-            {editing ? (
-              <label className="itinerary-panel__budget-edit">
-                Budget per person ($)
-                <input
-                  type="number"
-                  min="0"
-                  className="itinerary-panel__budget-input"
-                  value={draftBudget}
-                  onChange={(e) => setDraftBudget(e.target.value)}
-                  placeholder="No budget"
-                />
-              </label>
-            ) : (
-              hasBudget && (
-                <p className={`itinerary-panel__budget${overBudgetBy > 0 ? ' itinerary-panel__budget--over' : ''}`}>
-                  ${totalPerPerson}/person of ${maxBudgetPerPerson} budget
-                  {overBudgetBy > 0 && <span className="itinerary-panel__budget-badge"> · over by ${overBudgetBy}</span>}
-                </p>
-              )
+            {/* Budget per person is derived from the stops' costs (edit those on
+                the timeline), so there's no budget field here even in edit mode.
+                It's shown read-only in both modes as the recalculated total. */}
+            {hasBudget && (
+              <p className="itinerary-panel__budget">
+                ${budgetPerPerson}/person
+              </p>
             )}
             {editing && error && <span className="itinerary-panel__edit-error">{error}</span>}
           </div>
@@ -265,6 +242,7 @@ function ItineraryPanel({
           editable={isOwner}
           onRemoveStop={onRemoveStop}
           onEditStop={onEditStop}
+          onEditCost={onEditCost}
           onAddStop={onAddStop}
           meetingPoint={meetingPoint}
           radiusMi={radiusMi}
