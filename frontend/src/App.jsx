@@ -12,13 +12,14 @@ import CreateItineraryPage from './pages/CreateItineraryPage/CreateItineraryPage
 import LoadingPage from './pages/LoadingPage/LoadingPage'
 import ItineraryPage from './pages/ItineraryPage/ItineraryPage'
 import AccountPage from './pages/AccountPage/AccountPage'
+import ResetPasswordPage from './pages/ResetPasswordPage/ResetPasswordPage'
 import OnboardingPage from './pages/OnboardingPage/OnboardingPage'
 import { getCurrentUser } from './lib/currentUser.js'
 
 function App() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const isAuthPage = pathname === '/login' || pathname === '/register';
+  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/reset-password';
   // Onboarding is post-register but pre-login (still signed out). Like the auth
   // pages it takes over the screen — full-bleed shell (no padded max-width) and
   // no footer — so the wizard is the whole focus. It keeps the in-app hero
@@ -120,6 +121,7 @@ function App() {
             path="/register"
             element={isAuthenticated ? <Navigate to="/home" replace /> : <RegisterPage setCurrentUser={setCurrentUser} />}
           />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           {/* Second half of registration. Deliberately NOT gated on
               isAuthenticated: the user is still signed out here (the app stays
               locked until they finish), so OnboardingPage guards itself on the
