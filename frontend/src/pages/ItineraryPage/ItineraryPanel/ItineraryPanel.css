@@ -69,6 +69,32 @@
   object-fit: cover;
 }
 
+/* Loading shimmer shown over the banner until the cover image has painted, so a
+   large (AI-generated) cover doesn't flash the fallback gradient while it
+   downloads. Sits above the img (z-index 0) but below the scrim/content. */
+.itinerary-panel__banner-shimmer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    90deg,
+    var(--surface-muted) 0%,
+    var(--accent-soft) 50%,
+    var(--surface-muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: banner-shimmer 1.5s infinite;
+}
+
+@keyframes banner-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 /* Fallback-only brand mark: the NavQuest diamond (same recipe as the navbar
    wordmark) centered low-opacity over the gradient, so a coverless banner reads
    as intentional/branded rather than empty. Sits below the scrim (z-index 1) and

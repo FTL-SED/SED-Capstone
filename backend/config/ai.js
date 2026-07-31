@@ -344,6 +344,15 @@ export const BANNER_IMAGE_SIZE = '1536x1024'
 // Cap on the user's free-text style prompt, to bound the request and cost.
 export const BANNER_PROMPT_MAX_CHARS = 500
 
+// Cap on each itinerary detail field (title/location/description) that also
+// feeds the image prompt. These come from other wizard steps, so bound them
+// here too — an oversized title would otherwise flow unchecked into the prompt.
+export const BANNER_FIELD_MAX_CHARS = 200
+
+// OpenAI moderation model used to screen banner prompt text before we spend an
+// image call. omni-moderation-latest is free and multimodal-aware.
+export const MODERATION_MODEL = 'omni-moderation-latest'
+
 // Per-user rate limit on POST /ai-agent/banner: at most 10 generations per
 // rolling hour. This is the real cost guardrail (the 3-cap above is bypassable
 // by refreshing the wizard).

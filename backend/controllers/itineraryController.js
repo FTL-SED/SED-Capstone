@@ -6,6 +6,12 @@ import * as visited from '../models/visited.js'
 import { parseIdParam, parseDate, loadOrNotFound, loadOwned } from './helpers.js'
 import { uploadItineraryCoverImage, removeItineraryCoverImage } from '../lib/supabase.js'
 import { computeReorder } from '../services/itinerary/reorderStops.js'
+import { detectImageType } from '../utils/imageType.js'
+
+// Real image types we accept for uploads, mapped to the stored file extension
+// and the Content-Type we hand Storage. Derived from the file's magic bytes
+// (detectImageType), never the client-supplied mimetype.
+const IMAGE_CONTENT_TYPE = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp' }
 
 // POST /itineraries
 // Creates an itinerary owned by the caller, with its stops referencing venue pins.
@@ -484,18 +490,20 @@ async function uploadItineraryCover(req, res) {
   if (!file) {
     return res.status(400).json({ error: 'No image file provided' })
   }
-  if (!file.mimetype?.startsWith('image/')) {
-    return res.status(400).json({ error: 'Cover must be an image file' })
+  // Verify the actual bytes are a real image — the client-supplied mimetype is
+  // spoofable, so it's never trusted for the accept decision or the stored name.
+  const imageType = detectImageType(file.buffer)
+  if (!imageType) {
+    return res.status(400).json({ error: 'Cover must be a PNG, JPEG, or WebP image' })
   }
 
   try {
     // One object per itinerary, keyed by id — upsert overwrites the old cover.
     // The query string busts the CDN cache so the new image shows immediately.
-    const ext = file.mimetype.split('/')[1] || 'png'
     const publicUrl = await uploadItineraryCoverImage({
-      path: `${id}/cover.${ext}`,
+      path: `${id}/cover.${imageType}`,
       buffer: file.buffer,
-      contentType: file.mimetype,
+      contentType: IMAGE_CONTENT_TYPE[imageType],
     })
     const coverImageUrl = `${publicUrl}?v=${id}-${file.size}`
 

@@ -41,6 +41,10 @@ function ItineraryPanel({
   const [coverRemoved, setCoverRemoved] = useState(false);
   const [error, setError] = useState('');
   const coverInputRef = useRef(null);
+  // The cover image renders before its bytes finish downloading (AI banner PNGs
+  // are large), so the gradient behind it flashed through. Track load state and
+  // cover it with a shimmer until the image actually paints.
+  const [coverLoaded, setCoverLoaded] = useState(false);
 
   // Revoke the object URL when the staged preview changes or the panel unmounts,
   // so we never leak the blob URL created for the local cover preview.
@@ -117,6 +121,15 @@ function ItineraryPanel({
   // persisted image — unless removal is staged, which hides it locally.
   const bannerImg = coverRemoved ? null : (coverPreview ?? coverImageUrl);
 
+  // Reset the loaded flag when the shown image changes, so a new cover (or a
+  // staged edit preview) re-shows the shimmer until it too has painted. Done by
+  // adjusting state during render (the React-recommended alternative to a
+  // setState-in-effect) — track the src the flag currently applies to.
+  const [loadedSrc, setLoadedSrc] = useState(null);
+  if (coverLoaded && loadedSrc !== bannerImg) {
+    setCoverLoaded(false);
+  }
+
   return (
     <div className="itinerary-panel">
       {/* Photo banner à la Google Maps' place sidebar: the cover image fills the
@@ -134,8 +147,21 @@ function ItineraryPanel({
               className="itinerary-panel__banner-img"
               src={bannerImg}
               alt={`Cover photo for ${title || 'this itinerary'}`}
-              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              onLoad={() => { setCoverLoaded(true); setLoadedSrc(bannerImg); }}
+              onError={(e) => {
+                // A broken cover: hide the img and clear the shimmer so the
+                // banner degrades to the branded gradient instead of shimmering
+                // forever.
+                e.currentTarget.style.display = 'none';
+                setCoverLoaded(true);
+                setLoadedSrc(bannerImg);
+              }}
             />
+          )}
+          {/* Shimmer over the gradient while the cover downloads, so the large AI
+              banner PNGs don't flash the fallback gradient before they paint. */}
+          {bannerImg && !coverLoaded && (
+            <span className="itinerary-panel__banner-shimmer" aria-hidden="true" />
           )}
           <div className="itinerary-panel__banner-scrim" aria-hidden="true" />
           {editing && (

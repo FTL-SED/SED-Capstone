@@ -32,6 +32,13 @@
   color: var(--slate-500, #6e6656);
 }
 
+/* Upload button + the compact AI button sit side by side. */
+.step3-finish__cover-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 /* File input styled as a ghost button (the real input is visually hidden). */
 .step3-finish__cover-upload {
   display: inline-flex;
@@ -83,20 +90,21 @@
   color: var(--accent-strong, #cf6a2f);
 }
 
+/* Compact secondary action next to the upload button. */
 .step3-finish__ai-banner {
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
-  padding: 10px 16px;
+  min-height: 36px;
+  padding: 6px 12px;
   border: 1px dashed var(--border-strong, #ddcca6);
   border-radius: var(--radius-pill, 999px);
   background: transparent;
   color: var(--accent, #e67e34);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
   transition: border-color 0.18s ease, color 0.18s ease;
-  margin-left: 10px;
 }
 
 .step3-finish__ai-banner:hover {

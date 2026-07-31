@@ -40,11 +40,16 @@ function BannerGeneratorModal({ details = {}, onUse, onClose }) {
       });
     } catch (err) {
       const status = err?.response?.status;
-      setError(
-        status === 429
-          ? 'You have generated too many banners. Please try again later.'
-          : 'Could not generate a banner. Please try again.',
-      );
+      const serverMessage = err?.response?.data?.error;
+      if (status === 429) {
+        setError('You have generated too many banners. Please try again later.');
+      } else if (status === 400) {
+        // Content-policy rejection or invalid input — the backend sends a
+        // user-safe message; show it so the user can reword their description.
+        setError(serverMessage || 'That description can’t be used. Please try different wording.');
+      } else {
+        setError('Could not generate a banner. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

@@ -41,7 +41,12 @@ function Step3_Finish({ form, update, onBack, goTo }) {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  // A cover image is required — either uploaded or AI-generated (both set
+  // form.coverImageFile). Guard the navigation as well as disabling the button.
+  const hasCover = Boolean(form.coverImageFile);
+
   const handleFinish = () => {
+    if (!hasCover) return;
     navigate('/loading', { state: { form } });
   };
 
@@ -69,7 +74,7 @@ function Step3_Finish({ form, update, onBack, goTo }) {
 
       <div className="step3-finish__field">
         <label>Cover image</label>
-        <p className="step3-finish__hint">Optional — leave blank to use a warm default.</p>
+        <p className="step3-finish__hint">Required — upload an image or generate one with AI.</p>
         {preview && (
           <div className="step3-finish__cover-preview">
             <img src={preview} alt="Chosen cover preview" />
@@ -82,29 +87,31 @@ function Step3_Finish({ form, update, onBack, goTo }) {
             </button>
           </div>
         )}
-        <label className="step3-finish__cover-upload">
-          {form.coverImageFile ? 'Choose a different image' : 'Upload an image'}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            hidden
-          />
-        </label>
-        <button
-          type="button"
-          className="step3-finish__ai-banner"
-          onClick={() => setShowBannerModal(true)}
-        >
-          ✨ Generate with AI
-        </button>
+        <div className="step3-finish__cover-actions">
+          <label className="step3-finish__cover-upload">
+            {form.coverImageFile ? 'Choose a different image' : 'Upload an image'}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              hidden
+            />
+          </label>
+          <button
+            type="button"
+            className="step3-finish__ai-banner"
+            onClick={() => setShowBannerModal(true)}
+          >
+            ✨ AI
+          </button>
+        </div>
       </div>
 
       <PrivacyField form={form} update={update} />
       <div className="step3-finish__nav">
         <BackButton onClick={onBack} />
-        <FinishButton onClick={handleFinish} />
+        <FinishButton onClick={handleFinish} disabled={!hasCover} />
       </div>
 
       {showBannerModal && (

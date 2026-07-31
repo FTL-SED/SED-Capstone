@@ -4,6 +4,12 @@ import { reshapeItinerary } from '../models/itineraries.js'
 import { parseIdParam } from './helpers.js'
 import { getAuthUser } from '../middleware/auth.js'
 import { usernameFromEmail } from '../utils/username.js'
+import { detectImageType } from '../utils/imageType.js'
+
+// Real image types we accept, mapped to the stored extension + Content-Type.
+// Derived from the file's magic bytes (detectImageType), never the spoofable
+// client-supplied mimetype.
+const IMAGE_CONTENT_TYPE = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp' }
 
 // POST /users/register
 // Creates the Supabase Auth account, then the matching app-side profile row.
@@ -373,20 +379,21 @@ async function uploadUserAvatar(req, res) {
   if (!file) {
     return res.status(400).json({ error: 'No image file provided' })
   }
-
-  if (!file.mimetype?.startsWith('image/')) {
-    return res.status(400).json({ error: 'Avatar must be an image file' })
+  // Verify the actual bytes are a real image — the client-supplied mimetype is
+  // spoofable, so it's never trusted for the accept decision or the stored name.
+  const imageType = detectImageType(file.buffer)
+  if (!imageType) {
+    return res.status(400).json({ error: 'Avatar must be a PNG, JPEG, or WebP image' })
   }
 
   try {
     // One object per user, keyed by id — upsert overwrites the old avatar. The
     // extension keeps the content type honest; the query string busts the CDN
     // cache so the new image shows immediately.
-    const ext = file.mimetype.split('/')[1] || 'png'
     const publicUrl = await uploadAvatar({
-      path: `${id}/avatar.${ext}`,
+      path: `${id}/avatar.${imageType}`,
       buffer: file.buffer,
-      contentType: file.mimetype,
+      contentType: IMAGE_CONTENT_TYPE[imageType],
     })
     const avatarUrl = `${publicUrl}?v=${id}-${file.size}`
 
