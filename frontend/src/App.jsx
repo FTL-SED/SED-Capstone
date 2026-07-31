@@ -45,7 +45,7 @@ function App() {
   const isFloatingNav = isLanding || isAuthPage || isOnboarding;
   const isHeroNav = isFloatingNav ||
     pathname === '/home' || pathname === '/discover' || pathname === '/create' ||
-    pathname === '/account' || isFullBleed;
+    pathname === '/account' || pathname === '/loading' || isFullBleed;
 
   // by using local storage, if the page references, but current user still stays same,
   // the isAuthenticated details wont be forgotted
