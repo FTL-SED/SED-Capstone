@@ -114,6 +114,8 @@ Acceptance Criteria:
 - When I submit a valid username, email, and password, Supabase Auth creates my account, then a POST /users request creates my linked profile and I receive a 201 response with {username, email, createdAt}, then I'm logged in and redirected to my dashboard
 - If any field is missing or improperly formatted, the UI shows a field-specific error without clearing my other inputs
 - The password is handled entirely by Supabase Auth; NavQuest never receives or stores it, and it is never included in any response, logs, or client storage
+- Instead of manual login, I can use a third-party Google account to sign up or log in, which speeds up the login process for people who prefer to use Google
+- A "Show Password" feature lets me reflect the current password I typed so I don't have to remember it blindly
 
 #14 As an itinerary organizer, I want to update my account’s information in case - I want to change my username, email, or password
 - When I change my username and save, a PUT /users/:id request is sent containing only the changed field, and I receive a 200 response reflecting the change
@@ -487,7 +489,9 @@ const [currentViewedItinerary, setCurrentViewedItinerary] = useState(null);
 │   │       ├── <LoginForm>
 │   │       │   ├── <TextInput> email
 │   │       │   ├── <PasswordInput> password
-│   │       │   └── <SubmitButton> "Log in"
+│   │       │   │   └── <ShowPasswordToggle>   "Show Password"
+│   │       │   ├── <SubmitButton> "Log in"
+│   │       │   └── <GoogleLoginButton>        "Continue with Google"
 │   │       └── <SignUpSection>
 |   |           ├── <SignUpText>
 |   |           ├── <RegisterLink>
@@ -499,9 +503,11 @@ const [currentViewedItinerary, setCurrentViewedItinerary] = useState(null);
 │   │       │   ├── <TextInput> username
 │   │       │   ├── <TextInput> email
 │   │       │   ├── <PasswordInput> password
+│   │       │   │   └── <ShowPasswordToggle>   "Show Password"
 │   │       │   ├── <ErrorMessage>            (only if a submit error occurs)
 │   │       │   ├── <ConfirmationMessage>     (only on successful register, e.g. "check your email")
-│   │       │   └── <SubmitButton> "Register"
+│   │       │   ├── <SubmitButton> "Register"
+│   │       │   └── <GoogleLoginButton>        "Continue with Google"
 |   |       └── <LoginSection>
 |   |           ├── <loginText>
 |   |           ├── <loginLink>
@@ -823,5 +829,33 @@ Tradeoffs: Just having a randomly chosen set of cards for the Explore carousel d
 # Sprint 2
 
 # Sprint 3
+## Spec Reconciliation — Bug Bash (Sprint 3)
+
+### Spec audit owner(s)
+Semir, Emmanuel, Dylan
+
+### Sections reviewed
+- Data model: ✅ spec matches running app 
+- API contracts: ✅ spec matches running app
+- State architecture: ✅ spec matches running app
+- AI feature spec: ✅ spec matches running app
+- Component behavior (from wireframes): ✅ spec matches running app
+
+### Spec gaps found (behavior in the app not documented in the spec)
+- For the login feature, users did not have access to seeing their password
+- In the login feature, users were also forced to do manual login rather than a common third-party authentication service (i.e. Google)
+- For the created itineraries, they are uneditable
+
+### Implemented features that diverged from the spec
+N/A, our specifications for the app matched what was expected during our Bug Bash. Our biggest problem during the Bug Bash was our intended behavior did not always align with our end user's desires (i.e. users struggled with remembering their password and did not like the AI-generated itinerary).
+
+### Sections updated to reflect intentional changes
+- Added a Google Authentication feature to add Third-Party login integration (which will speed up the login process for people who prefer to use Google)
+- Added a "Show Password" feature to reflect the current password of the user
+- Added the ability to edit itineraries
+
+### Going into Sprint 4: is the spec an accurate description of the system?
+Yes
 
 # Sprint 4
+
