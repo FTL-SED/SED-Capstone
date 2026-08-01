@@ -20,5 +20,16 @@ We finished nearly all of the features we wanted to create, including the abilit
 
 We very much appreciated the Bug Bash because we got to see how other users experienced our app and how we could improve the app accordingly. Through our feedback, we were able to change our user experience so the application was more cohesive and we were able to account for more edge cases (i.e. if the user forgot their password while logging in). We also appreciated the support we got from our advisors, managers, and mentors since they helped us consider each user scenarios and consider how we can approach the final MVP features we planned on implementing including Google authentication and the user search feature. 
 
+* What did the spec audit during the bug bash surface? Were there significant gaps between documented and actual behavior, and how did you address them? Is the Spec Reconciliation — Bug Bash section committed to your repo?
+
+The Spec Reconciliation - Bug Bash Section is committed to our repo and goes into depth about the differences between our documented and actual behavior, but we found no issues between our specification and actual behavior. However, the Bug Bash did reveal issues with our user experience based on our intended specification behavior, like users struggling with the logging in flow, which we focused on this week on improving. Due to this, we needed to update our specifications to reflect the newer features + acceptance criterion we needed for the web application (including having Google authentication and the ability to update an itinerary).
+
+
+* Going into Sprint 4, is your master spec accurate? What sections still need updating?
+
+Our master spec is accurate since for the next sprint we mainly want to focus on demoing and ensuring that our website works perfectly end-to-end for our final demo. Therefore, we plan on not updating our spec any further after this.
+
+
 * Which features and user stories would you consider “at risk”? How will you change your plan if those items remain “at risk”?
+
 Since this is the last Sprint, we have nearly finished all of the features and user stories. While we had to cut certain features for the sake of the time, including AI-assisted editing of the itinerary and user-generated itinerary stops, we ultimately finished the functionality for all the features we planned on completing. For these cut features, they were originally "at risk" which is why we decided to cut them in the first place. 
