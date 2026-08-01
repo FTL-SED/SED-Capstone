@@ -8,7 +8,7 @@ import App from './App.jsx'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 0 * 60 * 1000,    // after x min: revisits within this window use cache, no refetch
+      staleTime: 3 * 60 * 1000,    // after x min: revisits within this window use cache, no refetch
       refetchOnWindowFocus: false, // don't refetch just from clicking back into the tab
     },
   },
