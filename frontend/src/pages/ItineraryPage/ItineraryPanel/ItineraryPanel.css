@@ -164,6 +164,33 @@
   margin: 8px 0 0;
   font-size: 0.9rem;
   color: #6b6257;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+/* Plain text button (no pill) sitting to the right of the budget line, at the
+   same font size — a lightweight collapse/expand affordance for the reader. */
+.itinerary-panel__collapse-toggle {
+  margin-left: auto;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 500;
+  color: var(--accent-strong);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.itinerary-panel__collapse-toggle:hover {
+  text-decoration: underline;
+}
+
+.itinerary-panel__collapse-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 /* The title reads as an editorial heading — same Fraunces display face, weight

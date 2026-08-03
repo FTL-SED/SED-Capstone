@@ -41,6 +41,10 @@ function ItineraryPanel({
   const [coverRemoved, setCoverRemoved] = useState(false);
   const [error, setError] = useState('');
   const coverInputRef = useRef(null);
+  // Reader-facing collapse of the description + budget lines, so the timeline can
+  // fill the panel. Only the toggle stays visible when collapsed. Editing always
+  // shows the fields, so it's forced expanded below.
+  const [collapsed, setCollapsed] = useState(true);
   // The cover image renders before its bytes finish downloading (AI banner PNGs
   // are large), so the gradient behind it flashed through. Track load state and
   // cover it with a shimmer until the image actually paints.
@@ -199,18 +203,35 @@ function ItineraryPanel({
         </div>
         {(description || hasBudget || editing) && (
           <div className="itinerary-panel__meta">
-            <Description
-              text={description}
-              editing={editing}
-              value={draftDescription}
-              onChange={setDraftDescription}
-            />
+            {/* Editing always shows the fields; otherwise the reader can collapse
+                the description + budget down to just the budget line + toggle. */}
+            {(editing || !collapsed) && (
+              <Description
+                text={description}
+                editing={editing}
+                value={draftDescription}
+                onChange={setDraftDescription}
+              />
+            )}
             {/* Budget per person is derived from the stops' costs (edit those on
                 the timeline), so there's no budget field here even in edit mode.
-                It's shown read-only in both modes as the recalculated total. */}
-            {hasBudget && (
+                It's shown read-only in both modes as the recalculated total. The
+                collapse/expand toggle sits to its right, at the same size. */}
+            {(hasBudget || !editing) && (
               <p className="itinerary-panel__budget">
-                ${budgetPerPerson}/person
+                {hasBudget && (editing || !collapsed) && (
+                  <span>${budgetPerPerson}/person</span>
+                )}
+                {!editing && (
+                  <button
+                    type="button"
+                    className="itinerary-panel__collapse-toggle"
+                    aria-expanded={!collapsed}
+                    onClick={() => setCollapsed((c) => !c)}
+                  >
+                    {collapsed ? 'Show details' : 'Hide details'}
+                  </button>
+                )}
               </p>
             )}
             {editing && error && <span className="itinerary-panel__edit-error">{error}</span>}
