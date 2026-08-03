@@ -296,6 +296,27 @@ img {
   to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
 }
 
+/* --- In-app nav cross-fade (Dashboard / Explore / Create) --- */
+/* A subtle fade: the outgoing page fades + eases back slightly while the new
+   page fades in, so switching between the in-app pages feels smooth rather than
+   an instant hard cut. */
+/* Softest possible switch: leave the outgoing page fully opaque (no dip, no
+   flicker) and just ease the new page up from a gentle 0.4 start. The two never
+   sit half-transparent together, so it reads as a whisper-quiet settle rather
+   than a cross-fade. */
+:root[data-sky-transition="fade"]::view-transition-old(root) {
+  animation: none;
+}
+
+:root[data-sky-transition="fade"]::view-transition-new(root) {
+  animation: page-fade-in 110ms ease-out both;
+}
+
+@keyframes page-fade-in {
+  from { opacity: 0.7; }
+  to   { opacity: 1; }
+}
+
 /* --- Card-only switch: hold the sky still, morph just the card --- */
 :root[data-sky-transition="card"]::view-transition-old(root),
 :root[data-sky-transition="card"]::view-transition-new(root) {
