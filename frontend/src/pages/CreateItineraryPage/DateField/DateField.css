@@ -85,6 +85,20 @@
   border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow-lg);
+  /* Anchor the open animation to the top edge (it drops down from the trigger). */
+  transform-origin: top left;
+}
+
+/* Subtle open animation: the calendar fades and eases down from the trigger so
+   it doesn't appear abruptly. Skipped for users who opt out of motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .date-field__popup {
+    animation: date-field-popup 0.16s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+@keyframes date-field-popup {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .date-field__nav {

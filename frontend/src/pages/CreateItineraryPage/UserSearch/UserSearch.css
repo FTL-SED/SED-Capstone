@@ -29,6 +29,21 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   max-height: 240px;
   overflow-y: auto;
+  /* Anchor the open animation to the top edge (it drops down from the input). */
+  transform-origin: top left;
+}
+
+/* Subtle open animation: the results fade and ease down from the input so the
+   list doesn't appear abruptly — matching the date/time pickers on the same
+   Create flow. Skipped for users who opt out of motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .user-search__results {
+    animation: user-search-results 0.16s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+@keyframes user-search-results {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .user-search__results button {

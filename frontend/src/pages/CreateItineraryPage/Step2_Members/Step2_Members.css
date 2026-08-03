@@ -39,6 +39,20 @@
   border: 1px dashed #c7d2fe;
   border-radius: 10px;
   background: #f8fafc;
+  transform-origin: top;
+}
+
+/* Subtle reveal when the "Search by username" panel is toggled open, so it
+   eases down into place instead of appearing abruptly — matching the dropdown
+   effects elsewhere in the Create flow. Skipped for reduced-motion users. */
+@media (prefers-reduced-motion: no-preference) {
+  .step2-members__search {
+    animation: step2-members-search 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+@keyframes step2-members-search {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .step2-members__search-hint {
