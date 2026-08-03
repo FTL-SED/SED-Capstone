@@ -20,7 +20,6 @@ import PinName from '../PinName/PinName.jsx'
 import PinTiming from '../PinTiming/PinTiming.jsx'
 import PinCost from '../PinCost/PinCost.jsx'
 import PinAddress from '../PinAddress/PinAddress.jsx'
-import AddStopPanel from '../AddStopPanel/AddStopPanel.jsx'
 
 // A meal badge if the stop was tagged breakfast/lunch/dinner (persist.js folds
 // mealType into the pin's tags).
@@ -46,7 +45,6 @@ function RemoveStopControl({ onConfirm }) {
   if (confirming) {
     return (
       <div className="timeline-stop__confirm" {...noDrag}>
-        <span>Remove?</span>
         <button type="button" className="timeline-stop__confirm-yes" onClick={onConfirm}>
           Remove
         </button>
@@ -151,7 +149,7 @@ function SortableStop({ pin, index, total, meal, onRemoveStop, onEditStop, onEdi
 
 // Wanderlog-style vertical timeline. For the owner (`editable`) each stop is
 // draggable (dnd-kit) and dropping calls onReorderStops with the new id order.
-function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onEditStop, onEditCost, onAddStop, meetingPoint, radiusMi, onReorderStops }) {
+function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onEditStop, onEditCost, onReorderStops }) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -161,7 +159,6 @@ function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onEditSto
     return (
       <div className="written-itinerary">
         <p className="written-itinerary__empty">No stops in this itinerary yet.</p>
-        {editable && <AddStopPanel onAddStop={onAddStop} meetingPoint={meetingPoint} radiusMi={radiusMi} />}
       </div>
     );
   }
@@ -204,28 +201,25 @@ function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onEditSto
   };
 
   return (
-    <>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={pins.map((p) => p.stopId)} strategy={verticalListSortingStrategy}>
-          <ol className="written-itinerary">
-            {pins.map((pin, i) => (
-              <SortableStop
-                key={pin.stopId}
-                pin={pin}
-                index={i}
-                total={pins.length}
-                meal={mealOf(pin.tags)}
-                onRemoveStop={onRemoveStop}
-                onEditStop={onEditStop}
-                onEditCost={onEditCost}
-                siblings={siblingsFor(pin)}
-              />
-            ))}
-          </ol>
-        </SortableContext>
-      </DndContext>
-      <AddStopPanel onAddStop={onAddStop} meetingPoint={meetingPoint} radiusMi={radiusMi} />
-    </>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={pins.map((p) => p.stopId)} strategy={verticalListSortingStrategy}>
+        <ol className="written-itinerary">
+          {pins.map((pin, i) => (
+            <SortableStop
+              key={pin.stopId}
+              pin={pin}
+              index={i}
+              total={pins.length}
+              meal={mealOf(pin.tags)}
+              onRemoveStop={onRemoveStop}
+              onEditStop={onEditStop}
+              onEditCost={onEditCost}
+              siblings={siblingsFor(pin)}
+            />
+          ))}
+        </ol>
+      </SortableContext>
+    </DndContext>
   );
 }
 

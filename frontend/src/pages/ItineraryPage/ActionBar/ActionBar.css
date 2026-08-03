@@ -2,29 +2,92 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  /* Spread the view-mode actions evenly across the full panel width so there's
+     no dead space on the right. The edit toolbar overrides this to stay
+     left-packed (see .action-bar--editing). */
+  justify-content: space-between;
   gap: 8px;
 }
 
-/* Edit stays an accent-outlined pill; Save + Cancel are neutral .action-btn pills
-   (App.css) that go teal on hover — matching the Visited button's resting style. */
-.action-bar__edit {
+/* "Add stop" is the owner's primary timeline action: a solid accent pill so it
+   stands out from the neutral social pills sharing its row. */
+.action-bar__add-stop {
   border-color: var(--accent);
-  color: var(--accent-strong);
-}
-
-.action-bar__edit:hover {
   background: var(--accent);
-  border-color: var(--accent);
   color: #fff;
 }
 
-.action-bar__save:hover {
-  border-color: var(--accent);
+.action-bar__add-stop:hover {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+  color: #fff;
+}
+
+/* The edit toolbar keeps all controls on one row — no wrap — and tightens each
+   pill so Delete / Privacy / Change cover fit together. */
+.action-bar--editing {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: 6px;
+}
+
+.action-bar--editing .action-btn {
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+/* "Change cover" dropdown: the toggle owns a relative wrapper so its menu can
+   float beneath it. Mirrors the Discover tags dropdown pattern. */
+.action-bar__cover-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.action-bar__cover-caret {
+  margin-left: 2px;
+  font-size: 0.7rem;
+}
+
+.action-bar__cover-options {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 5;
+  min-width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.action-bar__cover-option {
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--slate-600);
+  text-align: left;
+  white-space: nowrap;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.action-bar__cover-option:hover {
+  background: var(--surface-muted);
   color: var(--accent-strong);
 }
 
-.action-bar__save:disabled,
-.action-bar__cancel:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+/* "Remove cover" carries a danger tint so it reads as the destructive option. */
+.action-bar__cover-option--remove {
+  color: var(--danger, #b42318);
+}
+
+.action-bar__cover-option--remove:hover {
+  background: var(--danger-soft, #ffe4e6);
+  color: var(--danger, #b42318);
 }

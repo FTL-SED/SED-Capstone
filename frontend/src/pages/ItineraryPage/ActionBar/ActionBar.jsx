@@ -1,4 +1,5 @@
 import './ActionBar.css'
+import { useState, useEffect, useRef } from 'react'
 import DeleteButton from '../DeleteButton/DeleteButton.jsx'
 import BookmarkButton from '../BookmarkButton/BookmarkButton.jsx'
 import SaveCopyButton from '../SaveCopyButton/SaveCopyButton.jsx'
@@ -15,29 +16,76 @@ function ActionBar({
   onToggleLike,
   onToggleBookmark,
   onTogglePrivacy,
-  onDelete,
   onCopy,
   copied = false,
   visited,
   onMarkVisited,
   editing = false,
-  onEdit,
-  onSaveEdit,
-  onCancelEdit,
-  editBusy = false,
+  onDelete,
   onExport,
+  onAddStop,
+  onChangeCover,
+  onRemoveCover,
+  hasCover = false,
 }) {
-  // While the owner is editing the itinerary's metadata, the bar collapses to
-  // Save/Cancel so the destructive/social actions can't fire mid-edit.
+  // The "Change cover" dropdown (edit toolbar): Upload new / Remove cover behind
+  // one button, closed on any outside click — mirrors the Discover tags dropdown.
+  const [coverMenuOpen, setCoverMenuOpen] = useState(false);
+  const coverMenuRef = useRef(null);
+  useEffect(() => {
+    if (!coverMenuOpen) return;
+    const handleClickOutside = (e) => {
+      if (coverMenuRef.current && !coverMenuRef.current.contains(e.target)) {
+        setCoverMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [coverMenuOpen]);
+
+  // While the owner is editing the itinerary's metadata, the bar becomes an edit
+  // toolbar: Delete, the public/private toggle, and the cover dropdown. Save
+  // (checkmark) and Exit (back) now live as icon buttons on the banner, so the
+  // social actions can't fire mid-edit.
   if (isOwner && editing) {
     return (
-      <div className="action-bar">
-        <button type="button" className="action-btn action-bar__save" onClick={onSaveEdit} disabled={editBusy}>
-          {editBusy ? 'Saving…' : 'Save'}
-        </button>
-        <button type="button" className="action-btn action-bar__cancel" onClick={onCancelEdit} disabled={editBusy}>
-          Cancel
-        </button>
+      <div className="action-bar action-bar--editing">
+        <DeleteButton onClick={onDelete} />
+        <PrivacyButton isPublic={isPublic} onClick={onTogglePrivacy} />
+        <div className="action-bar__cover-menu" ref={coverMenuRef}>
+          <button
+            type="button"
+            className="action-btn"
+            aria-haspopup="true"
+            aria-expanded={coverMenuOpen}
+            onClick={() => setCoverMenuOpen((prev) => !prev)}
+          >
+            Change cover
+            <span className="action-bar__cover-caret" aria-hidden="true">▾</span>
+          </button>
+          {coverMenuOpen && (
+            <div className="action-bar__cover-options" role="menu">
+              <button
+                type="button"
+                role="menuitem"
+                className="action-bar__cover-option"
+                onClick={() => { setCoverMenuOpen(false); onChangeCover(); }}
+              >
+                Upload new
+              </button>
+              {hasCover && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="action-bar__cover-option action-bar__cover-option--remove"
+                  onClick={() => { setCoverMenuOpen(false); onRemoveCover(); }}
+                >
+                  Remove cover
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -46,26 +94,27 @@ function ActionBar({
     <div className="action-bar">
       {isOwner ? (
         <>
-          <button type="button" className="action-btn action-bar__edit" onClick={onEdit}>
-            Edit
+          <button type="button" className="action-btn action-bar__add-stop" onClick={onAddStop}>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Add stop
           </button>
-          <DeleteButton onClick={onDelete} />
-          <PrivacyButton isPublic={isPublic} onClick={onTogglePrivacy} />
-          <BookmarkButton bookmarked={bookmarked} onClick={onToggleBookmark} />
-          <LikeButton liked={liked} likeCount={likeCount} onClick={onToggleLike} />
           <VisitedButton visited={visited} onClick={onMarkVisited} />
+          <LikeButton liked={liked} likeCount={likeCount} onClick={onToggleLike} />
+          <BookmarkButton bookmarked={bookmarked} onClick={onToggleBookmark} />
           <button type="button" className="action-btn" onClick={onExport}>
-            Export
+            Share
           </button>
         </>
       ) : (
         <>
+          <VisitedButton visited={visited} onClick={onMarkVisited} />
+          <LikeButton liked={liked} likeCount={likeCount} onClick={onToggleLike} />
           <BookmarkButton bookmarked={bookmarked} onClick={onToggleBookmark} />
           <SaveCopyButton onClick={onCopy} copied={copied} />
-          <LikeButton liked={liked} likeCount={likeCount} onClick={onToggleLike} />
-          <VisitedButton visited={visited} onClick={onMarkVisited} />
           <button type="button" className="action-btn" onClick={onExport}>
-            Export
+            Share
           </button>
         </>
       )}

@@ -5,6 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import ItineraryPanel from './ItineraryPanel/ItineraryPanel.jsx'
 import MapView from './MapView/MapView.jsx'
 import ExportModal from './ExportModal/ExportModal.jsx'
+import ConfirmModal from './ConfirmModal/ConfirmModal.jsx'
 import ErrorMessage from '../../components/ErrorMessage/ErrorMessage.jsx'
 import LoadingSection from '../LoadingPage/LoadingSection/LoadingSection.jsx'
 import { useLikeBookmark } from '../../hooks/useLikeBookmark.js'
@@ -187,6 +188,8 @@ function ItineraryPage() {
     : '';
   // Guards against double-firing the delete/copy network calls on rapid clicks.
   const [actionBusy, setActionBusy] = useState(false);
+  // Whether the "delete itinerary" confirmation dialog is open.
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   // Highlights the Copy button while the copy request is in flight, so the user
   // gets immediate feedback that their click registered.
   const [copied, setCopied] = useState(false);
@@ -226,10 +229,17 @@ function ItineraryPage() {
     return previous;
   };
 
-  // Owner-only: delete this itinerary after confirming, then go home.
-  const handleDelete = async () => {
+  // Owner-only: open the delete-confirmation dialog. The actual delete runs from
+  // the dialog's confirm handler below, so the prompt is a branded in-app modal
+  // rather than the browser's native window.confirm.
+  const handleDelete = () => {
     if (actionBusy) return;
-    if (!window.confirm('Delete this itinerary? This cannot be undone.')) return;
+    setConfirmDeleteOpen(true);
+  };
+
+  // Confirmed from the dialog: delete this itinerary, then go home.
+  const confirmDelete = async () => {
+    setConfirmDeleteOpen(false);
     setActionBusy(true);
     try {
       await deleteItinerary(id);
@@ -539,6 +549,16 @@ function ItineraryPage() {
         onClose={() => setExportOpen(false)}
         onSend={handleEmail}
         onCopy={handleCopyText}
+      />
+      <ConfirmModal
+        open={confirmDeleteOpen}
+        title="Delete this itinerary?"
+        message={`"${itinerary.title}" and all of its stops will be permanently deleted. This can't be undone.`}
+        confirmLabel="Delete itinerary"
+        cancelLabel="Keep it"
+        danger
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmDeleteOpen(false)}
       />
     </div>
   );

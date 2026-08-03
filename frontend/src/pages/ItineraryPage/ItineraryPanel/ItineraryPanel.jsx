@@ -5,6 +5,8 @@ import Title from '../Title/Title.jsx'
 import Description from '../Description/Description.jsx'
 import Author from '../Author/Author.jsx'
 import WrittenItinerary from '../WrittenItinerary/WrittenItinerary.jsx'
+import AddStopPanel from '../AddStopPanel/AddStopPanel.jsx'
+import ConfirmModal from '../ConfirmModal/ConfirmModal.jsx'
 
 // The left half of the split: the itinerary's title/description/author, the
 // CRUD action bar, and the scrolling stop timeline — all in one panel.
@@ -41,10 +43,15 @@ function ItineraryPanel({
   const [coverRemoved, setCoverRemoved] = useState(false);
   const [error, setError] = useState('');
   const coverInputRef = useRef(null);
-  // Reader-facing collapse of the description + budget lines, so the timeline can
-  // fill the panel. Only the toggle stays visible when collapsed. Editing always
-  // shows the fields, so it's forced expanded below.
-  const [collapsed, setCollapsed] = useState(true);
+  // Whether the "Add a stop" modal (owner-only, opened from the action bar) is
+  // showing. The modal owns its own search state; this just gates it open/closed.
+  const [addStopOpen, setAddStopOpen] = useState(false);
+  // View-mode collapse: hides the banner, description/budget and the action bar
+  // down to a slim title bar, so the stop timeline gets the whole panel. Only
+  // applies when not editing (editing always shows the full form).
+  const [collapsed, setCollapsed] = useState(false);
+  // Whether the "remove cover" confirmation dialog is open.
+  const [confirmRemoveCoverOpen, setConfirmRemoveCoverOpen] = useState(false);
   // The cover image renders before its bytes finish downloading (AI banner PNGs
   // are large), so the gradient behind it flashed through. Track load state and
   // cover it with a shimmer until the image actually paints.
@@ -84,9 +91,11 @@ function ItineraryPanel({
     setCoverRemoved(false); // picking a file un-stages a removal
   };
 
-  // Stage removal of the existing cover: drop any picked file/preview and hide
-  // the banner locally. Committed on Save (see ItineraryPage.handleEditItinerary).
-  const onRemoveCover = () => {
+  // Removing the cover is confirmed first via a branded dialog (below), then
+  // staged: drop any picked file/preview and hide the banner locally. The
+  // removal is committed on Save (see ItineraryPage.handleEditItinerary).
+  const confirmRemoveCover = () => {
+    setConfirmRemoveCoverOpen(false);
     if (coverPreview) URL.revokeObjectURL(coverPreview);
     setCoverFile(null);
     setCoverPreview(null);
@@ -134,13 +143,35 @@ function ItineraryPanel({
     setCoverLoaded(false);
   }
 
+  // Editing always forces the full form open, so the collapse only applies in
+  // view mode.
+  const showCollapsed = collapsed && !editing;
+
   return (
     <div className="itinerary-panel">
+      {/* Collapsed view: a slim title bar with an expand arrow replaces the whole
+          banner + description + action bar, so the stop timeline gets the panel. */}
+      {showCollapsed && (
+        <button
+          type="button"
+          className="itinerary-panel__collapsed-bar"
+          onClick={() => setCollapsed(false)}
+          aria-expanded="false"
+          aria-label="Show details"
+        >
+          <svg className="itinerary-panel__collapsed-caret" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+          <span className="itinerary-panel__collapsed-title">{title}</span>
+        </button>
+      )}
       {/* Photo banner à la Google Maps' place sidebar: the cover image fills the
           header, a bottom-weighted scrim keeps the overlaid title/author legible,
           and the description sits below on the readable surface strip. A warm
           gradient always backs the banner, so a missing/broken image degrades
           into the product's golden-hour identity instead of a broken box. */}
+      {!showCollapsed && (
+      <>
       <header className="itinerary-panel__header">
         <div className="itinerary-panel__banner">
           {!bannerImg && (
@@ -168,7 +199,40 @@ function ItineraryPanel({
             <span className="itinerary-panel__banner-shimmer" aria-hidden="true" />
           )}
           <div className="itinerary-panel__banner-scrim" aria-hidden="true" />
-          {editing && (
+          {/* Collapse control (all viewers, view mode): tucks the banner +
+              description + actions away so the stop timeline gets the whole
+              panel. Sits top-left; hidden while editing (that corner is the
+              back button there). */}
+          {!editing && (
+            <button
+              type="button"
+              className="itinerary-panel__banner-icon itinerary-panel__banner-icon--collapse"
+              onClick={() => setCollapsed(true)}
+              aria-label="Hide details"
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M18 15l-6-6-6 6" />
+              </svg>
+            </button>
+          )}
+          {/* Owner banner controls. In view mode a single gear icon (top-right)
+              enters edit mode. In edit mode a back arrow (top-left) exits and a
+              save (checkmark) icon (top-right) commits the edits — the destructive
+              Delete now lives in the edit toolbar below. */}
+          {isOwner && !editing && (
+            <button
+              type="button"
+              className="itinerary-panel__banner-icon itinerary-panel__banner-icon--settings"
+              onClick={beginEdit}
+              aria-label="Edit itinerary"
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+            </button>
+          )}
+          {isOwner && editing && (
             <>
               <input
                 ref={coverInputRef}
@@ -180,20 +244,26 @@ function ItineraryPanel({
               />
               <button
                 type="button"
-                className="itinerary-panel__cover-change"
-                onClick={() => coverInputRef.current?.click()}
+                className="itinerary-panel__banner-icon itinerary-panel__banner-icon--back"
+                onClick={cancelEdit}
+                aria-label="Discard changes and exit edit mode"
               >
-                Change cover
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M19 12H5" />
+                  <path d="M12 19l-7-7 7-7" />
+                </svg>
               </button>
-              {bannerImg && (
-                <button
-                  type="button"
-                  className="itinerary-panel__cover-remove"
-                  onClick={onRemoveCover}
-                >
-                  Remove cover
-                </button>
-              )}
+              <button
+                type="button"
+                className="itinerary-panel__banner-icon itinerary-panel__banner-icon--save"
+                onClick={saveEdit}
+                disabled={actionBusy}
+                aria-label="Save changes"
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+              </button>
             </>
           )}
           <div className="itinerary-panel__banner-content">
@@ -203,35 +273,18 @@ function ItineraryPanel({
         </div>
         {(description || hasBudget || editing) && (
           <div className="itinerary-panel__meta">
-            {/* Editing always shows the fields; otherwise the reader can collapse
-                the description + budget down to just the budget line + toggle. */}
-            {(editing || !collapsed) && (
-              <Description
-                text={description}
-                editing={editing}
-                value={draftDescription}
-                onChange={setDraftDescription}
-              />
-            )}
+            <Description
+              text={description}
+              editing={editing}
+              value={draftDescription}
+              onChange={setDraftDescription}
+            />
             {/* Budget per person is derived from the stops' costs (edit those on
                 the timeline), so there's no budget field here even in edit mode.
-                It's shown read-only in both modes as the recalculated total. The
-                collapse/expand toggle sits to its right, at the same size. */}
-            {(hasBudget || !editing) && (
+                It's shown read-only in both modes as the recalculated total. */}
+            {hasBudget && (
               <p className="itinerary-panel__budget">
-                {hasBudget && (editing || !collapsed) && (
-                  <span>${budgetPerPerson}/person</span>
-                )}
-                {!editing && (
-                  <button
-                    type="button"
-                    className="itinerary-panel__collapse-toggle"
-                    aria-expanded={!collapsed}
-                    onClick={() => setCollapsed((c) => !c)}
-                  >
-                    {collapsed ? 'Show details' : 'Hide details'}
-                  </button>
-                )}
+                <span>${budgetPerPerson}/person</span>
               </p>
             )}
             {editing && error && <span className="itinerary-panel__edit-error">{error}</span>}
@@ -247,18 +300,20 @@ function ItineraryPanel({
         onToggleLike={onToggleLike}
         onToggleBookmark={onToggleBookmark}
         onTogglePrivacy={onTogglePrivacy}
-        onDelete={onDelete}
         onCopy={onCopy}
         copied={copied}
         visited={visited}
         onMarkVisited={onMarkVisited}
         editing={editing}
-        onEdit={beginEdit}
-        onSaveEdit={saveEdit}
-        onCancelEdit={cancelEdit}
-        editBusy={actionBusy}
+        onDelete={onDelete}
         onExport={onExport}
+        onAddStop={() => setAddStopOpen(true)}
+        onChangeCover={() => coverInputRef.current?.click()}
+        onRemoveCover={() => setConfirmRemoveCoverOpen(true)}
+        hasCover={Boolean(bannerImg)}
       />
+      </>
+      )}
       {/* Written / Visual tabs — shown only on narrow screens (CSS-hidden on
           desktop, where the written timeline and the map show side by side).
           Sitting below the header + action bar, they keep the title, author and
@@ -290,12 +345,28 @@ function ItineraryPanel({
           onRemoveStop={onRemoveStop}
           onEditStop={onEditStop}
           onEditCost={onEditCost}
-          onAddStop={onAddStop}
-          meetingPoint={meetingPoint}
-          radiusMi={radiusMi}
           onReorderStops={onReorderStops}
         />
       </div>
+      {isOwner && (
+        <AddStopPanel
+          open={addStopOpen}
+          onClose={() => setAddStopOpen(false)}
+          onAddStop={onAddStop}
+          meetingPoint={meetingPoint}
+          radiusMi={radiusMi}
+        />
+      )}
+      <ConfirmModal
+        open={confirmRemoveCoverOpen}
+        title="Remove the cover photo?"
+        message="The banner will fall back to the default golden-hour cover. You can upload a new one anytime. This takes effect when you save your changes."
+        confirmLabel="Remove cover"
+        cancelLabel="Keep cover"
+        danger
+        onConfirm={confirmRemoveCover}
+        onCancel={() => setConfirmRemoveCoverOpen(false)}
+      />
     </div>
   );
 }
