@@ -271,8 +271,9 @@
   box-shadow: var(--shadow-sm);
   cursor: pointer;
   backdrop-filter: blur(4px);
-  transition: background-color 0.18s ease, color 0.18s ease,
-    border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+  transition: background-color 0.22s ease, color 0.22s ease,
+    border-color 0.22s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.22s ease;
 }
 
 .itinerary-panel__banner-icon:hover {
@@ -283,12 +284,13 @@
 }
 
 /* Subtle press feedback on tap/click (settings, collapse, back, save): the
-   button dips slightly, echoing the modals' gentle motion. Skipped for users
+   button eases down slightly, then springs back on release via the base
+   transform transition, echoing the modals' gentle motion. Skipped for users
    who opt out of motion. */
 @media (prefers-reduced-motion: no-preference) {
   .itinerary-panel__banner-icon:active {
-    transform: scale(0.92);
-    transition-duration: 0.08s;
+    transform: scale(0.95);
+    transition-duration: 0.14s;
   }
 }
 
