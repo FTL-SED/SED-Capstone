@@ -13,3 +13,9 @@ node_modules
 *.dump
 
 CLAUDE.md
+
+# AI-assistant scratch: local agent config, memories, planning docs — not shipped
+.claude/
+**/superpowers/
+ANIMATIONS.md
+RECOMMENDATION_ENGINE.md
