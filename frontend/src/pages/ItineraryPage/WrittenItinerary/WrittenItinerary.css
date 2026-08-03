@@ -18,6 +18,24 @@
   gap: 14px;
 }
 
+/* Mount entrance: each stop fades + rises into place, staggered down the
+   timeline by its position (--stop-i, set in the JSX), so the day's stops
+   cascade in. Skipped for users who opt out of motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .timeline-stop {
+    /* `backwards` holds the pre-start (hidden) state during the stagger delay
+       but drops the animated transform once done — so it never lingers to fight
+       dnd-kit's inline drag transform on the draggable rows. */
+    animation: timeline-stop-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: calc(var(--stop-i, 0) * 0.06s);
+  }
+}
+
+@keyframes timeline-stop-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .timeline-stop__rail {
   display: flex;
   flex-direction: column;
