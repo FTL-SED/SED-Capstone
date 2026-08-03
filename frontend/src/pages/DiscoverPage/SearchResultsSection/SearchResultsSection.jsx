@@ -16,8 +16,12 @@ function SearchResultsSection({
       {!error && itineraries.length === 0 && !loading && (
         <p className="search-results-section__empty">No itineraries found.</p>
       )}
+      {/* Pass `loading` so the grid shows its skeleton placeholders while a new
+          search/filter fetches (e.g. after tapping a tag) instead of a blank
+          section — matching the Recent section's first-load behavior. */}
       <ItinerariesGrid
         itineraries={itineraries}
+        loading={loading}
         likedIds={likedIds}
         bookmarkedIds={bookmarkedIds}
         onToggleLike={onToggleLike}
