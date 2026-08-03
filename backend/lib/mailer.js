@@ -4,7 +4,13 @@
 import nodemailer from 'nodemailer'
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
+  // Force IPv4 (the "old-style" address). Some hosts (e.g. Render) have no route
+  // to IPv6 addresses, so letting Node pick Gmail's IPv6 address first fails with
+  // ENETUNREACH. Pinning family: 4 makes it always dial the reachable IPv4 address.
+  family: 4,
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD,
