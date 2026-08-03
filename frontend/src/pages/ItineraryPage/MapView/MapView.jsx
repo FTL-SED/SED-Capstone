@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet'
 import L from 'leaflet'
 
-// A numbered teal marker built from HTML (divIcon) so we need no image assets.
+// A numbered orange marker built from HTML (divIcon) so we need no image assets.
 const numberedIcon = (n) =>
   L.divIcon({
     className: 'map-view__marker',

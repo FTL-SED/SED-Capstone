@@ -18,3 +18,18 @@
 .bookmark-button[aria-pressed="true"] svg {
   fill: var(--accent);
 }
+
+/* Icon-only: the accessible label stays in the DOM (aria-label + this span for
+   screen readers) but is visually hidden, so the button reads as just the
+   bookmark glyph. */
+.bookmark-button__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -19,7 +19,9 @@
   z-index: 0;
 }
 
-/* Numbered teal pin (divIcon). Leaflet applies .map-view__marker to the wrapper. */
+/* Numbered orange pin (divIcon). Leaflet applies .map-view__marker to the
+   wrapper. The markers render in Leaflet's map pane (outside .itinerary-panel),
+   so the app's golden-hour orange is set explicitly here rather than inherited. */
 .map-view__marker {
   background: transparent;
   border: none;
@@ -32,7 +34,7 @@
   width: 28px;
   height: 28px;
   border-radius: var(--radius-pill, 999px);
-  background: var(--accent, #0d9488);
+  background: #e67e34;
   color: #fff;
   font-size: 0.8rem;
   font-weight: 700;
@@ -70,8 +72,8 @@
   width: 10px;
   height: 10px;
   border-radius: 999px;
-  background: #0d9488;
-  border: 2px solid #0f766e;
+  background: #e67e34;
+  border: 2px solid #cf6a2f;
 }
 
 /* On-map control to opt into the travel-radius overlay (off by default). */

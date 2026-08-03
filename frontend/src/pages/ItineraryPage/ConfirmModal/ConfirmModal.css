@@ -1,0 +1,69 @@
+/* Branded confirmation dialog, matching the ExportModal / AddStopPanel overlay:
+   a centered surface card over a dimmed backdrop. */
+.confirm-modal__backdrop {
+  position: fixed; inset: 0; z-index: 1100;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(15, 23, 42, 0.45); padding: 16px;
+}
+
+.confirm-modal {
+  position: relative;
+  width: 100%; max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 28px 28px 22px;
+}
+
+.confirm-modal__close {
+  position: absolute; top: 12px; right: 14px;
+  background: none; border: none; cursor: pointer;
+  font-size: 1.6rem; line-height: 1; color: var(--slate-400);
+  transition: color 0.15s ease;
+}
+.confirm-modal__close:hover { color: var(--ink); }
+
+.confirm-modal__title { margin: 0 0 8px; font-size: 1.3rem; color: var(--ink); }
+.confirm-modal__message { margin: 0; font-size: 0.95rem; line-height: 1.5; color: var(--slate-600); }
+
+.confirm-modal__actions {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.confirm-modal__cancel {
+  padding: 10px 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.95rem; font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.confirm-modal__cancel:hover { background: var(--surface-muted); }
+
+.confirm-modal__confirm {
+  padding: 10px 18px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.95rem; font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.confirm-modal__confirm:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+
+/* Destructive variant: red confirm button for delete / remove actions. */
+.confirm-modal__confirm--danger {
+  border-color: var(--danger, #b42318);
+  background: var(--danger, #b42318);
+}
+.confirm-modal__confirm--danger:hover {
+  background: #9a1e13;
+  border-color: #9a1e13;
+}

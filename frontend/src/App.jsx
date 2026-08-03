@@ -150,7 +150,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      {!isAuthPage && !isOnboarding && !isFullBleed && !isLoading && <Footer />}
+      {!isAuthPage && !isOnboarding && !isLoading && <Footer />}
     </div>
   );
 }
