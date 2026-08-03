@@ -1,4 +1,4 @@
-import planTripPreview from '../../../assets/plan-trip-preview.png'
+import onboardingPreview from '../../../assets/onboarding-preview.png'
 import groupMembersPreview from '../../../assets/group-members-preview.png'
 import itineraryPreview from '../../../assets/itinerary-preview.png'
 import discoverPreview from '../../../assets/discover-preview.png'
@@ -15,10 +15,10 @@ import './ChaosToClaritySection.css'
  */
 const BEATS = [ 
   {
-    title: "Making plans together shouldn't feel like work",
-    copy: "Stop jumping between group chats, maps, TikToks, and review sites. Tell NavQuest what your group enjoys, and we'll handle the planning.",
-    image: planTripPreview,
-    imageAlt: "NavQuest's Create form — a few quick trip details (date, time window, transport, budget) and NavQuest maps out the whole day.",
+    title: "Create your personalized travel profile",
+    copy: "Create an account and save your interests, dietary needs, and budget once. NavQuest keeps them ready for every plan.",
+    image: onboardingPreview,
+    imageAlt: "Setting up your NavQuest profile — saving your interests, dietary needs, and budget so they're ready for every plan.",
   },
   {
     title: 'Plan a day that actually works for everyone',
