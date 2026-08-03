@@ -6,17 +6,24 @@
      it as you scroll to the bottom. */
   position: relative;
   z-index: 1;
-  /* One consistent footer everywhere: the deep blue band that used to be the
-     landing-only treatment, so the closing bar reads the same on every page. */
-  border-top: none;
-  background: #16324f;
-  padding: 40px 24px 48px;
+  /* One consistent footer everywhere, matching the in-app hero navbar: the same
+     solid warm cream fill and hairline border so the closing bar bookends the
+     bar at the top of the page. */
+  border-top: 1px solid rgba(120, 104, 74, 0.16);
+  background: #f6efe1;
+  padding: 12px 24px;
   text-align: center;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 16px;
 }
 
 .footer p {
-  color: #ffffff; /* white, high contrast on the deep blue */
+  margin: 0;
+  color: #33402a; /* moss ink, matching the navbar links on the cream fill */
   font-family: "Fraunces", Georgia, serif;
-  font-size: 1.05rem;
+  font-size: 0.85rem;
   letter-spacing: 0.04em;
 }

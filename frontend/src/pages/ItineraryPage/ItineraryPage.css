@@ -107,11 +107,11 @@
      tabbed view. The panel is always visible — its header (title, description,
      author) and action bar (like / save / privacy) stay put on both views — and
      the Written / Visual tabs beneath them swap only the content below: the
-     written timeline OR the map. The page is a flex column filling the viewport
-     below the nav so the active content has a concrete height. */
+     written timeline OR the map. The page is a flex column that fills the
+     leftover height of the shell (via the base rule's flex:1) between the nav
+     and footer, so the active content has a concrete height. */
   .itinerary-page {
     flex-direction: column;
-    height: calc(100vh - var(--nav-h));
     min-height: 0;
   }
 
