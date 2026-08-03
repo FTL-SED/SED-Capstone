@@ -4,8 +4,30 @@
   gap: 20px;
 }
 
+/* Mount animation: when this step is shown, its sections cascade in (fade +
+   rise) one after another rather than all appearing at once. Each direct child
+   is offset by its position via nth-child. The fixed-position banner modal
+   overlay is excluded — a transform on it would break its fixed positioning and
+   re-animate it every open. Skipped for reduced-motion users. */
+@media (prefers-reduced-motion: no-preference) {
+  .step3-finish > *:not(.banner-modal__overlay) {
+    animation: step-content-in 0.34s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+  .step3-finish > *:nth-child(1) { animation-delay: 0.02s; }
+  .step3-finish > *:nth-child(2) { animation-delay: 0.07s; }
+  .step3-finish > *:nth-child(3) { animation-delay: 0.12s; }
+  .step3-finish > *:nth-child(4) { animation-delay: 0.17s; }
+  .step3-finish > *:nth-child(5) { animation-delay: 0.22s; }
+  .step3-finish > *:nth-child(n + 6):not(.banner-modal__overlay) { animation-delay: 0.27s; }
+}
+
+@keyframes step-content-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .step3-finish .privacy-field {
-  align-self: flex-end;
+  align-self: stretch;
 }
 
 .step3-finish__nav {
@@ -46,20 +68,23 @@
   gap: 10px;
 }
 
-/* File input styled as a ghost button (the real input is visually hidden). */
+/* File input styled as a solid outlined pill (the real input is visually
+   hidden), matching the Privacy toggle pills so the Step 3 controls read as one
+   set. */
 .step3-finish__cover-upload {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
   padding: 10px 16px;
-  border: 1px dashed var(--border-strong, #ddcca6);
+  border: 1px solid var(--border-strong, #ddcca6);
   border-radius: var(--radius-pill, 999px);
-  background: transparent;
-  color: var(--accent, #e67e34);
+  background: var(--surface);
+  color: var(--slate-600);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.18s ease, color 0.18s ease;
+  transition: border-color 0.18s ease, color 0.18s ease,
+    background-color 0.18s ease;
 }
 
 .step3-finish__cover-upload:hover {
@@ -101,17 +126,18 @@
 .step3-finish__ai-banner {
   display: inline-flex;
   align-items: center;
-  min-height: 36px;
-  padding: 6px 12px;
-  border: 1px dashed var(--border-strong, #ddcca6);
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--border-strong, #ddcca6);
   border-radius: var(--radius-pill, 999px);
-  background: transparent;
-  color: var(--accent, #e67e34);
-  font-size: 0.8rem;
+  background: var(--surface);
+  color: var(--slate-600);
+  font-size: 0.9rem;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
-  transition: border-color 0.18s ease, color 0.18s ease;
+  transition: border-color 0.18s ease, color 0.18s ease,
+    background-color 0.18s ease;
 }
 
 .step3-finish__ai-banner:hover {

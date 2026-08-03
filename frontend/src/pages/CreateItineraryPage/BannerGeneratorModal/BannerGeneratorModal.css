@@ -31,6 +31,22 @@
   overflow-y: auto;
 }
 
+/* Open animation: the backdrop fades in and the card pops up — the same
+   entrance as the Share (Export) and Add stop modals, so opening the AI banner
+   generator feels consistent. Skipped for users who opt out of motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .banner-modal__overlay { animation: banner-modal-fade 0.16s ease; }
+  .banner-modal { animation: banner-modal-pop 0.18s ease; }
+}
+@keyframes banner-modal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes banner-modal-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 /* Header section */
 .banner-modal__header {
   display: flex;
