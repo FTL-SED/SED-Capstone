@@ -123,6 +123,8 @@ function SortableStop({ pin, index, total, meal, onRemoveStop, onEditStop, onEdi
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.6 : 1,
+    // Stagger each row's mount entrance by its position (see CSS).
+    '--stop-i': index,
   };
   return (
     <li
@@ -171,7 +173,11 @@ function WrittenItinerary({ pins = [], editable = false, onRemoveStop, onEditSto
     return (
       <ol className="written-itinerary">
         {pins.map((pin, i) => (
-          <li key={pin.stopId ?? pin.id ?? pin.orderInItinerary} className="timeline-stop">
+          <li
+            key={pin.stopId ?? pin.id ?? pin.orderInItinerary}
+            className="timeline-stop"
+            style={{ '--stop-i': i }}
+          >
             <StopCard
               pin={pin}
               index={i}
