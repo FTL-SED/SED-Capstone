@@ -177,11 +177,11 @@ function LoadingPage() {
         // Reuse the same members mapping the recommendation body uses, so the
         // group we persist matches the group the plan was built for.
         const recommendationBody = buildRecommendationBody(form);
-        const { shortlist, constraints, reason } = await getRecommendations(recommendationBody);
+        const { shortlist, constraints } = await getRecommendations(recommendationBody);
         if (!active) return;
 
         if (!shortlist || shortlist.length === 0) {
-          setError(reason || 'No places matched your trip. Try widening your budget or radius.');
+          setError("Couldn't find places for these constraints. Please adjust your trip and try again.");
           return;
         }
 
@@ -199,7 +199,7 @@ function LoadingPage() {
         if (!active) return;
 
         if (result.feasible === false) {
-          setError(result.reason || 'No itinerary fits these constraints. Try adjusting your trip.');
+          setError("Couldn't find places for these constraints. Please adjust your trip and try again.");
           return;
         }
 
