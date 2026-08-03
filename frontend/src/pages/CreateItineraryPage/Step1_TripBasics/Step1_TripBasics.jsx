@@ -10,9 +10,10 @@ import NextButton from '../../../components/Inputs/NextButton/NextButton.jsx'
 import ErrorMessage from '../../../components/ErrorMessage/ErrorMessage.jsx'
 
 // The trip-level fields the backend requires (validateRecommendationInput):
-// a start time, an end time that differs from it, and a non-negative budget.
-// Transport and travel radius are optional, so they aren't checked here.
+// a date, a start time, an end time that differs from it, and a non-negative
+// budget. Transport and travel radius are optional, so they aren't checked here.
 function validateTripBasics(form) {
+  if (!form.tripDate) return 'Please choose a date.';
   if (!form.startTime) return 'Please choose a start time.';
   if (!form.endTime) return 'Please choose an end time.';
   if (form.startTime === form.endTime) return 'End time must differ from start time.';

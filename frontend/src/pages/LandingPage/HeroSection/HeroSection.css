@@ -76,6 +76,22 @@
   text-align: center;
 }
 
+/* On load, the headline and CTA ease up into place (staggered) so the hero
+   settles in rather than appearing fully formed. A short delay lets the scene
+   paint first. Skipped for users who opt out of motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero__overlay > * {
+    animation: hero-intro 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .hero__overlay > *:nth-child(1) { animation-delay: 0.15s; }
+  .hero__overlay > *:nth-child(2) { animation-delay: 0.35s; }
+}
+
+@keyframes hero-intro {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* Retune the shared Heading for the editorial hero (scoped to .hero) */
 .hero .hero-heading {
   max-width: 15ch;

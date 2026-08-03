@@ -100,6 +100,17 @@
   border-color: rgba(246, 239, 225, 0.12);
   background: none;
   box-shadow: 0 26px 60px rgba(18, 24, 14, 0.5);
+  /* Now a wrapper around the <img> (the scroll-reveal element); clip the photo
+     to the rounded frame and drop the line-box gap under the image. */
+  overflow: hidden;
+  line-height: 0;
+}
+
+/* The actual photo fills its reveal wrapper at its natural ratio. */
+.field-beat__image-img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .field-beat__image-label {
@@ -196,4 +207,19 @@
   background-size: 4px 100%, 100% 100%;
   background-position: center top, center top;
   background-repeat: no-repeat, no-repeat;
+}
+
+/* Road-paving entrance: on arrival the centre road grows from the top edge
+   downward (scaleY 0 → 1), so crossing from the hero into the journey reads as
+   the road extending ahead. The section adds --entered when it scrolls in
+   (see useReveal). */
+@media (prefers-reduced-motion: no-preference) {
+  .journey-field__route {
+    transform: translateX(-50%) scaleY(0);
+    transform-origin: top center;
+    transition: transform 1.1s cubic-bezier(0.5, 0, 0.2, 1);
+  }
+  .journey-field--entered .journey-field__route {
+    transform: translateX(-50%) scaleY(1);
+  }
 }

@@ -2,6 +2,8 @@ import onboardingPreview from '../../../assets/onboarding-preview.png'
 import groupMembersPreview from '../../../assets/group-members-preview.png'
 import itineraryPreview from '../../../assets/itinerary-preview.png'
 import discoverPreview from '../../../assets/discover-preview.png'
+import Reveal from '../../../components/Reveal/Reveal.jsx'
+import { useReveal } from '../../../hooks/useReveal.js'
 import './ChaosToClaritySection.css'
 
 /*
@@ -107,8 +109,17 @@ function Flower({ hue }) {
 }
 
 function ChaosToClaritySection() {
+  // Reveal the section as the hero scrolls away: the centre road "paves" itself
+  // downward (scaleY from the top) so entering the journey reads as the road
+  // extending ahead of you. Triggers a bit before the section's top reaches the
+  // viewport bottom so the paving is already underway on arrival.
+  const [sectionRef, entered] = useReveal({ rootMargin: '0px 0px -20% 0px', threshold: 0 });
+
   return (
-    <section className="journey-section journey-field">
+    <section
+      ref={sectionRef}
+      className={`journey-section journey-field${entered ? ' journey-field--entered' : ''}`}
+    >
       <div className="journey-field__route" aria-hidden="true" />
 
       <div className="journey-field__beats">
@@ -117,20 +128,28 @@ function ChaosToClaritySection() {
             <div
               className={`field-beat${i % 2 === 1 ? ' field-beat--flip' : ''}`}
             >
-              {/* text box */}
-              <div className="field-beat__text">
+              {/* text box — eases in from the side it sits on (flipped beats put
+                  the text on the right, so it enters from the right). */}
+              <Reveal className="field-beat__text" direction={i % 2 === 1 ? 'right' : 'left'}>
                 <h2 className="journey-headline field-beat__title">{beat.title}</h2>
                 <p className="journey-copy">{beat.copy}</p>
-              </div>
+              </Reveal>
 
-              {/* a real preview where the beat provides one, else a placeholder */}
+              {/* a real preview where the beat provides one, else a placeholder.
+                  Enters from the opposite side to the text, with a small delay. */}
               {beat.image ? (
-                <img
+                <Reveal
                   className="field-beat__image field-beat__image--photo"
-                  src={beat.image}
-                  alt={beat.imageAlt}
-                  loading="lazy"
-                />
+                  direction={i % 2 === 1 ? 'left' : 'right'}
+                  delay={120}
+                >
+                  <img
+                    className="field-beat__image-img"
+                    src={beat.image}
+                    alt={beat.imageAlt}
+                    loading="lazy"
+                  />
+                </Reveal>
               ) : (
                 <div className="field-beat__image" role="img" aria-label="Sample image">
                   <span className="field-beat__image-label">Sample image</span>

@@ -106,9 +106,12 @@
   box-shadow: none;
 }
 
-/* Toggle the heart color when liked: muted -> red, and fill the icon. */
+/* Toggle the heart color when liked: muted -> red, and fill the icon. Only the
+   heart colors — keep the background transparent (the base .like-button pressed
+   rule tints it danger-soft, which we don't want behind a card heart). */
 .like-button.itinerary-card__like[aria-pressed="true"] {
   color: var(--danger);
+  background: transparent;
 }
 .like-button.itinerary-card__like[aria-pressed="true"] svg {
   fill: var(--danger);
