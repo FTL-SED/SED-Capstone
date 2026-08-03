@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import AccountAvatar from './AccountAvatar/AccountAvatar.jsx'
 import AccountNav from './AccountNav/AccountNav.jsx'
 import ProfileSection from './ProfileSection/ProfileSection.jsx'
@@ -19,9 +19,14 @@ import './AccountPage.css'
  * AccountPage.css; the logic below is unchanged.
  */
 function AccountPage({ currentUser, setCurrentUser }) {
-  // The saved-preferences editor is opened on demand from the account nav rather
-  // than always shown, keeping the card focused on identity by default.
+  // Opening Preferences swaps the card's content: the identity/profile sections
+  // are replaced by the preferences editor, with a back arrow + Save in the
+  // header (rather than appending the editor below the profile).
   const [showPreferences, setShowPreferences] = useState(false);
+  // The header's Save button drives the editor via this ref, and mirrors its
+  // in-flight state for the button label/disabled.
+  const preferencesRef = useRef(null);
+  const [prefsSaving, setPrefsSaving] = useState(false);
 
   return (
     <div className="account-page">
@@ -145,26 +150,66 @@ function AccountPage({ currentUser, setCurrentUser }) {
       </div>
 
       <div className="account-card">
-        <header className="account-card__header">
-          <AccountAvatar currentUser={currentUser} setCurrentUser={setCurrentUser} />
-          <div className="account-card__identity">
-            <h1 className="account-card__name">{currentUser?.username}</h1>
-            <p className="account-card__subtitle">Everything about your travel profile.</p>
-          </div>
-        </header>
+        {showPreferences ? (
+          <>
+            {/* Preferences view: replaces the identity/profile content. Back
+                (top-left) returns to the profile; Save (top-right) commits the
+                editor via its ref. */}
+            <header className="account-card__header account-card__header--editor">
+              <button
+                type="button"
+                className="account-card__back"
+                onClick={() => setShowPreferences(false)}
+                aria-label="Back to profile"
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M19 12H5" />
+                  <path d="M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <h1 className="account-card__name">Preferences</h1>
+              <button
+                type="button"
+                className="account-card__save"
+                onClick={() => preferencesRef.current?.save()}
+                disabled={prefsSaving}
+              >
+                {prefsSaving ? 'Saving…' : 'Save'}
+              </button>
+            </header>
 
-        <div className="account-card__sections">
-          <ProfileSection currentUser={currentUser} />
-          <UsernameField currentUser={currentUser} setCurrentUser={setCurrentUser} />
-          <ChangePasswordSection currentUser={currentUser} />
-          {showPreferences && <PreferencesSection currentUser={currentUser} />}
-        </div>
+            <div className="account-card__sections">
+              <PreferencesSection
+                ref={preferencesRef}
+                currentUser={currentUser}
+                embedded={false}
+                onPendingChange={setPrefsSaving}
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <header className="account-card__header">
+              <AccountAvatar currentUser={currentUser} setCurrentUser={setCurrentUser} />
+              <div className="account-card__identity">
+                <h1 className="account-card__name">{currentUser?.username}</h1>
+                <p className="account-card__subtitle">Everything about your travel profile.</p>
+              </div>
+            </header>
 
-        <AccountNav
-          setCurrentUser={setCurrentUser}
-          onTogglePreferences={() => setShowPreferences((v) => !v)}
-          preferencesOpen={showPreferences}
-        />
+            <div className="account-card__sections">
+              <ProfileSection currentUser={currentUser} />
+              <UsernameField currentUser={currentUser} setCurrentUser={setCurrentUser} />
+              <ChangePasswordSection currentUser={currentUser} />
+            </div>
+
+            <AccountNav
+              setCurrentUser={setCurrentUser}
+              onTogglePreferences={() => setShowPreferences(true)}
+              preferencesOpen={showPreferences}
+            />
+          </>
+        )}
       </div>
     </div>
   );

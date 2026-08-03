@@ -2,7 +2,7 @@ import SectionHeader from '../../../components/SectionHeader/SectionHeader.jsx'
 import TagPills from '../../../components/Inputs/TagPills/TagPills.jsx'
 import AddressPicker from '../../../components/Inputs/AddressPicker/AddressPicker.jsx'
 import ErrorMessage from '../../../components/ErrorMessage/ErrorMessage.jsx'
-import { useState, useEffect } from 'react'
+import { forwardRef, useImperativeHandle, useState, useEffect } from 'react'
 import { usePreferencesQuery, usePreferencesMutation } from '../../../hooks/usePreferences.js'
 import {
   INITIAL_PREFS,
@@ -18,7 +18,17 @@ import './PreferencesSection.css'
 // form from that cached record, and saves via the mutation (which updates the
 // cache). Deliberately does NOT send isPublic — that's the quick toggle in
 // ProfileSection — so this editor can't clobber it.
-function PreferencesSection({ currentUser }) {
+//
+// On the Account page it's shown as its own view (replacing the profile
+// sections), so the Save action lives in the card header. The parent drives
+// saving through the forwarded ref (save() + isPending) and reports its own
+// pending state up via onPendingChange; the internal header + save button are
+// hidden then (embedded=false). It still renders standalone with its own header
+// + button when embedded is left default.
+const PreferencesSection = forwardRef(function PreferencesSection(
+  { currentUser, embedded = true, onSaved, onPendingChange },
+  ref,
+) {
   const { data: prefs, isLoading, isError } = usePreferencesQuery(currentUser?.id)
   const mutation = usePreferencesMutation(currentUser?.id)
 
@@ -48,12 +58,26 @@ function PreferencesSection({ currentUser }) {
     // sending it — the backend leaves unspecified fields untouched.
     const { isPublic, ...body } = buildPreferencesPayload(form)
     void isPublic
-    mutation.mutate(body, { onSuccess: () => setMessage('Preferences saved.') })
+    mutation.mutate(body, {
+      onSuccess: () => {
+        setMessage('Preferences saved.')
+        onSaved?.()
+      },
+    })
   }
+
+  // Let the Account card's header drive Save (and read the pending state) when
+  // this editor is rendered as its own view.
+  useImperativeHandle(ref, () => ({ save: handleSave, isPending: mutation.isPending }))
+
+  // Keep the parent's header Save button label/disabled state in sync.
+  useEffect(() => {
+    onPendingChange?.(mutation.isPending)
+  }, [mutation.isPending, onPendingChange])
 
   return (
     <section className="preferences-section">
-      <SectionHeader title="Preferences" />
+      {embedded && <SectionHeader title="Preferences" />}
 
       {isLoading ? (
         <p className="preferences-section__loading">Loading…</p>
@@ -98,18 +122,22 @@ function PreferencesSection({ currentUser }) {
           <ErrorMessage message={error} />
           {message && <p className="preferences-section__success">{message}</p>}
 
-          <button
-            className="preferences-section__save"
-            type="button"
-            onClick={handleSave}
-            disabled={mutation.isPending}
-          >
-            {mutation.isPending ? 'Saving…' : 'Save preferences'}
-          </button>
+          {/* Standalone (non-embedded) mode is driven by the card header's Save
+              button, so the inline one is only shown when embedded. */}
+          {embedded && (
+            <button
+              className="preferences-section__save"
+              type="button"
+              onClick={handleSave}
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? 'Saving…' : 'Save preferences'}
+            </button>
+          )}
         </>
       )}
     </section>
   )
-}
+})
 
 export default PreferencesSection
