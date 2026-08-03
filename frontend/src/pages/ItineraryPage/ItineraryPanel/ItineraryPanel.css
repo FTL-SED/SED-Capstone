@@ -44,6 +44,22 @@
   border-bottom: 1px solid var(--border);
 }
 
+/* Staggered entrance for the expanded panel's sections (title/author, the
+   description/budget meta, and the action bar). Each fades and rises in, offset
+   by its --reveal-i index, so expanding — or toggling edit mode — cascades
+   smoothly instead of every section popping in at once. Keyed by view mode in
+   the JSX so it replays on the settings/back toggle too. */
+@media (prefers-reduced-motion: no-preference) {
+  .itinerary-panel__reveal {
+    animation: itinerary-panel-reveal 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--reveal-i, 0) * 0.07s);
+  }
+}
+@keyframes itinerary-panel-reveal {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* Collapsed state: a slim full-width bar that stands in for the whole header +
    action bar, so the timeline fills the panel. An expand chevron leads the
    itinerary title; clicking anywhere on the bar expands it again. */
@@ -59,6 +75,14 @@
   text-align: left;
   cursor: pointer;
   transition: background-color 0.18s ease;
+}
+
+/* Fade the slim bar in when collapsing, so the switch to the collapsed view
+   eases in rather than snapping. */
+@media (prefers-reduced-motion: no-preference) {
+  .itinerary-panel__collapsed-bar {
+    animation: itinerary-panel-reveal 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
 }
 
 .itinerary-panel__collapsed-bar:hover {
@@ -219,7 +243,10 @@
   letter-spacing: -0.02em;
 }
 
-.itinerary-panel > .action-bar {
+/* The action bar sits inside a reveal wrapper (for the staggered entrance), so
+   this is a descendant selector rather than a direct child. There's only one
+   action bar per panel, so it stays unambiguous. */
+.itinerary-panel .action-bar {
   padding: 12px 22px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -271,8 +298,9 @@
   box-shadow: var(--shadow-sm);
   cursor: pointer;
   backdrop-filter: blur(4px);
-  transition: background-color 0.18s ease, color 0.18s ease,
-    border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+  transition: background-color 0.22s ease, color 0.22s ease,
+    border-color 0.22s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.22s ease;
 }
 
 .itinerary-panel__banner-icon:hover {
@@ -280,6 +308,17 @@
   background: var(--surface);
   border-color: var(--accent);
   color: var(--accent-strong);
+}
+
+/* Subtle press feedback on tap/click (settings, collapse, back, save): the
+   button eases down slightly, then springs back on release via the base
+   transform transition, echoing the modals' gentle motion. Skipped for users
+   who opt out of motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .itinerary-panel__banner-icon:active {
+    transform: scale(0.95);
+    transition-duration: 0.14s;
+  }
 }
 
 .itinerary-panel__banner-icon:focus-visible {

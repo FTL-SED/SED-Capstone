@@ -96,3 +96,18 @@
   opacity: 0.6;
   cursor: default;
 }
+
+/* Open animation: the backdrop fades in and the card pops up — the same entrance
+   as the Share (Export) modal, so both dialogs feel consistent. */
+@media (prefers-reduced-motion: no-preference) {
+  .add-stop-modal__backdrop { animation: add-stop-modal-fade 0.16s ease; }
+  .add-stop-modal { animation: add-stop-modal-pop 0.18s ease; }
+}
+@keyframes add-stop-modal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes add-stop-modal-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}

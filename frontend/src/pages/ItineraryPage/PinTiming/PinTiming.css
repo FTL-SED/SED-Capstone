@@ -16,10 +16,20 @@
   color: var(--slate-400);
   cursor: pointer;
   line-height: 0;
+  transition: color 0.18s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .pin-timing__edit:hover {
   color: var(--accent-strong);
+}
+
+/* Subtle press feedback, matching the banner icon buttons: the pencil dips
+   slightly on tap, then springs back via the base transform transition. */
+@media (prefers-reduced-motion: no-preference) {
+  .pin-timing__edit:active {
+    transform: scale(0.9);
+    transition-duration: 0.14s;
+  }
 }
 
 .pin-timing--editing {
@@ -60,6 +70,17 @@
   padding: 4px 12px;
   border-radius: var(--radius-pill);
   cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease,
+    transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Gentle press-down on tap, matching the banner + action-bar buttons. */
+@media (prefers-reduced-motion: no-preference) {
+  .pin-timing__save:active,
+  .pin-timing__cancel:active {
+    transform: scale(0.96);
+    transition-duration: 0.14s;
+  }
 }
 
 .pin-timing__save {

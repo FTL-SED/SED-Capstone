@@ -146,6 +146,11 @@ function ItineraryPanel({
   // Editing always forces the full form open, so the collapse only applies in
   // view mode.
   const showCollapsed = collapsed && !editing;
+  // Keys the animated sections by mode so they remount — and thus replay their
+  // staggered entrance animation — when toggling into/out of edit mode, not just
+  // when expanding from collapsed. The banner image is intentionally NOT keyed,
+  // so it doesn't reload/reshimmer on the edit toggle.
+  const viewKey = editing ? 'edit' : 'view';
 
   return (
     <div className="itinerary-panel">
@@ -266,13 +271,13 @@ function ItineraryPanel({
               </button>
             </>
           )}
-          <div className="itinerary-panel__banner-content">
+          <div key={`bc-${viewKey}`} className="itinerary-panel__banner-content itinerary-panel__reveal" style={{ '--reveal-i': 0 }}>
             <Title text={title} editing={editing} value={draftTitle} onChange={setDraftTitle} />
             {author && <Author name={author} />}
           </div>
         </div>
         {(description || hasBudget || editing) && (
-          <div className="itinerary-panel__meta">
+          <div key={`meta-${viewKey}`} className="itinerary-panel__meta itinerary-panel__reveal" style={{ '--reveal-i': 1 }}>
             <Description
               text={description}
               editing={editing}
@@ -291,6 +296,7 @@ function ItineraryPanel({
           </div>
         )}
       </header>
+      <div key={`ab-${viewKey}`} className="itinerary-panel__reveal" style={{ '--reveal-i': 2 }}>
       <ActionBar
         isOwner={isOwner}
         liked={liked}
@@ -312,6 +318,7 @@ function ItineraryPanel({
         onRemoveCover={() => setConfirmRemoveCoverOpen(true)}
         hasCover={Boolean(bannerImg)}
       />
+      </div>
       </>
       )}
       {/* Written / Visual tabs — shown only on narrow screens (CSS-hidden on
