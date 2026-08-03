@@ -10,6 +10,7 @@ import { callAI } from './generation/client.js'
 import { validateItinerary } from './validation/validate.js'
 import { fallbackSequence } from './fallback/fallback.js'
 import { rescheduleStops } from './fallback/schedule.js'
+import { sanitizeItineraryText } from './sanitizeText.js'
 import { optimizeRoute } from '../../utils/route.js'
 import { windowLengthMinutes } from '../../utils/time.js'
 import { AI_VALIDATION_RETRIES } from '../../config/ai.js'
@@ -145,7 +146,11 @@ const generateItinerary = async (shortlist, constraints, callAiFn = callAI) => {
   // can't overflow the window (its legality check forbids it).
   const optimized = optimizeItinerary(result, shortlist, constraints, { fill: true })
   const { valid } = validateItinerary(optimized, shortlist, constraints, { enforceCoverage: false })
-  const itinerary = valid ? optimized : result
+  // Deterministic style pass on the human-readable text (12h times, no em/en
+  // dashes) — a safety net for when the model ignores the prompt's style rules.
+  // Runs last so it covers both AI and fallback output; touches text only, so it
+  // can't invalidate the already-validated schedule.
+  const itinerary = sanitizeItineraryText(valid ? optimized : result)
 
   return { itinerary, source }
 }
