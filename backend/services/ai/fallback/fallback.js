@@ -21,6 +21,21 @@ import { rescheduleStops } from './schedule.js'
 
 const isRestaurant = (pin) => pin.category === CATEGORY.restaurant
 
+// Reduce a full street address to a short "Street, City" for the itinerary's
+// location — a card-sized label that still distinguishes itineraries within one
+// city (the catalog is all San Francisco, so "City, State" would be identical
+// for everything). Addresses are "123 Street, City, ST ZIP"; drop the house
+// number from the street segment and pair it with the city. Falls back to just
+// the city (then a neutral placeholder) when it doesn't parse.
+const toShortLocation = (address) => {
+  if (typeof address !== 'string' || !address.trim()) return 'San Francisco'
+  const parts = address.split(',').map((p) => p.trim()).filter(Boolean)
+  if (parts.length < 2) return address
+  const street = parts[0].replace(/^\d+\s+/, '').trim()
+  const city = parts[1]
+  return street ? `${street}, ${city}` : city
+}
+
 // Estimated travel minutes between two pins, scaled to the group's transport
 // mode (walking/biking/transit/driving). Undefined ⇒ the default urban speed.
 const travelMinutes = (a, b, transport) =>
@@ -231,7 +246,7 @@ const fallbackSequence = (shortlist, constraints) => {
   const scheduled = rescheduleStops(stops, (stop) => stop.pin, startHHMM, transport)
 
   const cleanStops = scheduled.map(({ pin, ...stop }) => stop)
-  const location = shortlist[0].address ?? 'your destination'
+  const location = toShortLocation(shortlist[0].address)
   return {
     feasible: true,
     title: `A Day Out in ${location}`,

@@ -82,7 +82,7 @@ const SYSTEM_PROMPT = [
   'Output: a single JSON object, no prose, matching exactly:',
   '{',
   '  "feasible": true,',
-  '  "title": string, "location": string, "description": string,',
+  '  "title": string, "location": string (a short "Neighborhood, City", e.g. "Mission, San Francisco" — infer the neighborhood from the stops; never a street address or a phrase), "description": string,',
   '  "stops": [{',
   '    "pinId": integer (from the shortlist),',
   '    "arriveTime": "HH:MM", "departTime": "HH:MM",',
