@@ -22,7 +22,7 @@ function toValue({ hour12, minute, period }) {
   return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
 
-function formatDisplay(value) {
+export function formatDisplay(value) {
   if (!value) return '';
   const { hour12, minute, period } = parseParts(value);
   return `${hour12}:${String(minute).padStart(2, '0')} ${period}`;
