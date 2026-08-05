@@ -8,9 +8,9 @@ import { checkAvailability } from "../../../api/users.js";
 import './RegisterForm.css'
 
 function RegisterForm() {
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("emmanuel@gmail.com");
+  const [username, setUsername] = useState("Emmanuel");
+  const [password, setPassword] = useState("Password1!");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
