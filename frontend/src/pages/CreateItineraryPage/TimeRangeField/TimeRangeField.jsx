@@ -23,7 +23,6 @@ function toValue({ hour12, minute, period }) {
   return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
 
-
 // One looping scroll column of the wheel. The options are repeated three times
 // so the list can scroll past either end; when the user nears an edge we jump
 // back to the equivalent spot in the middle copy, so hour 12 rolls straight on
