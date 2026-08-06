@@ -1,5 +1,5 @@
 import './ItineraryDetailsPreview.css'
-import { formatDisplay } from '../TimeRangeField/TimeRangeField.jsx'
+import { formatTime12h } from '../../../utils/formatTime'
 
 // Review summary of everything the user entered, shown on the Finish step.
 // Each section has an "Edit" link that jumps back to the step that owns it
@@ -7,7 +7,9 @@ import { formatDisplay } from '../TimeRangeField/TimeRangeField.jsx'
 // generating. `form` is the wizard state; `goTo(step)` switches steps.
 function ItineraryDetailsPreview({ form, goTo }) {
   const timeRange =
-    form.startTime && form.endTime ? `${formatDisplay(form.startTime)} – ${formatDisplay(form.endTime)}` : 'Not set';
+    form.startTime && form.endTime
+      ? `${formatTime12h(form.startTime)} – ${formatTime12h(form.endTime)}`
+      : 'Not set';
 
   return (
     <div className="itinerary-details-preview">

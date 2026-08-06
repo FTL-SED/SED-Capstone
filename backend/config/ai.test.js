@@ -18,12 +18,12 @@ const at = (hhmm) => {
 }
 
 test('mealBlockAt: returns the block a minute-of-day falls in, else null', () => {
-  // Windows: breakfast 07:00-11:00, lunch 12:00-16:00, dinner 18:00-22:00.
+  // Windows: breakfast 07:00-11:00, lunch 11:30-14:30, dinner 17:00-21:00.
   assert.equal(mealBlockAt(at('08:00')), 'breakfast')
   assert.equal(mealBlockAt(at('13:00')), 'lunch')
   assert.equal(mealBlockAt(at('19:00')), 'dinner')
-  assert.equal(mealBlockAt(at('11:30')), null) // gap between breakfast and lunch
-  assert.equal(mealBlockAt(at('16:30')), null) // gap between lunch and dinner
+  assert.equal(mealBlockAt(at('11:15')), null) // gap between breakfast and lunch
+  assert.equal(mealBlockAt(at('16:00')), null) // gap between lunch and dinner
   assert.equal(mealBlockAt(at('23:00')), null) // after dinner
 })
 
@@ -31,6 +31,19 @@ test('isInMealBlock: inclusive of the block edges', () => {
   assert.equal(isInMealBlock(at('07:00'), MEAL_TIME_WINDOWS.breakfast), true)
   assert.equal(isInMealBlock(at('11:00'), MEAL_TIME_WINDOWS.breakfast), true)
   assert.equal(isInMealBlock(at('11:01'), MEAL_TIME_WINDOWS.breakfast), false)
+})
+
+test('meal windows are the required ranges (breakfast 7-11, lunch 11:30-14:30, dinner 17-21)', () => {
+  // Lunch strictly 11:30-14:30.
+  assert.equal(isInMealBlock(at('11:29'), MEAL_TIME_WINDOWS.lunch), false)
+  assert.equal(isInMealBlock(at('11:30'), MEAL_TIME_WINDOWS.lunch), true)
+  assert.equal(isInMealBlock(at('14:30'), MEAL_TIME_WINDOWS.lunch), true)
+  assert.equal(isInMealBlock(at('14:31'), MEAL_TIME_WINDOWS.lunch), false)
+  // Dinner strictly 17:00-21:00.
+  assert.equal(isInMealBlock(at('16:59'), MEAL_TIME_WINDOWS.dinner), false)
+  assert.equal(isInMealBlock(at('17:00'), MEAL_TIME_WINDOWS.dinner), true)
+  assert.equal(isInMealBlock(at('21:00'), MEAL_TIME_WINDOWS.dinner), true)
+  assert.equal(isInMealBlock(at('21:01'), MEAL_TIME_WINDOWS.dinner), false)
 })
 
 test('blocksOverlappingWindow: only blocks intersecting a same-day window', () => {
@@ -47,29 +60,29 @@ test('blocksOverlappingWindow: overnight / degenerate window returns []', () => 
 
 test('enforceableMealBlocks: 10:00–18:00 with 60min stops includes all three', () => {
   // Breakfast 07:00–11:00: arrival max(07:00,10:00) = 10:00, +60min = 11:00 <= 11:00 close ✓.
-  // Lunch 12:00–16:00: arrive 12:00, +60 = 13:00 <= 16:00 and <= 18:00 ✓.
-  // Dinner 17:00–22:00: arrival max(17:00,10:00) = 17:00, +60 = 18:00 <= 18:00 end ✓.
+  // Lunch 11:30–14:30: arrive max(11:30,10:00) = 11:30, +60 = 12:30 <= 14:30 and <= 18:00 ✓.
+  // Dinner 17:00–21:00: arrival max(17:00,10:00) = 17:00, +60 = 18:00 <= 18:00 end ✓.
   const blocks = enforceableMealBlocks('10:00', '18:00', AVG_STOP_DURATION_MIN)
   assert.deepEqual(blocks, ['breakfast', 'lunch', 'dinner'])
 })
 
 test('enforceableMealBlocks: 08:00–22:00 with 60min stops includes all three', () => {
   // Breakfast 07:00–11:00: arrive 08:00, +60 = 09:00 <= 11:00 ✓
-  // Lunch 12:00–16:00: arrive 12:00, +60 = 13:00 <= 16:00 ✓
-  // Dinner 17:00–22:00: arrive 17:00, +60 = 18:00 <= 22:00 ✓
+  // Lunch 11:30–14:30: arrive 11:30, +60 = 12:30 <= 14:30 ✓
+  // Dinner 17:00–21:00: arrive 17:00, +60 = 18:00 <= 21:00 ✓
   const blocks = enforceableMealBlocks('08:00', '22:00', AVG_STOP_DURATION_MIN)
   assert.deepEqual(blocks, ['breakfast', 'lunch', 'dinner'])
 })
 
 test('enforceableMealBlocks: 12:30–13:30 with 60min stops includes lunch (exactly fits)', () => {
-  // Lunch 12:00–16:00: earliest arrival max(12:00,12:30) = 12:30, +60min = 13:30 exactly fits
-  // the 13:30 window end and is <= the 16:00 block close, so lunch IS enforceable.
+  // Lunch 11:30–14:30: earliest arrival max(11:30,12:30) = 12:30, +60min = 13:30 exactly fits
+  // the 13:30 window end and is <= the 14:30 block close, so lunch IS enforceable.
   const blocks = enforceableMealBlocks('12:30', '13:30', AVG_STOP_DURATION_MIN)
   assert.deepEqual(blocks, ['lunch'])
 })
 
 test('enforceableMealBlocks: 12:30–13:00 with 60min stops excludes lunch (no 60min room)', () => {
-  // Lunch 12:00–16:00: arrival 12:30, +60 = 13:30 > 13:00 window end.
+  // Lunch 11:30–14:30: arrival 12:30, +60 = 13:30 > 13:00 window end.
   const blocks = enforceableMealBlocks('12:30', '13:00', AVG_STOP_DURATION_MIN)
   assert.deepEqual(blocks, [])
 })

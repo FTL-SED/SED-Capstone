@@ -1,126 +1,115 @@
 // Tests the AI branch of generateItinerary WITHOUT a live model, by injecting a
-// fake callAI. The existing handoff/index tests only ever exercise the
-// deterministic fallback (no key configured), so this is the one place the
-// AI-succeeds and AI-output-rejected→fallback paths are actually covered.
+// fake narrator reply. In the scheduler+narrator design the model only supplies
+// an ORDER + prose; the backend selects the day and computes all times, so these
+// assert: a good reply's order/prose is used (source "ai"); a bad/missing reply
+// falls back to the deterministic order (source "deterministic") but still yields
+// a valid, fully-timed day.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
 import { generateItinerary } from './index.js'
 
-// A tiny shortlist the AI is asked to sequence. Coords/prices let the route
-// optimizer + validator run for real; only the AI call itself is faked.
+// A small shortlist the backend will select from. Coords/prices let selection +
+// the route optimizer + scheduler run for real; only the narrator call is faked.
 const SHORTLIST = [
-  { id: 1, name: 'SFMOMA', category: 'activity', interests: ['art'], pricePerPerson: 10, latitude: 37.7857, longitude: -122.4011, openingHours: [{ open: '09:00', close: '18:00' }] },
-  { id: 2, name: 'Golden Gate Park', category: 'activity', interests: ['nature'], pricePerPerson: 0, latitude: 37.7694, longitude: -122.4562, openingHours: [{ open: '09:00', close: '18:00' }] },
-  { id: 10, name: 'La Taqueria', category: 'restaurant', cuisine: ['mexican'], pricePerPerson: 14, latitude: 37.7509, longitude: -122.4180, openingHours: [{ open: '11:00', close: '21:00' }] },
+  { id: 1, name: 'SFMOMA', category: 'activity', interests: ['art'], pricePerPerson: 10, latitude: 37.7857, longitude: -122.4011, address: '151 3rd St, SoMa, San Francisco, CA', openingHours: [{ open: '09:00', close: '18:00' }] },
+  { id: 2, name: 'Golden Gate Park', category: 'activity', interests: ['nature'], pricePerPerson: 0, latitude: 37.7694, longitude: -122.4562, address: '501 Stanyan St, Golden Gate Park, San Francisco, CA', openingHours: [{ open: '09:00', close: '18:00' }] },
+  { id: 10, name: 'La Taqueria', category: 'restaurant', cuisine: ['mexican'], pricePerPerson: 14, latitude: 37.7509, longitude: -122.4180, address: '2889 Mission St, Mission, San Francisco, CA', openingHours: [{ open: '11:00', close: '21:00' }] },
 ]
-// Tight window (10:00-13:30) matching GOOD_REPLY's 2 stops so the coverage
-// backstop doesn't trip. Test intent is "AI path works", not day-filling.
 const CONSTRAINTS = {
-  timeWindow: { startTime: '10:00', endTime: '13:30' },
+  timeWindow: { startTime: '10:00', endTime: '15:00' },
   maxBudgetPerPerson: 90,
   groupSize: 2,
   transport: 'walking',
-  includeMeals: false,
 }
 
-// A well-formed AI reply that sequences two shortlist pins within the window.
-const GOOD_REPLY = {
-  feasible: true,
-  title: 'A Day in SF',
-  location: 'San Francisco',
-  description: 'Art then a taco.',
-  stops: [
-    { pinId: 1, arriveTime: '10:00', departTime: '11:30' },
-    { pinId: 10, arriveTime: '12:00', departTime: '13:00', mealType: 'lunch' },
-  ],
-}
+const idsOf = (itin) => itin.stops.map((s) => s.pinId)
 
-test('AI path: a valid reply is used and tagged source "ai"', async () => {
-  const out = await generateItinerary(SHORTLIST, CONSTRAINTS, async () => GOOD_REPLY)
-  assert.equal(out.source, 'ai')
-  assert.ok(out.itinerary.stops.length >= 1)
-  // Every stop references a real shortlist pin.
-  const ids = new Set(SHORTLIST.map((p) => p.id))
-  for (const s of out.itinerary.stops) assert.ok(ids.has(s.pinId))
-})
+// An all-activity selection (includeMeals:false) so any permutation the model
+// returns schedules validly — isolates "the model's order is used" from
+// meal-window feasibility (a meal placed first would be held to its window,
+// which the pipeline correctly rejects — covered by the fallback tests below).
+const ACTIVITIES = [
+  { id: 1, name: 'SFMOMA', category: 'activity', interests: ['art'], pricePerPerson: 10, latitude: 37.7857, longitude: -122.4011, address: '151 3rd St, SoMa, San Francisco, CA' },
+  { id: 2, name: 'Ferry Building', category: 'activity', interests: ['shopping'], pricePerPerson: 5, latitude: 37.7955, longitude: -122.3937, address: '1 Ferry Building, Embarcadero, San Francisco, CA' },
+  { id: 3, name: 'Coit Tower', category: 'activity', interests: ['scenic_views'], pricePerPerson: 10, latitude: 37.8024, longitude: -122.4058, address: '1 Telegraph Hill Blvd, North Beach, San Francisco, CA' },
+]
+const NO_MEALS = { ...CONSTRAINTS, includeMeals: false }
 
-test('AI path: a hallucinated pinId is rejected and falls back', async () => {
-  const hallucinated = {
-    ...GOOD_REPLY,
-    stops: [{ pinId: 9999, arriveTime: '10:00', departTime: '11:00' }],
+test('AI path: a valid order + prose is used and tagged source "ai"', async () => {
+  const reply = (messages) => {
+    const user = messages.find((m) => m.role === 'user').content
+    const ids = [...user.matchAll(/"id":(\d+)/g)].map((m) => Number(m[1]))
+    return {
+      title: 'A Sightseeing Day',
+      description: 'A relaxed SF day.',
+      order: [...ids].reverse(), // a valid permutation, distinct from default
+      notes: Object.fromEntries(ids.map((id) => [id, `Stop ${id} is great.`])),
+    }
   }
-  // Fallback needs a wider window for walking between these spread-out pins (~70-87
-  // min travel). Tight CONSTRAINTS would trip coverage backstop. Test intent is
-  // "hallucinated pinId → fallback works", not minimal-window edge case.
-  const wideConstraints = { ...CONSTRAINTS, timeWindow: { startTime: '09:00', endTime: '18:00' } }
-  const out = await generateItinerary(SHORTLIST, wideConstraints, async () => hallucinated)
-  assert.equal(out.source, 'fallback')
-  // The fallback only uses real shortlist pins.
-  const ids = new Set(SHORTLIST.map((p) => p.id))
-  for (const s of out.itinerary.stops) assert.ok(ids.has(s.pinId))
+  const out = await generateItinerary(ACTIVITIES, NO_MEALS, async (m) => reply(m))
+  assert.equal(out.source, 'ai')
+  assert.equal(out.itinerary.title, 'A Sightseeing Day')
+  // Every scheduled stop references a selected pin and carries assigned times.
+  const ids = new Set(ACTIVITIES.map((p) => p.id))
+  for (const s of out.itinerary.stops) {
+    assert.ok(ids.has(s.pinId))
+    assert.match(s.arriveTime, /^\d{2}:\d{2}$/)
+    assert.match(s.departTime, /^\d{2}:\d{2}$/)
+  }
 })
 
-test('AI path: a thrown call (e.g. malformed JSON upstream) falls back', async () => {
-  // Fallback needs room for walking; use wide window so coverage backstop doesn't trip.
-  const wideConstraints = { ...CONSTRAINTS, timeWindow: { startTime: '09:00', endTime: '18:00' } }
-  const out = await generateItinerary(SHORTLIST, wideConstraints, async () => {
-    throw new Error('AI response had no message content')
+test('AI path: a null reply (timeout) falls back to the deterministic order', async () => {
+  const out = await generateItinerary(SHORTLIST, CONSTRAINTS, async () => {
+    throw new Error('Request timed out.')
   })
-  assert.equal(out.source, 'fallback')
+  assert.equal(out.source, 'deterministic')
   assert.ok(out.itinerary.stops.length >= 1)
+  const ids = new Set(SHORTLIST.map((p) => p.id))
+  for (const s of out.itinerary.stops) assert.ok(ids.has(s.pinId))
 })
 
-test('AI path: an over-budget reply is retried with feedback, then accepted', async () => {
-  // Budget $15, grace $5 → limit $20. First reply totals $24 (past the grace so
-  // it IS rejected → retry); the corrective retry returns a $14 day. Should end
-  // as source "ai" with callAiFn invoked twice (original + corrective).
-  const overBudget = {
-    feasible: true, title: 'T', location: 'SF', description: 'D',
-    stops: [
-      { pinId: 1, arriveTime: '10:00', departTime: '11:30' }, // $10
-      { pinId: 10, arriveTime: '12:00', departTime: '13:00', mealType: 'lunch' }, // $14 -> total 24 > 20 (past grace)
-    ],
-  }
-  const inBudget = {
-    feasible: true, title: 'T', location: 'SF', description: 'D',
-    stops: [
-      { pinId: 2, arriveTime: '10:00', departTime: '11:30' }, // $0
-      { pinId: 10, arriveTime: '12:00', departTime: '13:00', mealType: 'lunch' }, // $14 -> total 14 <= 15
-    ],
-  }
-  let calls = 0
-  const callAiFn = async () => { calls++; return calls === 1 ? overBudget : inBudget }
-  const tightBudget = { ...CONSTRAINTS, maxBudgetPerPerson: 15 }
-  const out = await generateItinerary(SHORTLIST, tightBudget, callAiFn)
-  assert.equal(calls, 2, 'should retry once with corrective feedback')
-  assert.equal(out.source, 'ai')
-  const ids = out.itinerary.stops.map((s) => s.pinId)
-  assert.ok(!ids.includes(1), 'the $10 activity should be gone after the corrective retry')
-})
-
-test('AI path: if the corrective retry still fails, it falls back', async () => {
-  const overBudget = {
-    feasible: true, title: 'T', location: 'SF', description: 'D',
-    stops: [
-      { pinId: 1, arriveTime: '10:00', departTime: '11:30' },
-      { pinId: 10, arriveTime: '12:00', departTime: '13:00', mealType: 'lunch' },
-    ],
-  }
-  let calls = 0
-  const callAiFn = async () => { calls++; return overBudget } // $24, never fixes it
-  const tightBudget = { ...CONSTRAINTS, maxBudgetPerPerson: 15 } // grace $5 → limit $20 < 24
-  const out = await generateItinerary(SHORTLIST, tightBudget, callAiFn)
-  // 1 original + AI_VALIDATION_RETRIES corrective rounds (default 2) = 3 calls.
-  assert.equal(calls, 3, 'tries original + corrective retries, then falls back')
-  assert.equal(out.source, 'fallback')
-})
-
-test('AI path: an AI-declared infeasible result is returned as infeasible', async () => {
+test('AI path: a bad order (hallucinated / incomplete) falls back to deterministic', async () => {
   const out = await generateItinerary(SHORTLIST, CONSTRAINTS, async () => ({
-    feasible: false,
-    reason: 'Budget too tight',
+    title: 'T', description: 'D',
+    order: [9999], // not a permutation of the selected ids
+    notes: {},
   }))
+  assert.equal(out.source, 'deterministic')
+  // Still a valid, fully-timed day from the deterministic order.
+  const ids = new Set(SHORTLIST.map((p) => p.id))
+  for (const s of out.itinerary.stops) assert.ok(ids.has(s.pinId))
+})
+
+test('AI path: prose is taken from the model even when the order is defaulted', async () => {
+  const out = await generateItinerary(SHORTLIST, CONSTRAINTS, async () => ({
+    title: 'Custom Title',
+    description: 'Custom description.',
+    order: [1], // invalid → deterministic order, but prose should still apply
+    notes: {},
+  }))
+  assert.equal(out.source, 'deterministic')
+  assert.equal(out.itinerary.title, 'Custom Title')
+  assert.equal(out.itinerary.description, 'Custom description.')
+})
+
+test('AI path: the model never adds or drops a place — schedule uses only selected pins', async () => {
+  const out = await generateItinerary(SHORTLIST, CONSTRAINTS, async () => ({
+    title: 'T', description: 'D',
+    order: [1, 2, 10, 9999], // extra id — rejected, order defaulted
+    notes: {},
+  }))
+  const scheduled = new Set(idsOf(out.itinerary))
+  for (const id of scheduled) assert.ok(SHORTLIST.some((p) => p.id === id))
+})
+
+test('AI path: an infeasible selection is returned as infeasible (no model call)', async () => {
+  let called = false
+  const out = await generateItinerary(
+    [],
+    CONSTRAINTS,
+    async () => { called = true; return {} },
+  )
   assert.equal(out.feasible, false)
-  assert.match(out.reason, /budget/i)
+  assert.equal(called, false, 'model must not be called when selection is infeasible')
 })

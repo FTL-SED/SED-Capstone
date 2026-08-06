@@ -10,7 +10,7 @@
 // beyond its own baseline dwell (so a 45-min café can't become a 3-hour event),
 // and growth is DISTRIBUTED round-robin across stops (each gets a little longer)
 // rather than piling onto one. Meals are never stretched or pushed past their block.
-import { MEAL_TIME_WINDOWS, MAX_STOP_DURATION_MIN, STOP_STRETCH_MAX_MIN, travelMinutesFor } from '../../../config/ai.js'
+import { MEAL_TIME_WINDOWS, MAX_STOP_DURATION_MIN, STOP_STRETCH_MAX_MIN, TAIL_SNAP_MAX_MIN, travelMinutesFor } from '../../../config/ai.js'
 import { haversineMiles } from '../../../utils/geo.js'
 import { toMinutes, toHHMM, minutesFromStart, MINUTES_PER_DAY } from '../../../utils/time.js'
 import { backfillTravelLegs } from './travelLegs.js'
@@ -44,15 +44,42 @@ const rescheduleStops = (stops, coordOf, startTime, transport, options = {}) => 
     return a && b ? travelMinutes(haversineMiles(a, b)) : 0
   })
 
-  // Each stop's natural dwell (preserved from the input), measured in elapsed
-  // space so a stop straddling midnight reads as a positive dwell. This baseline
-  // is also the per-stop stretch anchor: the fill may grow a dwell to at most
-  // baseline + STOP_STRETCH_MAX_MIN (and never past MAX_STOP_DURATION_MIN).
-  const dwells = stops.map((stop) => Math.max(0, minutesFromStart(stop.arriveTime, stop.departTime)))
+  // Each stop's natural dwell — the per-stop stretch anchor (fill may grow it to
+  // at most baseline + STOP_STRETCH_MAX_MIN, never past MAX_STOP_DURATION_MIN).
+  // Prefer an explicit `durationMinutes` (the scheduler+narrator path assigns
+  // times itself, so its stops carry only a duration); otherwise derive dwell
+  // from the stop's existing arrive/depart (the deterministic sequencer's stops
+  // already carry real times). Measured in elapsed space so a stop straddling
+  // midnight reads as a positive dwell.
+  const dwells = stops.map((stop) =>
+    typeof stop.durationMinutes === 'number'
+      ? Math.max(0, stop.durationMinutes)
+      : Math.max(0, minutesFromStart(stop.arriveTime, stop.departTime)),
+  )
   const baseline = [...dwells]
-  const dwellCap = (i) => Math.min(MAX_STOP_DURATION_MIN, baseline[i] + STOP_STRETCH_MAX_MIN)
-
   const isMeal = (i) => stops[i].mealType !== undefined
+
+  // Per-stop stretch allowance for the fill. STOP_STRETCH_MAX_MIN is the FLOOR,
+  // not a flat cap: on a rich day (enough stops to fill the window at natural
+  // dwell) the extra slack needed is small, so the allowance stays ~30 and a
+  // coffee never balloons. On a SPARSE day (few stops, wide window) the flat 30
+  // couldn't reach the window end — leaving the day hours short — so we widen the
+  // allowance to the slack the day actually needs, spread across the non-meal
+  // stops that can absorb it. Always bounded by MAX_STOP_DURATION_MIN so no stop
+  // becomes absurd. `windowEndElapsed` is undefined when fill is off (deterministic
+  // sequencer's own pass), in which case the flat floor applies.
+  const stretchAllowance = (() => {
+    const windowEnd = options.windowEndElapsed
+    if (typeof windowEnd !== 'number' || windowEnd <= 0) return STOP_STRETCH_MAX_MIN
+    const totalTravel = travelInto.reduce((s, t) => s + t, 0)
+    const totalBaseline = baseline.reduce((s, d) => s + d, 0)
+    const stretchable = stops.reduce((n, _, i) => (isMeal(i) ? n : n + 1), 0)
+    if (stretchable === 0) return STOP_STRETCH_MAX_MIN
+    const gap = windowEnd - (totalTravel + totalBaseline)
+    // Per-stretchable-stop share of the gap, never below the flat floor.
+    return Math.max(STOP_STRETCH_MAX_MIN, Math.ceil(gap / stretchable))
+  })()
+  const dwellCap = (i) => Math.min(MAX_STOP_DURATION_MIN, baseline[i] + stretchAllowance)
 
   // Lay out arrive/depart (elapsed) for a given dwell set, holding each meal
   // until its block opens. Returns { arrive[], depart[] }.
@@ -126,6 +153,22 @@ const rescheduleStops = (stops, coordOf, startTime, transport, options = {}) => 
         dwells[i] -= FILL_STEP_MIN // revert: this stop can't absorb more
       }
       if (!grew) break
+    }
+
+    // Tail-snap: after filling, if the last stop still departs within
+    // TAIL_SNAP_MAX_MIN of the window end, extend its dwell to land EXACTLY on the
+    // end for a clean finish. Only a SMALL residual is closed (a far-short day is
+    // left honest). A trailing MEAL is snapped too — extending its dwell moves
+    // only its depart, not its arrival, so it stays inside its block (isLegal
+    // still guards this), and a dinner running to the window end reads naturally.
+    const filled = layout(dwells)
+    const lastIdx = stops.length - 1
+    const residual = windowEndElapsed - filled.depart[lastIdx]
+    if (residual > 0 && residual <= TAIL_SNAP_MAX_MIN) {
+      dwells[lastIdx] += residual
+      // Revert if the extra somehow breaks legality (window overrun / a meal's
+      // arrival pushed out of its block by the re-layout).
+      if (!isLegal(layout(dwells))) dwells[lastIdx] -= residual
     }
   }
 

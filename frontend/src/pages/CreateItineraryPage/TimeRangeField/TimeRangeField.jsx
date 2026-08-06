@@ -1,5 +1,6 @@
 import './TimeRangeField.css'
 import { useState, useRef, useEffect } from 'react'
+import { formatTime12h } from '../../../utils/formatTime'
 
 const HOURS = Array.from({ length: 12 }, (_, i) => i + 1); // 1..12
 const MINUTES = Array.from({ length: 60 }, (_, i) => i);   // 0..59
@@ -20,12 +21,6 @@ function toValue({ hour12, minute, period }) {
   let h = hour12 % 12;
   if (period === 'PM') h += 12;
   return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-}
-
-export function formatDisplay(value) {
-  if (!value) return '';
-  const { hour12, minute, period } = parseParts(value);
-  return `${hour12}:${String(minute).padStart(2, '0')} ${period}`;
 }
 
 // One looping scroll column of the wheel. The options are repeated three times
@@ -134,7 +129,7 @@ function TimePicker({ label, value, onChange }) {
         onClick={() => setOpen((v) => !v)}
       >
         <span className={`time-picker__value${value ? '' : ' time-picker__value--empty'}`}>
-          {value ? formatDisplay(value) : '--:--'}
+          {value ? formatTime12h(value) : '--:--'}
         </span>
         <svg
           className={`time-picker__chevron${open ? ' time-picker__chevron--open' : ''}`}

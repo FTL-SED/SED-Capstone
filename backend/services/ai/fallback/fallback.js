@@ -195,9 +195,20 @@ const fallbackSequence = (shortlist, constraints) => {
       const cost = typeof pin.pricePerPerson === 'number' ? pin.pricePerPerson : 0
       const fitsWindow = depart <= windowLen
       const fitsBudget = spent + cost + reservedMealBudget() <= budgetCap
-      // Yield to the meal once an activity would run into its open time.
-      const beforeMeal = !nextMeal || depart <= nextMeal.arrive
-      if (fitsWindow && fitsBudget && beforeMeal) {
+      // Place this activity before a pending meal as long as the MEAL is still
+      // seatable afterward — i.e. inserting a real stop is preferred over holding
+      // the meal at its open time and leaving an idle gap (and pins unused). The
+      // meal, deferred behind this activity, would arrive at depart+travel (held
+      // no earlier than its open time) and must still (a) land within its block
+      // so it keeps its mealType, and (b) finish inside the window. Only when that
+      // would push the meal out of reach do we yield to it instead.
+      let mealStillFits = true
+      if (nextMeal) {
+        const blockEndElapsed = toMinutes(MEAL_TIME_WINDOWS[nextMeal.block].end) - startWall
+        const mealArrive = Math.max(depart + travelMinutes(pin, nextMeal.pin, transport), nextMeal.arrive)
+        mealStillFits = mealArrive <= blockEndElapsed && mealArrive + AVG_STOP_DURATION_MIN <= windowLen
+      }
+      if (fitsWindow && fitsBudget && mealStillFits) {
         emit(pin, arrive, undefined, duration)
         ai++
         continue

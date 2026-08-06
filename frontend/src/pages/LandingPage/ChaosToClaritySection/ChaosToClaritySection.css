@@ -78,21 +78,20 @@
   color: rgba(246, 239, 225, 0.7);
 }
 
-/* A real photo drops the placeholder's forced 4:3 frame and takes its own
-   natural proportions instead — shown in full, never cropped, never distorted,
-   with no empty letterbox strips. `width: 100%` up to the shared 560px cap
-   keeps it in step with the text box; height follows the image's aspect ratio.
-   Solid (not dashed) border and a soft shadow lift it off the field. */
+/* A real photo sits in a shared landscape frame so every beat's image is the
+   same size and balances the text card beside it — rather than each taking its
+   own height (a portrait image, like the group-members shot, otherwise renders
+   far taller than its text card). The frame is a fixed 16:10 box; the photo
+   fills it with object-fit: cover, cropping only what's needed. Solid (not
+   dashed) border and a soft shadow lift it off the field. */
 .field-beat__image--photo {
-  /* Render as a plain block image, not the placeholder's grid box: width:100%
-     + height:auto is the pair that ALWAYS keeps the true ratio (no stretch).
-     aspect-ratio:auto drops the forced 4:3; max-width sets how big it can get. */
   display: block;
-  aspect-ratio: auto;
+  /* Shared frame ratio (~1.6), matching the landscape previews so they crop
+     imperceptibly while the taller portrait one crops top/bottom to match. */
+  aspect-ratio: 16 / 10;
   /* Larger than the 560px placeholder but capped so the photo stays within its
-     half and never crosses the centre road. width:100% + height:auto keeps the
-     true ratio (no stretch); justify-self:end (from the base rule) holds it
-     against the outer edge, balancing the text card on the far side. */
+     half and never crosses the centre road. justify-self:end (from the base
+     rule) holds it against the outer edge, balancing the text card. */
   width: 100%;
   height: auto;
   max-width: 640px;
@@ -100,17 +99,19 @@
   border-color: rgba(246, 239, 225, 0.12);
   background: none;
   box-shadow: 0 26px 60px rgba(18, 24, 14, 0.5);
-  /* Now a wrapper around the <img> (the scroll-reveal element); clip the photo
-     to the rounded frame and drop the line-box gap under the image. */
+  /* Wrapper around the <img> (the scroll-reveal element); clip the photo to the
+     rounded frame. */
   overflow: hidden;
   line-height: 0;
 }
 
-/* The actual photo fills its reveal wrapper at its natural ratio. */
+/* The actual photo fills the shared frame, cropping to cover rather than
+   letterboxing or stretching. */
 .field-beat__image-img {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
 }
 
 .field-beat__image-label {

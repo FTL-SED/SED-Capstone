@@ -1,13 +1,12 @@
 // Unit tests for the AI client's pure/injectable logic (no live model, no
-// network): JSON-fence stripping, retry classification, the callAI retry/parse
-// loop with an injected request fn, and the toPromptPin input caps. The live
-// gateway call (requestOnce) is intentionally not tested — it's a thin SDK
-// wrapper — but everything around it is.
+// network): JSON-fence stripping, retry classification, and the callAI
+// retry/parse loop with an injected request fn. The live gateway call
+// (requestOnce) is intentionally not tested — it's a thin SDK wrapper — but
+// everything around it is. (Prompt input-capping lives in prompt.test.js.)
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
 import { callAI, stripCodeFence, worthRetrying, extractJson } from './client.js'
-import { toPromptPin } from './prompt.js'
 
 test('stripCodeFence: unwraps a ```json fence', () => {
   const wrapped = '```json\n{"feasible":true}\n```'
@@ -82,9 +81,23 @@ test('callAI: retries on a 5xx then succeeds', async () => {
     }
     return '{"feasible":false,"reason":"nope"}'
   }
-  const result = await callAI([{ role: 'user', content: 'hi' }], request)
+  // maxRetries: 1 drives the retry path explicitly — the configured default is
+  // now 0 (single attempt), so pass a retry budget to exercise the mechanism.
+  const result = await callAI([{ role: 'user', content: 'hi' }], request, 1)
   assert.equal(calls, 2)
   assert.deepEqual(result, { feasible: false, reason: 'nope' })
+})
+
+test('callAI: does NOT retry when maxRetries is 0 (the current default)', async () => {
+  let calls = 0
+  const request = async () => {
+    calls += 1
+    const err = new Error('server busy')
+    err.status = 503
+    throw err
+  }
+  await assert.rejects(() => callAI([{ role: 'user', content: 'hi' }], request, 0), /server busy/)
+  assert.equal(calls, 1) // single attempt, no retry
 })
 
 test('callAI: does NOT retry a 4xx — fails fast', async () => {
@@ -106,32 +119,4 @@ test('callAI: surfaces a parse error when the reply is not JSON', async () => {
   await assert.rejects(() => callAI([{ role: 'user', content: 'hi' }], request))
 })
 
-test('toPromptPin: caps an over-long name and floods of tags', () => {
-  const pin = {
-    id: 1,
-    name: 'x'.repeat(500),
-    category: 'activity',
-    interests: Array.from({ length: 30 }, (_, i) => `tag${i}`),
-    cuisine: ['mexican'],
-    diet: ['vegan'],
-    latitude: 37.7,
-    longitude: -122.4,
-    pricePerPerson: 10,
-  }
-  const out = toPromptPin(pin)
-  assert.equal(out.name.length, 120)
-  assert.ok(out.tags.length <= 12, `expected <=12 tags, got ${out.tags.length}`)
-})
-
-test('toPromptPin: caps an individual over-long tag', () => {
-  const out = toPromptPin({
-    id: 2,
-    name: 'ok',
-    category: 'activity',
-    interests: ['y'.repeat(200)],
-    latitude: 37.7,
-    longitude: -122.4,
-    pricePerPerson: 0,
-  })
-  assert.equal(out.tags[0].length, 40)
-})
+// (toPromptPin's input-capping is now toPromptPlace, covered in prompt.test.js.)
