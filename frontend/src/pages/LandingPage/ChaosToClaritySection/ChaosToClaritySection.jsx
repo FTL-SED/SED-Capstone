@@ -27,6 +27,9 @@ const BEATS = [
     copy: "NavQuest finds a fair meeting point so no one's stuck with an hour commute, keeps every stop inside your group's budget, and never books a place someone in the group can't eat at.",
     image: groupMembersPreview,
     imageAlt: "Adding each group member with their starting point, interests, and dietary needs so NavQuest can plan a day that's fair to everyone.",
+    // Portrait shot: anchor the top so the shared 16:10 frame crops only the
+    // bottom, keeping the step header and first member visible.
+    imagePosition: 'top',
   },
   {
     title: 'Every destination in the right place, at the right time',
@@ -147,6 +150,7 @@ function ChaosToClaritySection() {
                     className="field-beat__image-img"
                     src={beat.image}
                     alt={beat.imageAlt}
+                    style={beat.imagePosition ? { objectPosition: beat.imagePosition } : undefined}
                     loading="lazy"
                   />
                 </Reveal>

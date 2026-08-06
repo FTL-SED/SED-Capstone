@@ -73,15 +73,15 @@ export const AI_MODEL =
   'claude-sonnet-4-5-20250929'
 // OpenAI model id, used when the client talks to OpenAI directly instead of the
 // Salesforce gateway (they namespace model ids differently, so the gateway id
-// above isn't valid there). gpt-5-mini is the default: deployed, the backend
-// sits behind Cloudflare's ~100s request cap, and full gpt-5's variable
-// reasoning latency could exceed it (a call was cut mid-flight before the
-// fallback could return). mini is materially faster and more consistent, which
-// keeps a full generation comfortably under the cap; sequencing a shortlist is
-// a shallow structured task where the quality gap is small. Override with
-// OPENAI_MODEL=gpt-5 for the strongest tier if latency headroom allows.
-export const AI_OPENAI_MODEL =
-  process.env.OPENAI_MODEL || 'gpt-5-mini'
+// above isn't valid there). Pinned to gpt-5-nano, the SMALLEST/fastest tier of
+// the gpt-5 family (nano / mini / full): deployed, the backend sits behind
+// Cloudflare's ~100s request cap, and full gpt-5's variable reasoning latency
+// could exceed it (a call was cut mid-flight before the fallback could return).
+// nano is the fastest and cheapest, keeping a full generation well under the cap;
+// sequencing a shortlist is a shallow structured task where the quality gap is
+// acceptable for this speed sprint. Hardcoded (not env-overridable) so a stray
+// OPENAI_MODEL=gpt-5 in prod can't push us onto the slow tier and blow the cap.
+export const AI_OPENAI_MODEL = 'gpt-5-mini'
 
 // Reasoning effort for OpenAI reasoning models (gpt-5 family). Sequencing a
 // shortlist is a structured, shallow task, so 'low' keeps gpt-5's quality while
@@ -95,24 +95,23 @@ export const AI_OPENAI_REASONING_EFFORT =
 // before emitting the itinerary, so a call can take much longer than a
 // non-reasoning model. This timeout bounds how long we wait per attempt before
 // giving up to the deterministic fallback. 30s is deliberately set so the
-// worst case (timeout × attempts) stays UNDER the deployed Cloudflare ~100s
-// request cap: at 30s with AI_MAX_RETRIES=1 the backend gives up and returns a
-// fallback itinerary at ~60s, rather than being killed mid-request by the proxy
-// (which returned no response at all — see the deployed /ai-agent hang).
+// worst case (a single attempt, no retry) stays UNDER the deployed Cloudflare
+// ~100s request cap: at 30s with AI_MAX_RETRIES=0 the backend gives up and
+// returns a fallback itinerary at ~30s, rather than being killed mid-request by
+// the proxy (which returned no response at all — see the deployed /ai-agent hang).
 export const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS) || 30_000
-// Transient-error retries (5xx / network / timeout). Kept at 1 so the worst
-// case is (AI_MAX_RETRIES + 1) × AI_TIMEOUT_MS = 2 × 30s = 60s, leaving headroom
-// under the deployed ~100s proxy cap for the deterministic fallback to run and
-// respond. A higher count would risk the proxy killing the request before the
-// fallback ever returns.
-export const AI_MAX_RETRIES = Number(process.env.AI_MAX_RETRIES) || 1
+// Transient-error retries (5xx / network / timeout). 0 means a single attempt,
+// no retry — so the worst case is (AI_MAX_RETRIES + 1) × AI_TIMEOUT_MS = 1 × 30s
+// = 30s, well under the deployed ~100s proxy cap, leaving headroom for the
+// deterministic fallback to run and respond. A retry would risk the proxy
+// killing the request before the fallback ever returns.
+export const AI_MAX_RETRIES = Number(process.env.AI_MAX_RETRIES) || 0
 
-// How many times to re-ask the model with its validation errors fed back before
-// giving up to the deterministic fallback. Distinct from AI_MAX_RETRIES (which
-// retries transient NETWORK errors): this retries a well-formed but rule-broken
-// itinerary (e.g. over budget). 2 rounds matches the model's observed
-// convergence; each round is another billed call, so keep it small.
-export const AI_VALIDATION_RETRIES = Number(process.env.AI_VALIDATION_RETRIES) || 2
+// NOTE: there is no validation-retry loop in the scheduler+narrator design. The
+// backend deterministically SELECTS the day (services/ai/plan) so budget/meals/
+// coverage are already valid before the model is called; the LLM only re-orders
+// that set and narrates, and if its order fails validation we schedule the
+// deterministic order instead — never a re-ask. See the roadmap redesign doc.
 
 // Hard ceiling on tokens the model may generate per call (reasoning + visible
 // output for reasoning models like gpt-5). A finished itinerary JSON is ~1–2k
@@ -145,6 +144,16 @@ export function coverageSlackFor(windowLenMinutes) {
 // the day should gain another stop, not a longer one.
 export const STOP_STRETCH_MAX_MIN = Number(process.env.STOP_STRETCH_MAX_MIN) || 30
 
+// After the fill pass, if the last stop still departs within this many minutes of
+// the window end, extend that last stop's dwell to land EXACTLY on the end — a
+// tidy finish (a day that reads "…6:47pm" on a 7pm window looks off; snapping it
+// to 7:00 looks intentional). Only a SMALL residual is snapped: a day that's
+// genuinely far short (no material to fill) is left honest rather than papered
+// over with one absurdly long final stop. This is a cosmetic tail adjustment on
+// top of the fill, so it may push the last dwell past the normal stretch cap, but
+// only by at most this many minutes.
+export const TAIL_SNAP_MAX_MIN = Number(process.env.TAIL_SNAP_MAX_MIN) || 30
+
 // Budget grace band. A day whose per-person total exceeds the budget by no more
 // than this is KEPT (not rejected to the fallback) — a $151 day on a $150 budget
 // is materially the same as a $150 one, and keeping the better AI-sequenced day
@@ -161,15 +170,15 @@ export function budgetGraceFor(maxBudgetPerPerson) {
 }
 
 // Meal anchors ("HH:MM", Pacific wall-clock) the prompt + fallback use to slot
-// restaurants and label meal stops. Kept generously wide so a sensible meal a
-// little off the "ideal" hour still validates rather than getting the whole AI
-// itinerary rejected into the fallback over a few minutes. The blocks are
-// non-overlapping (breakfast ends before lunch starts, lunch before dinner) so a
-// stop's arriveTime maps to at most one block.
+// restaurants and label meal stops. A meal stop's ARRIVAL time must fall strictly
+// within its block for the stop to keep its mealType (see validate.js's
+// isInMealBlock check). The blocks are non-overlapping (breakfast ends before
+// lunch starts, lunch before dinner) so a stop's arriveTime maps to at most one
+// block. Windows are the realistic hours a group would sit down for that meal.
 export const MEAL_TIME_WINDOWS = {
   breakfast: { start: '07:00', end: '11:00' },
-  lunch: { start: '12:00', end: '16:00' },
-  dinner: { start: '17:00', end: '22:00' },
+  lunch: { start: '11:30', end: '14:30' },
+  dinner: { start: '17:00', end: '21:00' },
 }
 
 // Meal blocks that are REQUIRED when a group wants meals — every enforceable one

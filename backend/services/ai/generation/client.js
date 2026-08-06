@@ -69,17 +69,18 @@ const requestOnce = async (messages) => {
 }
 
 // Ask the AI to sequence an itinerary and return its reply parsed into a JS
-// object. Retries a few times on transient errors, then gives up by throwing —
-// the caller (generateItinerary) turns any throw into the deterministic
-// fallback. `request` is injectable so tests can exercise the retry/parse logic
-// without a live model; it defaults to the real network call.
-const callAI = async (messages, request = requestOnce) => {
+// object. Retries transient errors up to `maxRetries` times, then gives up by
+// throwing — the caller (generateItinerary) turns any throw into the
+// deterministic fallback. `request` is injectable so tests can exercise the
+// retry/parse logic without a live model; `maxRetries` is injectable so a test
+// can drive the retry path regardless of the configured default (currently 0).
+const callAI = async (messages, request = requestOnce, maxRetries = AI_MAX_RETRIES) => {
   if (!Array.isArray(messages) || messages.length === 0) {
     throw new Error('callAI requires a non-empty messages array')
   }
 
   let lastError
-  for (let attempt = 0; attempt <= AI_MAX_RETRIES; attempt++) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const reply = await request(messages)
       if (typeof reply !== 'string') throw new Error('AI response had no message content')
@@ -88,7 +89,7 @@ const callAI = async (messages, request = requestOnce) => {
       lastError = err
       if (!worthRetrying(err)) break
       // Wait a little longer before each retry (but not after the last try).
-      if (attempt < AI_MAX_RETRIES) await sleep(250 * (attempt + 1))
+      if (attempt < maxRetries) await sleep(250 * (attempt + 1))
     }
   }
 

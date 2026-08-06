@@ -61,7 +61,7 @@ async function main() {
   }
 
   console.log(`\n✅ Source: ${result.source.toUpperCase()}` +
-    (result.source === 'fallback' ? ' (AI failed/invalid — deterministic sequencer ran)' : ' (AI-generated)'))
+    (result.source === 'deterministic' ? ' (AI order unavailable/invalid — deterministic order used)' : ' (AI-ordered)'))
   printItinerary(result.itinerary)
 }
 

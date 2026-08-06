@@ -201,7 +201,7 @@ test('rejects a stop outside the trip time window', () => {
 })
 
 test('rejects a mealType whose arriveTime is outside its block', () => {
-  // 16:30 is past the lunch window (12:00-16:00), so tagging it "lunch" is invalid.
+  // 16:30 is past the lunch window (11:30-14:30), so tagging it "lunch" is invalid.
   const bad = {
     ...goodItinerary,
     stops: [{ pinId: 3, arriveTime: '16:30', departTime: '17:00', mealType: 'lunch' }],

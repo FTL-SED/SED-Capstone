@@ -6,7 +6,7 @@
 import fs from 'node:fs'
 import https from 'node:https'
 import OpenAI from 'openai'
-import { AI_MODEL, AI_OPENAI_MODEL } from '../config/ai.js'
+import { AI_MODEL, AI_OPENAI_MODEL, AI_MAX_RETRIES } from '../config/ai.js'
 
 // The Salesforce internal gateway and OpenAI both speak the OpenAI
 // chat-completions wire format, so the same SDK talks to either — only the base
@@ -24,10 +24,26 @@ let cached
 export function getAiClient() {
   if (cached) return cached
 
-  // Prefer the internal gateway (AI_KEY); fall back to OpenAI. `provider` lets
-  // the caller send provider-specific params (e.g. OpenAI's reasoning_effort)
-  // only to the provider that accepts them.
-  if (process.env.AI_KEY) {
+  // Prefer OpenAI (OPEN_AI_API_KEY); fall back to the internal gateway (AI_KEY).
+  // This branch (ai-speed-up-sprint) is testing the OpenAI model specifically,
+  // so OpenAI wins whenever its key is set. `provider` lets the caller send
+  // provider-specific params (e.g. OpenAI's reasoning_effort) only to the
+  // provider that accepts them.
+  if (process.env.OPEN_AI_API_KEY) {
+    // OpenAI's default base URL + a public certificate Node already trusts, so
+    // no baseURL override, no custom httpAgent, no NODE_EXTRA_CA_CERTS needed.
+    // maxRetries mirrors our own AI_MAX_RETRIES so the SDK's hidden default of 2
+    // can't triple-count a timeout — a 30s timeout was becoming ~91s (3×30s)
+    // because the SDK silently retried twice on top of our loop.
+    cached = {
+      provider: 'openai',
+      model: AI_OPENAI_MODEL,
+      client: new OpenAI({
+        apiKey: process.env.OPEN_AI_API_KEY,
+        maxRetries: AI_MAX_RETRIES,
+      }),
+    }
+  } else if (process.env.AI_KEY) {
     if (!process.env.NODE_EXTRA_CA_CERTS) throw new Error('NODE_EXTRA_CA_CERTS is not set')
     cached = {
       provider: 'gateway',
@@ -35,6 +51,7 @@ export function getAiClient() {
       client: new OpenAI({
         apiKey: process.env.AI_KEY,
         baseURL: GATEWAY_BASE_URL,
+        maxRetries: AI_MAX_RETRIES,
         // The internal endpoint uses Salesforce's certificate, which Node
         // doesn't trust by default, so we load it from NODE_EXTRA_CA_CERTS.
         httpAgent: new https.Agent({
@@ -42,18 +59,8 @@ export function getAiClient() {
         }),
       }),
     }
-  } else if (process.env.OPEN_AI_API_KEY) {
-    // OpenAI's default base URL + a public certificate Node already trusts, so
-    // no baseURL override, no custom httpAgent, no NODE_EXTRA_CA_CERTS needed.
-    cached = {
-      provider: 'openai',
-      model: AI_OPENAI_MODEL,
-      client: new OpenAI({
-        apiKey: process.env.OPEN_AI_API_KEY,
-      }),
-    }
   } else {
-    throw new Error('AI_KEY (or OPEN_AI_API_KEY) is not set')
+    throw new Error('OPEN_AI_API_KEY (or AI_KEY) is not set')
   }
 
   return cached

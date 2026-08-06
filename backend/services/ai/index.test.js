@@ -25,9 +25,14 @@ try {
   dbReason = 'no DATABASE_URL / Postgres unreachable'
 }
 
-// Force the fallback path — deterministic, no network/API key required.
+// Force the deterministic path — no narrator call. Unset BOTH provider keys so
+// getAiClient() throws → generateItinerary uses the deterministic order (source
+// "deterministic"). Unsetting only AI_KEY isn't enough now that the client
+// prefers OPEN_AI_API_KEY (see lib/aiClient.js).
 const savedKey = process.env.AI_KEY
+const savedOpenAiKey = process.env.OPEN_AI_API_KEY
 delete process.env.AI_KEY
+delete process.env.OPEN_AI_API_KEY
 
 const createdItineraryIds = []
 let testUserId
@@ -40,6 +45,7 @@ after(async () => {
     await prisma.user.delete({ where: { id: testUserId } }).catch(() => {})
   }
   if (savedKey !== undefined) process.env.AI_KEY = savedKey
+  if (savedOpenAiKey !== undefined) process.env.OPEN_AI_API_KEY = savedOpenAiKey
   await prisma.$disconnect()
 })
 
@@ -63,10 +69,10 @@ test('generates, persists, and reads back a full itinerary', { skip: dbReason },
   const user = await users.create({ authUserId: tag, email: `${tag}@example.com`, username: tag })
   testUserId = user.id
 
-  // 1. Generate (fallback path, since the key is unset).
+  // 1. Generate (deterministic path, since the key is unset → no narrator call).
   const result = await generateItinerary(shortlist, constraints)
   assert.notEqual(result.feasible, false, 'expected a feasible itinerary')
-  assert.equal(result.source, 'fallback')
+  assert.equal(result.source, 'deterministic')
 
   // 2. Persist.
   const saved = await persistItinerary(result.itinerary, shortlist, {
@@ -149,7 +155,7 @@ test('tight budget / wide window does NOT throw (C2 fix)', { skip: dbReason }, a
   // is that it doesn't throw (no uncaught validation error).
   if (result.feasible === false) return // tight budget may be infeasible — valid
   assert.ok(result.itinerary.stops.length > 0, 'expected at least one stop')
-  assert.equal(result.source, 'fallback', 'should use fallback for tight budget')
+  assert.equal(result.source, 'deterministic', 'no key set → deterministic order')
 })
 
 test('fallback meals respect budget cap (budget-aware meal reservation)', { skip: dbReason }, async () => {

@@ -35,6 +35,35 @@ const constraints = {
   includeMeals: false,
 }
 
+test('packs adjacent activities into the day rather than leaving them unused before a meal', () => {
+  // 5 activities + 2 restaurants, all within ~1 mile (travel is trivial), a
+  // 12:00-19:00 window. Every activity fits, so a good selection should use most
+  // of them and reach near the window end — NOT stop early with free adjacent
+  // pins unused because an activity was deferred to hold a meal's open time.
+  const P = (id, cat, price, lat, lng) => ({ id, name: `P${id}`, category: cat, pricePerPerson: price, latitude: lat, longitude: lng, address: `${id} St, SF` })
+  const close = [
+    P(1, 'activity', 10, 37.7857, -122.4011),
+    P(3, 'activity', 10, 37.786, -122.403),
+    P(4, 'activity', 0, 37.785, -122.405),
+    P(6, 'activity', 0, 37.7845, -122.402),
+    P(7, 'activity', 0, 37.7855, -122.4),
+    P(10, 'restaurant', 14, 37.7858, -122.4015),
+    P(11, 'restaurant', 22, 37.7852, -122.404),
+  ]
+  const c = { timeWindow: { startTime: '12:00', endTime: '19:00' }, maxBudgetPerPerson: 150, groupSize: 2, transport: 'walking' }
+  const result = fallbackSequence(close, c)
+  assert.equal(result.feasible, true)
+  const filled = fillWindow(result, close, '12:00', '19:00', 'walking')
+  const toMinLocal = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3))
+  const lastDepart = toMinLocal(filled.stops.at(-1).departTime) - toMinLocal('12:00')
+  // With plenty of nearby pins, the day should reach within ~30 min of the
+  // 420-min window end by USING pins, not by ballooning a couple of stops.
+  assert.ok(lastDepart >= 420 - 30, `day ended too early (${lastDepart}/420) — pins left unused`)
+  // And it should genuinely use most activities, not a bare 2-3.
+  const activityStops = result.stops.filter((s) => !s.mealType).length
+  assert.ok(activityStops >= 4, `expected ≥4 activities used, got ${activityStops}`)
+})
+
 test('produces a feasible itinerary that PASSES validation (same-schema promise)', () => {
   const result = fallbackSequence(shortlist, constraints)
   assert.equal(result.feasible, true)
@@ -275,7 +304,7 @@ test('fallback: 11:30-start trip does NOT include breakfast (block no longer ove
   const result = fallbackSequence(shortlist, constraints)
   assert.equal(result.feasible, true)
   const mealTypes = new Set(result.stops.filter((s) => s.mealType).map((s) => s.mealType))
-  assert.ok(!mealTypes.has('breakfast'), 'should NOT have breakfast (block 07:00-10:45 does not overlap 11:30-20:30)')
+  assert.ok(!mealTypes.has('breakfast'), 'should NOT have breakfast (block 07:00-11:00 ends before the 11:30 start)')
   // Should still have lunch and dinner
   assert.ok(mealTypes.has('lunch'), 'expected a lunch meal')
   assert.ok(mealTypes.has('dinner'), 'expected a dinner meal')
@@ -372,11 +401,11 @@ test('fallback gives different venue types different dwell (not a flat 90)', () 
 
 
 test('fallback: thin shortlist stretches dwell times (bounded) toward the window end', () => {
-  // 5 places for a 12-hour window. Each stop stretches only up to baseline +
-  // STOP_STRETCH_MAX_MIN (activities 60+30=90, meals stay 90), so 5 pins can't
-  // fully reach 21:00 — that's intentional: cap the stretch, don't inflate one
-  // stop to 3 hours. The day should still push MUCH later than the un-stretched
-  // ~15:00, and no single stop may exceed its cap.
+  // 5 places for a 12-hour window. The fill's per-stop allowance ADAPTS to the
+  // gap: with few stops for a wide window it grows dwells past the flat +30 so the
+  // day reaches near the window end (not quitting hours early), bounded only by
+  // the hard MAX_STOP_DURATION_MIN ceiling. The day should push MUCH later than
+  // the un-stretched ~15:00, and no stop may exceed the 180-min ceiling.
   const shortlist = [
     { id: 1, name: 'Museum', category: 'activity', pricePerPerson: 0, latitude: 37.785, longitude: -122.401, rating: 4.6, address: 'San Francisco' },
     { id: 2, name: 'Park', category: 'activity', pricePerPerson: 0, latitude: 37.769, longitude: -122.456, rating: 4.8, address: 'San Francisco' },
@@ -396,11 +425,11 @@ test('fallback: thin shortlist stretches dwell times (bounded) toward the window
   const last = result.stops[result.stops.length - 1]
   assert.ok(toMin(last.departTime) >= seqLast, `fill should not shorten the day`)
   assert.ok(toMin(last.departTime) >= 18 * 60, `filled day should reach past 18:00, ended ${last.departTime}`)
-  // ...but no single non-meal stop exceeds its per-type baseline + 30 cap.
-  // (baselines here: activities 60 → cap 90; meals stay at 90.)
+  // ...but no non-meal stop exceeds the hard MAX_STOP_DURATION_MIN (180) ceiling,
+  // even when the adaptive fill widens the per-stop allowance to fill the window.
   for (const s of result.stops) {
     if (s.mealType) continue
-    assert.ok(toMin(s.departTime) - toMin(s.arriveTime) <= 90, `stop dwell exceeds 60+30 cap`)
+    assert.ok(toMin(s.departTime) - toMin(s.arriveTime) <= 180, `stop dwell exceeds the 180-min ceiling`)
   }
   const { valid, errors } = validateItinerary(result, shortlist, constraints, { enforceCoverage: false })
   assert.deepEqual(errors, [])
