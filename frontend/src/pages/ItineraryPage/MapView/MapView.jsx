@@ -23,6 +23,25 @@ const mutedIcon = (n) =>
     iconAnchor: [14, 14],
   });
 
+// Basemap tiles. CARTO's keyless basemaps now return an "API KEY REQUIRED"
+// watermark, so we use Geoapify's soft, muted osm-bright-smooth style with the
+// same key the address autocomplete uses. Without a key, fall back to the
+// standard OpenStreetMap tiles so the map still renders.
+const GEOAPIFY_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY;
+const OSM_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+const TILE_LAYER = GEOAPIFY_KEY
+  ? {
+      url: `https://maps.geoapify.com/v1/tile/osm-bright-smooth/{z}/{x}/{y}{r}.png?apiKey=${GEOAPIFY_KEY}`,
+      attribution: `Powered by <a href="https://www.geoapify.com/">Geoapify</a> | ${OSM_ATTRIBUTION}`,
+      maxZoom: 20,
+    }
+  : {
+      url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: OSM_ATTRIBUTION,
+      maxZoom: 19,
+    };
+
 const EARTH_RADIUS_MILES = 3958.8;
 const toRad = (d) => (d * Math.PI) / 180;
 function haversineMi(a, b) {
@@ -112,15 +131,7 @@ function MapView({ pins = [], meetingPoint = null, radiusMi = null }) {
   return (
     <div className="map-view">
       <MapContainer center={center} zoom={13} className="map-view__map" scrollWheelZoom>
-        {/* CARTO Voyager basemap: a soft, muted, low-contrast style close to
-            Google Maps' look — free and keyless, unlike the harsh, heavily
-            saturated raw OpenStreetMap raster tiles. */}
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-          subdomains="abcd"
-          maxZoom={20}
-        />
+        <TileLayer {...TILE_LAYER} />
         {showRadius && (
           <Circle
             center={[meetingPoint.lat, meetingPoint.lng]}
