@@ -18,6 +18,8 @@ The site generates tailored itineraries based on user inputs like budget, starti
 
 Deployment Website: **https://sed-capstone.onrender.com**
 
+Demo Video: [Watch the NavQuest Demo](https://drive.google.com/file/d/1sBaIGDp-iqHPKI6XQQp8WhBdIO4ZJLsQ/view?usp=sharing)
+
 ### Open-source libraries used
 
 - Add any links to open-source libraries used in your project.
